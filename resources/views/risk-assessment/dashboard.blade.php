@@ -385,10 +385,10 @@
     new Chart(monthlyTrendsCtx, {
         type: 'line',
         data: {
-            labels: {!! json_encode($monthlyTrends->pluck('month')->toArray()) !!},
+            labels: {!! json_encode(array_column($monthlyTrends, 'month')) !!},
             datasets: [{
                 label: 'Risk Assessments',
-                data: {!! json_encode($monthlyTrends->pluck('total')->toArray()) !!},
+                data: {!! json_encode(array_column($monthlyTrends, 'total')) !!},
                 borderColor: '#f97316',
                 backgroundColor: 'rgba(249, 115, 22, 0.1)',
                 tension: 0.4,
