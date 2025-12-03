@@ -68,7 +68,8 @@ class RiskReview extends Model
         });
 
         static::created(function ($review) {
-            ActivityLog::log('create', 'risk_assessment', 'RiskReview', $review->id, "Created risk review for assessment: {$review->riskAssessment->title ?? 'N/A'}");
+            $assessmentTitle = $review->riskAssessment->title ?? 'N/A';
+            ActivityLog::log('create', 'risk_assessment', 'RiskReview', $review->id, "Created risk review for assessment: {$assessmentTitle}");
         });
     }
 
