@@ -67,6 +67,14 @@ class Incident extends Model
         'reported_to_authorities',
         'reported_to_authorities_at',
         'regulatory_reference',
+        // Risk Assessment Integration Fields
+        'related_hazard_id',
+        'related_risk_assessment_id',
+        'related_jsa_id',
+        'hazard_was_identified',
+        'controls_were_in_place',
+        'controls_were_effective',
+        'risk_assessment_gap_analysis',
     ];
 
     protected $casts = [
@@ -82,6 +90,9 @@ class Incident extends Model
         'approved_at' => 'datetime',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'hazard_was_identified' => 'boolean',
+        'controls_were_in_place' => 'boolean',
+        'controls_were_effective' => 'boolean',
     ];
 
     /**
@@ -164,6 +175,27 @@ class Incident extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Risk Assessment Module Relationships
+    public function relatedHazard(): BelongsTo
+    {
+        return $this->belongsTo(Hazard::class, 'related_hazard_id');
+    }
+
+    public function relatedRiskAssessment(): BelongsTo
+    {
+        return $this->belongsTo(RiskAssessment::class, 'related_risk_assessment_id');
+    }
+
+    public function relatedJSA(): BelongsTo
+    {
+        return $this->belongsTo(JSA::class, 'related_jsa_id');
+    }
+
+    public function controlMeasures(): HasMany
+    {
+        return $this->hasMany(ControlMeasure::class);
     }
 
     /**
