@@ -286,7 +286,7 @@ class ToolboxTalkController extends Controller
 
         $toolboxTalk->delete();
 
-        return redirect()->route('admin.toolbox-talks.index')
+        return redirect()->route('toolbox-talks.index')
             ->with('success', 'Toolbox talk deleted successfully!');
     }
 

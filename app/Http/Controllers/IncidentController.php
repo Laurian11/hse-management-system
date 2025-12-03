@@ -162,8 +162,14 @@ class IncidentController extends Controller
 
     public function update(UpdateIncidentRequest $request, Incident $incident)
     {
+        // Check if user can update this incident (same company)
+        if ($incident->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $data = $request->validated();
         $data['incident_date'] = $data['date_occurred'] ?? $incident->incident_date;
+        $data['incident_type'] = $data['title']; // Use title as incident type for now
 
         // Handle image uploads
         if ($request->hasFile('images')) {
@@ -193,7 +199,7 @@ class IncidentController extends Controller
 
         $incident->delete();
 
-        return redirect()->route('admin.incidents.index')
+        return redirect()->route('incidents.index')
             ->with('success', 'Incident deleted successfully!');
     }
 

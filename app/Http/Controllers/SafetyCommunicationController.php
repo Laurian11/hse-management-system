@@ -215,7 +215,7 @@ class SafetyCommunicationController extends Controller
 
         $communication->delete();
 
-        return redirect()->route('admin.safety-communications.index')
+        return redirect()->route('safety-communications.index')
             ->with('success', 'Safety communication deleted successfully!');
     }
 

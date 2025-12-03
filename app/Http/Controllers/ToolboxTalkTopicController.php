@@ -210,7 +210,7 @@ class ToolboxTalkTopicController extends Controller
 
         $topic->delete();
 
-        return redirect()->route('admin.toolbox-topics.index')
+        return redirect()->route('toolbox-topics.index')
             ->with('success', 'Topic deleted successfully!');
     }
 
