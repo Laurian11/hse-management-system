@@ -69,7 +69,7 @@ class RiskReviewController extends Controller
         
         // Pre-select risk assessment if provided
         $selectedRiskAssessment = null;
-        if ($request->has('risk_assessment_id')) {
+        if ($request->has('risk_assessment_id') && $request->filled('risk_assessment_id')) {
             $selectedRiskAssessment = RiskAssessment::forCompany($companyId)->findOrFail($request->risk_assessment_id);
         }
         

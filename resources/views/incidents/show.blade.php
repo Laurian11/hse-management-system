@@ -351,7 +351,7 @@
                                         </a>
                                     @endif
                                     
-                                    @if($incident->rootCauseAnalysis)
+                                    @if($incident->rootCauseAnalysis && $incident->related_risk_assessment_id)
                                         <a href="{{ route('risk-assessment.risk-reviews.create', ['incident_id' => $incident->id, 'risk_assessment_id' => $incident->related_risk_assessment_id]) }}" class="block w-full text-left px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
                                             <i class="fas fa-sync-alt mr-2"></i>Trigger Risk Review
                                         </a>
