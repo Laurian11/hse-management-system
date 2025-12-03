@@ -13,6 +13,13 @@ class JSA extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'jsas';
+
     protected $fillable = [
         'reference_number',
         'company_id',
