@@ -95,9 +95,13 @@ class IncidentController extends Controller
 
     public function store(StoreIncidentRequest $request)
     {
+        $user = Auth::user();
         $data = $request->validated();
-        $data['company_id'] = Auth::user()->company_id;
-        $data['reported_by'] = Auth::user()->id;
+        $data['company_id'] = $user->company_id;
+        $data['reported_by'] = $user->id;
+        $data['reporter_name'] = $user->name;
+        $data['reporter_email'] = $user->email;
+        $data['reporter_phone'] = $user->phone;
         $data['incident_date'] = $data['date_occurred'];
         $data['status'] = 'open';
         $data['incident_type'] = $data['title']; // Use title as incident type for now
