@@ -19,6 +19,12 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HazardController;
+use App\Http\Controllers\RiskAssessmentController;
+use App\Http\Controllers\JSAController;
+use App\Http\Controllers\ControlMeasureController;
+use App\Http\Controllers\RiskReviewController;
+use App\Http\Controllers\RiskAssessmentDashboardController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -167,6 +173,30 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
         Route::get('/{attachment}', [IncidentAttachmentController::class, 'show'])->name('show');
         Route::delete('/{attachment}', [IncidentAttachmentController::class, 'destroy'])->name('destroy');
     });
+});
+
+// Risk Assessment & Hazard Management Routes
+Route::prefix('risk-assessment')->name('risk-assessment.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [RiskAssessmentDashboardController::class, 'index'])->name('dashboard');
+    
+    // Hazards (HAZID)
+    Route::resource('hazards', HazardController::class);
+    
+    // Risk Assessments (Risk Register)
+    Route::resource('risk-assessments', RiskAssessmentController::class);
+    
+    // Job Safety Analysis (JSA/JHA)
+    Route::resource('jsas', JSAController::class);
+    Route::post('/jsas/{jsa}/approve', [JSAController::class, 'approve'])->name('jsas.approve');
+    
+    // Control Measures
+    Route::resource('control-measures', ControlMeasureController::class);
+    Route::post('/control-measures/{controlMeasure}/verify', [ControlMeasureController::class, 'verify'])->name('control-measures.verify');
+    
+    // Risk Reviews
+    Route::resource('risk-reviews', RiskReviewController::class);
+    Route::post('/risk-reviews/{riskReview}/complete', [RiskReviewController::class, 'complete'])->name('risk-reviews.complete');
 });
 
 // Administrative Module Routes

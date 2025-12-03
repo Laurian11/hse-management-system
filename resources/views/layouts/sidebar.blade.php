@@ -128,6 +128,43 @@
                 </div>
             </div>
             
+            <!-- Risk Assessment & Hazard Management - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('risk-assessment')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-shield-alt text-orange-600"></i>
+                        <span class="sidebar-text">Risk Assessment</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="risk-assessment-chevron"></i>
+                </button>
+                <div id="risk-assessment-section" class="space-y-1 pl-4 border-l-2 border-orange-100">
+                    <a href="{{ route('risk-assessment.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/dashboard') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center text-orange-600"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.hazards.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/hazards*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Hazards">
+                        <i class="fas fa-exclamation-triangle w-5 text-center text-red-600"></i>
+                        <span class="sidebar-text">Hazards (HAZID)</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/risk-assessments*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Risk Register">
+                        <i class="fas fa-clipboard-list w-5 text-center text-orange-600"></i>
+                        <span class="sidebar-text">Risk Register</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.jsas.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/jsas*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="JSA">
+                        <i class="fas fa-tasks w-5 text-center text-blue-600"></i>
+                        <span class="sidebar-text">Job Safety Analysis</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.control-measures.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/control-measures*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Controls">
+                        <i class="fas fa-shield-alt w-5 text-center text-green-600"></i>
+                        <span class="sidebar-text">Control Measures</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.risk-reviews.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/risk-reviews*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Reviews">
+                        <i class="fas fa-sync-alt w-5 text-center text-purple-600"></i>
+                        <span class="sidebar-text">Risk Reviews</span>
+                    </a>
+                </div>
+            </div>
+            
             <!-- Safety Communications -->
             <a href="{{ route('safety-communications.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all {{ request()->is('safety-communications*') ? 'bg-purple-50 text-purple-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Communications">
                 <i class="fas fa-bullhorn w-5 text-center text-purple-600"></i>
