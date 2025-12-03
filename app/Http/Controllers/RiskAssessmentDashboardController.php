@@ -64,15 +64,19 @@ class RiskAssessmentDashboardController extends Controller
             ->pluck('total', 'status');
         
         // Monthly Risk Assessments Trend (Last 6 Months)
-        $monthlyTrends = RiskAssessment::forCompany($companyId)
-            ->select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
-                DB::raw('count(*) as total')
-            )
-            ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $monthlyTrends = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthAssessments = RiskAssessment::forCompany($companyId)
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->get();
+            
+            $monthlyTrends[] = [
+                'month' => $month->format('Y-m'),
+                'total' => $monthAssessments->count(),
+            ];
+        }
         
         // Top 5 High-Risk Assessments
         $topHighRisks = RiskAssessment::forCompany($companyId)
