@@ -17,6 +17,8 @@ use App\Http\Controllers\CAPAController;
 use App\Http\Controllers\IncidentAttachmentController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\EmployeeController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -169,6 +171,25 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
 
 // Administrative Module Routes
 Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin Dashboard
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+    
+    // Employee Management
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('index');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('create');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
+        Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit');
+        Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update');
+        Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy');
+        
+        // Specialized routes
+        Route::post('/{employee}/activate', [EmployeeController::class, 'activate'])->name('activate');
+        Route::post('/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('deactivate');
+        Route::get('/export', [EmployeeController::class, 'export'])->name('export');
+    });
+    
     // User Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');

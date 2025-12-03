@@ -145,6 +145,14 @@
                     <i class="fas fa-chevron-down text-xs transition-transform" id="admin-chevron"></i>
                 </button>
                 <div id="admin-section" class="space-y-1 pl-4 border-l-2 border-gray-100">
+                    <a href="{{ route('admin.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin') && !request()->is('admin/*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Admin Dashboard">
+                        <i class="fas fa-tachometer-alt w-5 text-center text-gray-600"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('admin.employees.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/employees*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Employees">
+                        <i class="fas fa-user-tie w-5 text-center text-gray-600"></i>
+                        <span class="sidebar-text">Employees</span>
+                    </a>
                     <a href="{{ route('admin.users.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/users*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Users">
                         <i class="fas fa-users w-5 text-center text-gray-600"></i>
                         <span class="sidebar-text">Users</span>
