@@ -326,6 +326,38 @@
                         <!-- Quick Actions -->
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                            
+                            <!-- Risk Assessment Integration (Closed-Loop) -->
+                            <div class="mb-4 pb-4 border-b border-gray-200">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">Risk Assessment Integration</h4>
+                                <div class="space-y-2">
+                                    @if(!$incident->related_hazard_id)
+                                        <a href="{{ route('risk-assessment.hazards.create', ['incident_id' => $incident->id]) }}" class="block w-full text-left px-4 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors">
+                                            <i class="fas fa-exclamation-triangle mr-2"></i>Create Hazard from Incident
+                                        </a>
+                                    @else
+                                        <a href="{{ route('risk-assessment.hazards.show', $incident->relatedHazard) }}" class="block w-full text-left px-4 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors">
+                                            <i class="fas fa-exclamation-triangle mr-2"></i>View Related Hazard
+                                        </a>
+                                    @endif
+                                    
+                                    @if(!$incident->related_risk_assessment_id)
+                                        <a href="{{ route('risk-assessment.risk-assessments.create', ['incident_id' => $incident->id]) }}" class="block w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <i class="fas fa-clipboard-list mr-2"></i>Create Risk Assessment
+                                        </a>
+                                    @else
+                                        <a href="{{ route('risk-assessment.risk-assessments.show', $incident->relatedRiskAssessment) }}" class="block w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <i class="fas fa-clipboard-list mr-2"></i>View Related Risk Assessment
+                                        </a>
+                                    @endif
+                                    
+                                    @if($incident->rootCauseAnalysis)
+                                        <a href="{{ route('risk-assessment.risk-reviews.create', ['incident_id' => $incident->id, 'risk_assessment_id' => $incident->related_risk_assessment_id]) }}" class="block w-full text-left px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
+                                            <i class="fas fa-sync-alt mr-2"></i>Trigger Risk Review
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
                             <div class="space-y-3">
                                 @if(!$incident->investigation && $incident->status !== 'closed')
                                     <a href="{{ route('incidents.investigations.create', $incident) }}" class="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -359,6 +391,58 @@
                                 @endif
                             </div>
                         </div>
+
+                        <!-- Risk Assessment Integration Status -->
+                        @if($incident->related_hazard_id || $incident->related_risk_assessment_id || $incident->hazard_was_identified)
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Risk Assessment Integration</h3>
+                            <div class="space-y-3">
+                                @if($incident->hazard_was_identified)
+                                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                            <span class="text-sm text-gray-700">Hazard was identified</span>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if($incident->controls_were_in_place)
+                                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                            <span class="text-sm text-gray-700">Controls were in place</span>
+                                        </div>
+                                        @if($incident->controls_were_effective !== null)
+                                            <span class="text-xs {{ $incident->controls_were_effective ? 'text-green-600' : 'text-red-600' }}">
+                                                {{ $incident->controls_were_effective ? 'Effective' : 'Ineffective' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if($incident->related_hazard_id)
+                                    <div class="p-3 bg-orange-50 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Related Hazard</p>
+                                        <a href="{{ route('risk-assessment.hazards.show', $incident->relatedHazard) }}" class="text-sm font-medium text-orange-700 hover:text-orange-800">
+                                            {{ $incident->relatedHazard->reference_number }} - {{ $incident->relatedHazard->title }}
+                                        </a>
+                                    </div>
+                                @endif
+                                @if($incident->related_risk_assessment_id)
+                                    <div class="p-3 bg-blue-50 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Related Risk Assessment</p>
+                                        <a href="{{ route('risk-assessment.risk-assessments.show', $incident->relatedRiskAssessment) }}" class="text-sm font-medium text-blue-700 hover:text-blue-800">
+                                            {{ $incident->relatedRiskAssessment->reference_number }} - {{ $incident->relatedRiskAssessment->title }}
+                                        </a>
+                                    </div>
+                                @endif
+                                @if($incident->risk_assessment_gap_analysis)
+                                    <div class="p-3 bg-yellow-50 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Gap Analysis</p>
+                                        <p class="text-sm text-gray-700">{{ $incident->risk_assessment_gap_analysis }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
 
                         <!-- Workflow Status -->
                         <div class="bg-white rounded-lg shadow p-6">

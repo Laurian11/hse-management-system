@@ -139,7 +139,12 @@ class IncidentController extends Controller
             'rootCauseAnalysis',
             'capas',
             'attachments',
-            'approvedBy'
+            'approvedBy',
+            // Risk Assessment Integration
+            'relatedHazard',
+            'relatedRiskAssessment',
+            'relatedJSA',
+            'controlMeasures'
         ]);
         
         return view('incidents.show', compact('incident'));
