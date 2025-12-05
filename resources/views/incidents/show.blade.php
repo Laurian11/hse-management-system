@@ -2,7 +2,34 @@
 
 @section('title', $incident->reference_number)
 
+@php
+$breadcrumbs = [
+    ['label' => 'Dashboard', 'url' => route('dashboard'), 'icon' => 'fa-home'],
+    ['label' => 'Incidents', 'url' => route('incidents.index'), 'icon' => 'fa-exclamation-triangle'],
+    ['label' => $incident->reference_number, 'url' => null, 'active' => true]
+];
+@endphp
+
 @section('content')
+<script>
+    // Track recent item view
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('{{ route("recent-items.track") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                title: '{{ $incident->title ?? $incident->reference_number }}',
+                url: '{{ route("incidents.show", $incident) }}',
+                module: 'Incidents',
+                icon: 'fa-exclamation-triangle'
+            })
+        });
+    });
+</script>
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow-sm border-b">
@@ -18,6 +45,10 @@
                     </div>
                 </div>
                 <div class="flex space-x-3">
+                    <x-print-button />
+                    <a href="{{ route('incidents.create', ['copy_from' => $incident->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this incident">
+                        <i class="fas fa-copy mr-2"></i>Copy
+                    </a>
                     @if($incident->status !== 'closed' && $incident->status !== 'resolved')
                         <a href="{{ route('incidents.edit', $incident) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             <i class="fas fa-edit mr-2"></i>Edit

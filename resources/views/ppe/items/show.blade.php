@@ -3,6 +3,25 @@
 @section('title', 'PPE Item Details')
 
 @section('content')
+<script>
+    // Track recent item view
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('{{ route("recent-items.track") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                title: '{{ $item->name }}',
+                url: '{{ route("ppe.items.show", $item) }}',
+                module: 'PPE Management',
+                icon: 'fa-hard-hat'
+            })
+        });
+    });
+</script>
 <div class="bg-white shadow-sm border-b">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
@@ -13,6 +32,9 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ $item->name }}</h1>
             </div>
             <div class="flex space-x-3">
+                <a href="{{ route('ppe.items.create', ['copy_from' => $item->id]) }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700" title="Copy this item">
+                    <i class="fas fa-copy mr-2"></i>Copy
+                </a>
                 <a href="{{ route('ppe.items.edit', $item) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                     <i class="fas fa-edit mr-2"></i>Edit
                 </a>

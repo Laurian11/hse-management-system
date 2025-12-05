@@ -10,7 +10,12 @@
                 <a href="{{ route('incidents.index') }}" class="text-gray-600 hover:text-gray-700">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Incidents
                 </a>
-                <h1 class="text-2xl font-bold text-gray-900">Report Incident</h1>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {{ isset($copyFrom) ? 'Copy Incident' : 'Report Incident' }}
+                    @if(isset($copyFrom))
+                        <span class="text-sm font-normal text-gray-500">(from {{ $copyFrom->reference_number }})</span>
+                    @endif
+                </h1>
             </div>
         </div>
     </div>
@@ -25,7 +30,7 @@
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Event Type *</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors event-type-option">
-                    <input type="radio" name="event_type" value="injury_illness" required class="sr-only" onchange="toggleEventFields()">
+                    <input type="radio" name="event_type" value="injury_illness" required class="sr-only" onchange="toggleEventFields()" {{ (old('event_type', isset($copyFrom) ? $copyFrom->event_type : '') == 'injury_illness') ? 'checked' : '' }}>
                     <div class="flex-1">
                         <div class="flex items-center">
                             <i class="fas fa-user-injured text-2xl text-red-500 mr-3"></i>
@@ -37,7 +42,7 @@
                     </div>
                 </label>
                 <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors event-type-option">
-                    <input type="radio" name="event_type" value="property_damage" required class="sr-only" onchange="toggleEventFields()">
+                    <input type="radio" name="event_type" value="property_damage" required class="sr-only" onchange="toggleEventFields()" {{ (old('event_type', isset($copyFrom) ? $copyFrom->event_type : '') == 'property_damage') ? 'checked' : '' }}>
                     <div class="flex-1">
                         <div class="flex items-center">
                             <i class="fas fa-tools text-2xl text-orange-500 mr-3"></i>
@@ -49,7 +54,7 @@
                     </div>
                 </label>
                 <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors event-type-option">
-                    <input type="radio" name="event_type" value="near_miss" required class="sr-only" onchange="toggleEventFields()">
+                    <input type="radio" name="event_type" value="near_miss" required class="sr-only" onchange="toggleEventFields()" {{ (old('event_type', isset($copyFrom) ? $copyFrom->event_type : '') == 'near_miss') ? 'checked' : '' }}>
                     <div class="flex-1">
                         <div class="flex items-center">
                             <i class="fas fa-exclamation-triangle text-2xl text-yellow-500 mr-3"></i>
@@ -73,7 +78,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
                     <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Incident Title *</label>
-                    <input type="text" id="title" name="title" required value="{{ old('title') }}"
+                    <input type="text" id="title" name="title" required value="{{ old('title', isset($copyFrom) ? $copyFrom->title : '') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="Brief description of the incident">
                     @error('title')
@@ -86,10 +91,10 @@
                     <select id="severity" name="severity" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Severity</option>
-                        <option value="low" {{ old('severity') == 'low' ? 'selected' : '' }}>Low</option>
-                        <option value="medium" {{ old('severity') == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="high" {{ old('severity') == 'high' ? 'selected' : '' }}>High</option>
-                        <option value="critical" {{ old('severity') == 'critical' ? 'selected' : '' }}>Critical</option>
+                        <option value="low" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'high' ? 'selected' : '' }}>High</option>
+                        <option value="critical" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'critical' ? 'selected' : '' }}>Critical</option>
                     </select>
                     @error('severity')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -109,7 +114,7 @@
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                     <textarea id="description" name="description" rows="4" required
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Detailed description of what happened">{{ old('description') }}</textarea>
+                              placeholder="Detailed description of what happened">{{ old('description', isset($copyFrom) ? $copyFrom->description : '') }}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

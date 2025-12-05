@@ -2,6 +2,13 @@
 
 @section('title', 'Incidents')
 
+@php
+$breadcrumbs = [
+    ['label' => 'Dashboard', 'url' => route('dashboard'), 'icon' => 'fa-home'],
+    ['label' => 'Incidents', 'url' => route('incidents.index'), 'active' => true]
+];
+@endphp
+
 @section('content')
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
@@ -12,6 +19,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">Incident Management</h1>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <x-print-button />
                     <a href="{{ route('incidents.trend-analysis') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         <i class="fas fa-chart-line mr-2"></i>Trend Analysis
                     </a>
@@ -114,7 +122,32 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <form method="GET" action="{{ route('incidents.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-gray-700">Filters</h3>
+                <div class="flex items-center space-x-2">
+                    <!-- Saved Searches Dropdown -->
+                    <div class="relative" id="savedSearchesContainer">
+                        <button onclick="toggleSavedSearches()" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-bookmark mr-1"></i>Saved Searches
+                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        <div id="savedSearchesDropdown" class="hidden absolute right-0 mt-1 w-64 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
+                            <div class="p-2">
+                                <div id="savedSearchesList" class="space-y-1">
+                                    <!-- Saved searches will be loaded here -->
+                                </div>
+                                <button onclick="saveCurrentSearch()" class="w-full mt-2 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-plus mr-1"></i>Save Current Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="clearFilters()" class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-times mr-1"></i>Clear All
+                    </button>
+                </div>
+            </div>
+            <form method="GET" action="{{ route('incidents.index') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -151,12 +184,40 @@
                     <input type="date" name="date_from" value="{{ request()->get('date_from') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                    <input type="date" name="date_to" value="{{ request()->get('date_to') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-search mr-2"></i>Search
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- Bulk Actions Bar (hidden by default) -->
+        <div id="bulkActionsBar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <span id="selectedCount" class="text-sm font-medium text-blue-900">0 items selected</span>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="bulkExport()" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download mr-1"></i>Export Selected
+                        </button>
+                        <button onclick="bulkDelete()" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Delete Selected
+                        </button>
+                        <button onclick="bulkStatusUpdate()" class="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-edit mr-1"></i>Update Status
+                        </button>
+                    </div>
+                </div>
+                <button onclick="clearSelection()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-times mr-1"></i>Clear Selection
+                </button>
+            </div>
         </div>
 
         <!-- Incidents List -->
@@ -165,19 +226,39 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('reference_number')">
+                                Reference <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('title')">
+                                Title <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('event_type')">
+                                Event Type <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('severity')">
+                                Severity <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('status')">
+                                Status <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('department_id')">
+                                Department <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('incident_date')">
+                                Date <i class="fas fa-sort ml-1 text-gray-400"></i>
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($incidents as $incident)
                         <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="selected_items[]" value="{{ $incident->id }}" class="item-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="updateBulkActions()">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-semibold text-gray-900">{{ $incident->reference_number }}</div>
                             </td>
@@ -251,7 +332,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
+                            <td colspan="9" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
                                     <i class="fas fa-exclamation-triangle text-gray-400 text-4xl mb-4"></i>
                                     <p class="text-gray-500 text-lg font-medium">No incidents found</p>
@@ -276,4 +357,318 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Bulk Operations Functions
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+        updateBulkActions();
+    }
+    
+    function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+        const count = checkboxes.length;
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (count > 0) {
+            bulkBar.classList.remove('hidden');
+            selectedCount.textContent = count + ' item' + (count > 1 ? 's' : '') + ' selected';
+        } else {
+            bulkBar.classList.add('hidden');
+        }
+        
+        // Update select all checkbox
+        const allCheckboxes = document.querySelectorAll('.item-checkbox');
+        const selectAll = document.getElementById('selectAll');
+        selectAll.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+    }
+    
+    function clearSelection() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('selectAll').checked = false;
+        updateBulkActions();
+    }
+    
+    function bulkExport() {
+        const selected = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            alert('Please select at least one item to export.');
+            return;
+        }
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("incidents.export") }}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        selected.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+    
+    function bulkDelete() {
+        const selected = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            alert('Please select at least one item to delete.');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to delete ${selected.length} item(s)? This action cannot be undone.`)) {
+            return;
+        }
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("incidents.bulk-delete") }}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        const method = document.createElement('input');
+        method.type = 'hidden';
+        method.name = '_method';
+        method.value = 'DELETE';
+        form.appendChild(method);
+        
+        selected.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+    
+    function bulkStatusUpdate() {
+        const selected = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            alert('Please select at least one item to update.');
+            return;
+        }
+        
+        const newStatus = prompt('Enter new status (reported, open, investigating, resolved, closed):');
+        if (!newStatus) return;
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("incidents.bulk-update") }}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = newStatus;
+        form.appendChild(statusInput);
+        
+        selected.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+    
+    // Saved Searches Functions
+    const STORAGE_KEY = 'incidents_saved_searches';
+    
+    function getSavedSearches() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+    }
+    
+    function saveSavedSearches(searches) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(searches));
+    }
+    
+    function loadSavedSearches() {
+        const searches = getSavedSearches();
+        const container = document.getElementById('savedSearchesList');
+        
+        if (searches.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500 p-2">No saved searches</p>';
+            return;
+        }
+        
+        container.innerHTML = searches.map((search, index) => `
+            <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                <div class="flex-1 cursor-pointer" onclick="loadSavedSearch(${index})">
+                    <div class="text-sm font-medium text-gray-900">${search.name}</div>
+                    <div class="text-xs text-gray-500">${Object.keys(search.params).length} filter(s)</div>
+                </div>
+                <button onclick="deleteSavedSearch(${index})" class="ml-2 text-red-600 hover:text-red-800" title="Delete">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+    
+    function toggleSavedSearches() {
+        const dropdown = document.getElementById('savedSearchesDropdown');
+        dropdown.classList.toggle('hidden');
+        if (!dropdown.classList.contains('hidden')) {
+            loadSavedSearches();
+        }
+    }
+    
+    function saveCurrentSearch() {
+        const name = prompt('Enter a name for this search:');
+        if (!name) return;
+        
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = {};
+        
+        for (const [key, value] of formData.entries()) {
+            if (value) {
+                params[key] = value;
+            }
+        }
+        
+        // Also get URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        for (const [key, value] of urlParams.entries()) {
+            if (value && !params[key]) {
+                params[key] = value;
+            }
+        }
+        
+        if (Object.keys(params).length === 0) {
+            alert('No filters to save. Please apply some filters first.');
+            return;
+        }
+        
+        const searches = getSavedSearches();
+        searches.push({
+            name: name,
+            params: params,
+            createdAt: new Date().toISOString()
+        });
+        
+        saveSavedSearches(searches);
+        loadSavedSearches();
+        alert('Search saved successfully!');
+    }
+    
+    function loadSavedSearch(index) {
+        const searches = getSavedSearches();
+        const search = searches[index];
+        
+        if (!search) return;
+        
+        // Build URL with saved params
+        const url = new URL(window.location.href);
+        url.search = '';
+        
+        Object.keys(search.params).forEach(key => {
+            url.searchParams.set(key, search.params[key]);
+        });
+        
+        window.location.href = url.toString();
+    }
+    
+    function deleteSavedSearch(index) {
+        if (!confirm('Are you sure you want to delete this saved search?')) {
+            return;
+        }
+        
+        const searches = getSavedSearches();
+        searches.splice(index, 1);
+        saveSavedSearches(searches);
+        loadSavedSearches();
+    }
+    
+    function clearFilters() {
+        window.location.href = '{{ route("incidents.index") }}';
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const container = document.getElementById('savedSearchesContainer');
+        if (container && !container.contains(event.target)) {
+            document.getElementById('savedSearchesDropdown').classList.add('hidden');
+        }
+    });
+    
+    // Table Sorting
+    let currentSort = {
+        column: '{{ request()->get("sort", "created_at") }}',
+        direction: '{{ request()->get("direction", "desc") }}'
+    };
+    
+    function sortTable(column) {
+        // Toggle direction if same column
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        // Update URL and reload
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', currentSort.column);
+        url.searchParams.set('direction', currentSort.direction);
+        window.location.href = url.toString();
+    }
+    
+    // Update sort indicators on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const sortColumn = '{{ request()->get("sort", "created_at") }}';
+        const sortDirection = '{{ request()->get("direction", "desc") }}';
+        
+        // Update sort icons
+        document.querySelectorAll('th[onclick*="sortTable"]').forEach(th => {
+            const icon = th.querySelector('i');
+            if (th.getAttribute('onclick').includes(`'${sortColumn}'`)) {
+                icon.className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ml-1 text-blue-600`;
+            }
+        });
+    });
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBulkActions();
+        loadSavedSearches();
+    });
+</script>
+@endpush
 @endsection

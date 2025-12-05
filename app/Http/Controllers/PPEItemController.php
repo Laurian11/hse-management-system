@@ -40,7 +40,21 @@ class PPEItemController extends Controller
             $query->lowStock();
         }
         
-        $items = $query->latest()->paginate(20);
+        // Sorting
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        $allowedSortColumns = ['name', 'category', 'available_quantity', 'supplier_id', 'status', 'created_at'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'created_at';
+        }
+        
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        
+        $items = $query->orderBy($sortColumn, $sortDirection)->paginate(20);
+        $items->appends($request->query());
         
         $categories = PPEItem::forCompany($companyId)
             ->distinct()
@@ -59,12 +73,18 @@ class PPEItemController extends Controller
         return view('ppe.items.index', compact('items', 'categories', 'stats'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $companyId = Auth::user()->company_id;
         $suppliers = PPESupplier::forCompany($companyId)->active()->get();
         
-        return view('ppe.items.create', compact('suppliers'));
+        $copyFrom = null;
+        if ($request->has('copy_from')) {
+            $copyFrom = PPEItem::where('company_id', $companyId)
+                ->findOrFail($request->get('copy_from'));
+        }
+        
+        return view('ppe.items.create', compact('suppliers', 'copyFrom'));
     }
 
     public function store(Request $request)
@@ -257,6 +277,112 @@ class PPEItemController extends Controller
             ]);
             
             // Data
+            foreach ($items as $item) {
+                fputcsv($file, [
+                    $item->reference_number,
+                    $item->name,
+                    $item->category,
+                    $item->type ?? 'N/A',
+                    $item->total_quantity,
+                    $item->available_quantity,
+                    $item->issued_quantity,
+                    $item->minimum_stock_level,
+                    $item->supplier->name ?? 'N/A',
+                    ucfirst($item->status),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Bulk delete PPE items
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:ppe_items,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $deleted = PPEItem::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->delete();
+        
+        return redirect()->route('ppe.items.index')
+            ->with('success', "Successfully deleted {$deleted} item(s).");
+    }
+    
+    /**
+     * Bulk update PPE items status
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:ppe_items,id',
+            'status' => 'required|in:active,inactive,discontinued'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        $status = $request->input('status');
+        
+        $updated = PPEItem::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+        
+        return redirect()->route('ppe.items.index')
+            ->with('success', "Successfully updated {$updated} item(s) status to {$status}.");
+    }
+    
+    /**
+     * Bulk export selected PPE items
+     */
+    public function bulkExport(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:ppe_items,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $items = PPEItem::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->with('supplier')
+            ->get();
+        
+        $filename = 'ppe_items_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($items) {
+            $file = fopen('php://output', 'w');
+            
+            fputcsv($file, [
+                'Reference Number',
+                'Name',
+                'Category',
+                'Type',
+                'Total Quantity',
+                'Available',
+                'Issued',
+                'Minimum Stock',
+                'Supplier',
+                'Status'
+            ]);
+            
             foreach ($items as $item) {
                 fputcsv($file, [
                     $item->reference_number,

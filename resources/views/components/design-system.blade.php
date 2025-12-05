@@ -123,6 +123,42 @@
     --nav-hover-text: {{ $components['navigation']['hover_text'] }};
     --nav-active-text: {{ $components['navigation']['active_text'] }};
 }
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+    --color-primary-black: #FFFFFF;
+    --color-primary-white: #1A1A1A;
+    --color-secondary-gray: #2D2D2D;
+    --color-gray-50: #2D2D2D;
+    --color-gray-100: #3A3A3A;
+    --color-gray-200: #4A4A4A;
+    --color-gray-300: #5A5A5A;
+    --color-gray-400: #7A7A7A;
+    --color-gray-500: #9A9A9A;
+    --color-gray-600: #FFFFFF;
+    
+    --card-bg: #2D2D2D;
+    --card-text: #FFFFFF;
+    --card-border: #4A4A4A;
+    
+    --input-bg: #2D2D2D;
+    --input-text: #FFFFFF;
+    --input-border: #4A4A4A;
+    --input-focus-border: #0066CC;
+    
+    --nav-bg: #1A1A1A;
+    --nav-text: #FFFFFF;
+    --nav-border: #4A4A4A;
+    
+    --modal-bg: #2D2D2D;
+    --modal-text: #FFFFFF;
+    --modal-border: #4A4A4A;
+}
+
+/* Smooth theme transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
 </style>
 
 <script>

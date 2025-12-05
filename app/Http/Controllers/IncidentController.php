@@ -59,7 +59,29 @@ class IncidentController extends Controller
             $query->where('incident_date', '>=', $request->get('date_from'));
         }
         
-        $incidents = $query->orderBy('created_at', 'desc')->paginate(15);
+        if ($request->has('date_to') && $request->get('date_to')) {
+            $query->where('incident_date', '<=', $request->get('date_to'));
+        }
+        
+        // Sorting
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        // Validate sort column
+        $allowedSortColumns = ['reference_number', 'title', 'event_type', 'severity', 'status', 'department_id', 'incident_date', 'created_at'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'created_at';
+        }
+        
+        // Validate sort direction
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        
+        $incidents = $query->orderBy($sortColumn, $sortDirection)->paginate(15);
+        
+        // Append query parameters to pagination links
+        $incidents->appends($request->query());
         
         return view('incidents.index', compact('incidents'));
     }
@@ -84,14 +106,20 @@ class IncidentController extends Controller
         return view('incidents.dashboard', compact('stats', 'recentIncidents'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $companyId = Auth::user()->company_id;
         
         $departments = \App\Models\Department::where('company_id', $companyId)->get();
         $users = \App\Models\User::where('company_id', $companyId)->get();
         
-        return view('incidents.create', compact('departments', 'users'));
+        $copyFrom = null;
+        if ($request->has('copy_from')) {
+            $copyFrom = Incident::where('company_id', $companyId)
+                ->findOrFail($request->get('copy_from'));
+        }
+        
+        return view('incidents.create', compact('departments', 'users', 'copyFrom'));
     }
 
     public function store(StoreIncidentRequest $request)
@@ -440,5 +468,115 @@ class IncidentController extends Controller
             'departmentStats',
             'topRootCauses'
         ));
+    }
+    
+    /**
+     * Bulk delete incidents
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:incidents,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $deleted = Incident::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->delete();
+        
+        return redirect()->route('incidents.index')
+            ->with('success', "Successfully deleted {$deleted} incident(s).");
+    }
+    
+    /**
+     * Bulk update incidents status
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:incidents,id',
+            'status' => 'required|in:reported,open,investigating,resolved,closed'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        $status = $request->input('status');
+        
+        $updated = Incident::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+        
+        return redirect()->route('incidents.index')
+            ->with('success', "Successfully updated {$updated} incident(s) status to {$status}.");
+    }
+    
+    /**
+     * Export selected incidents
+     */
+    public function export(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:incidents,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $incidents = Incident::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->with(['reporter', 'assignedTo', 'department'])
+            ->get();
+        
+        $filename = 'incidents_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($incidents) {
+            $file = fopen('php://output', 'w');
+            
+            // Headers
+            fputcsv($file, [
+                'Reference Number',
+                'Title',
+                'Event Type',
+                'Severity',
+                'Status',
+                'Department',
+                'Reported By',
+                'Assigned To',
+                'Incident Date',
+                'Location',
+                'Description'
+            ]);
+            
+            // Data
+            foreach ($incidents as $incident) {
+                fputcsv($file, [
+                    $incident->reference_number,
+                    $incident->title ?? $incident->incident_type,
+                    $incident->event_type,
+                    $incident->severity,
+                    $incident->status,
+                    $incident->department->name ?? 'N/A',
+                    $incident->reporter->name ?? 'N/A',
+                    $incident->assignedTo->name ?? 'N/A',
+                    $incident->incident_date->format('Y-m-d H:i:s'),
+                    $incident->location,
+                    $incident->description
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -75,6 +75,7 @@ use App\Http\Controllers\EquipmentCertificationController;
 use App\Http\Controllers\StockConsumptionReportController;
 use App\Http\Controllers\SafetyMaterialGapAnalysisController;
 use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DocumentManagementDashboardController;
 use App\Http\Controllers\HSEDocumentController;
 use App\Http\Controllers\DocumentVersionController;
@@ -103,6 +104,13 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    
+    // Global Search API
+    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+    
+    // Recent Items
+    Route::post('/api/recent-items/track', [\App\Http\Controllers\RecentItemsController::class, 'track'])->name('recent-items.track');
+    Route::post('/api/recent-items/clear', [\App\Http\Controllers\RecentItemsController::class, 'clear'])->name('recent-items.clear');
 });
 
 Route::get('/', [LandingPageController::class, 'index'])->name('landing');
@@ -198,6 +206,11 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     Route::post('/{incident}/request-closure', [IncidentController::class, 'requestClosure'])->name('request-closure');
     Route::post('/{incident}/approve-closure', [IncidentController::class, 'approveClosure'])->name('approve-closure');
     Route::post('/{incident}/reject-closure', [IncidentController::class, 'rejectClosure'])->name('reject-closure');
+    
+    // Bulk Operations
+    Route::post('/bulk-delete', [IncidentController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-update', [IncidentController::class, 'bulkUpdate'])->name('bulk-update');
+    Route::post('/export', [IncidentController::class, 'export'])->name('export');
     
     // Investigation Routes
     Route::prefix('{incident}/investigations')->name('investigations.')->group(function () {
@@ -453,6 +466,11 @@ Route::prefix('ppe')->name('ppe.')->group(function () {
         Route::put('/{item}', [PPEItemController::class, 'update'])->name('update');
         Route::delete('/{item}', [PPEItemController::class, 'destroy'])->name('destroy');
         Route::post('/{item}/adjust-stock', [PPEItemController::class, 'adjustStock'])->name('adjust-stock');
+        
+        // Bulk Operations
+        Route::post('/bulk-delete', [PPEItemController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/bulk-update', [PPEItemController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::post('/bulk-export', [PPEItemController::class, 'bulkExport'])->name('bulk-export');
     });
     
     // PPE Issuance & Returns
