@@ -375,11 +375,11 @@
             const lowerQuery = query.toLowerCase();
             
             const quickLinks = [
-                { label: 'Incidents', route: 'incidents.index', icon: 'fa-exclamation-triangle', pattern: 'incident' },
-                { label: 'PPE Items', route: 'ppe.items.index', icon: 'fa-hard-hat', pattern: 'ppe' },
-                { label: 'Training Plans', route: 'training.training-plans.index', icon: 'fa-graduation-cap', pattern: 'training' },
-                { label: 'Risk Assessments', route: 'risk-assessment.assessments.index', icon: 'fa-shield-alt', pattern: 'risk' },
-                { label: 'Toolbox Talks', route: 'toolbox-talks.index', icon: 'fa-comments', pattern: 'toolbox' },
+                { label: 'Incidents', url: '{{ route("incidents.index") }}', icon: 'fa-exclamation-triangle', pattern: 'incident' },
+                { label: 'PPE Items', url: '{{ route("ppe.items.index") }}', icon: 'fa-hard-hat', pattern: 'ppe' },
+                { label: 'Training Plans', url: '{{ route("training.training-plans.index") }}', icon: 'fa-graduation-cap', pattern: 'training' },
+                { label: 'Risk Assessments', url: '{{ route("risk-assessment.risk-assessments.index") }}', icon: 'fa-shield-alt', pattern: 'risk' },
+                { label: 'Toolbox Talks', url: '{{ route("toolbox-talks.index") }}', icon: 'fa-comments', pattern: 'toolbox' },
             ];
             
             const filtered = quickLinks.filter(link => 
@@ -393,7 +393,7 @@
             }
             
             resultsDiv.innerHTML = filtered.map(link => `
-                <a href="{{ route('${link.route}') }}" class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors">
+                <a href="${link.url}" class="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors">
                     <i class="fas ${link.icon} text-blue-600 dark:text-blue-400"></i>
                     <div>
                         <div class="font-medium text-gray-900 dark:text-white">${link.label}</div>
