@@ -16,6 +16,10 @@
                 </div>
             </div>
             <div class="flex space-x-3">
+                <x-print-button />
+                <a href="{{ route('work-permits.create', ['copy_from' => $workPermit->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this work permit">
+                    <i class="fas fa-copy mr-2"></i>Copy
+                </a>
                 @if(in_array($workPermit->status, ['draft', 'rejected']))
                     <a href="{{ route('work-permits.edit', $workPermit) }}" class="bg-[#0066CC] text-white px-4 py-2 border border-[#0066CC] hover:bg-[#0052A3]">
                         <i class="fas fa-edit mr-2"></i>Edit

@@ -10,7 +10,12 @@
                 <a href="{{ route('work-permits.index') }}" class="text-gray-500 hover:text-black">
                     <i class="fas fa-arrow-left mr-2"></i>Back
                 </a>
-                <h1 class="text-2xl font-bold text-black">Create Work Permit</h1>
+                <h1 class="text-2xl font-bold text-black">
+                    {{ isset($copyFrom) ? 'Copy Work Permit' : 'Create Work Permit' }}
+                    @if(isset($copyFrom))
+                        <span class="text-sm font-normal text-gray-500">(from {{ $copyFrom->reference_number }})</span>
+                    @endif
+                </h1>
             </div>
         </div>
     </div>
@@ -20,7 +25,7 @@
     <form action="{{ route('work-permits.store') }}" method="POST" class="space-y-6">
         @csrf
 
-        @include('work-permits.partials.form', ['workPermit' => null, 'permitTypes' => $permitTypes, 'departments' => $departments, 'users' => $users, 'riskAssessments' => $riskAssessments, 'jsas' => $jsas])
+        @include('work-permits.partials.form', ['workPermit' => $copyFrom ?? null, 'permitTypes' => $permitTypes, 'departments' => $departments, 'users' => $users, 'riskAssessments' => $riskAssessments, 'jsas' => $jsas])
 
         <!-- Submit Button -->
         <div class="flex justify-end space-x-3">

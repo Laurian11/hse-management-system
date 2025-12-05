@@ -550,6 +550,11 @@ Route::middleware('auth')->prefix('work-permits')->name('work-permits.')->group(
     });
     
     // Work Permit parameterized routes (must come after static routes)
+    Route::post('/bulk-delete', [WorkPermitController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-update', [WorkPermitController::class, 'bulkUpdate'])->name('bulk-update');
+    Route::post('/bulk-export', [WorkPermitController::class, 'bulkExport'])->name('bulk-export');
+    Route::get('/{workPermit}/copy', [WorkPermitController::class, 'copy'])->name('copy');
+    
     Route::get('/{workPermit}', [WorkPermitController::class, 'show'])->name('show');
     Route::get('/{workPermit}/edit', [WorkPermitController::class, 'edit'])->name('edit');
     Route::put('/{workPermit}', [WorkPermitController::class, 'update'])->name('update');

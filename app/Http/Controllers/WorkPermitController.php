@@ -52,7 +52,34 @@ class WorkPermitController extends Controller
             $query->active();
         }
         
-        $permits = $query->latest()->paginate(20);
+        // Date range filters
+        if ($request->filled('date_from')) {
+            $query->where('work_start_date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->where('work_start_date', '<=', $request->date_to);
+        }
+        
+        // Sorting
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        // Validate sort column
+        $allowedSortColumns = ['reference_number', 'work_title', 'work_start_date', 'status', 'work_location', 'created_at'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'created_at';
+        }
+        
+        // Validate sort direction
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        
+        $permits = $query->orderBy($sortColumn, $sortDirection)->paginate(20);
+        
+        // Append query parameters to pagination links
+        $permits->appends($request->query());
         
         $permitTypes = WorkPermitType::forCompany($companyId)->active()->get();
         $departments = Department::where('company_id', $companyId)->active()->get();
@@ -67,7 +94,7 @@ class WorkPermitController extends Controller
         return view('work-permits.index', compact('permits', 'permitTypes', 'departments', 'stats'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $companyId = Auth::user()->company_id;
         $permitTypes = WorkPermitType::forCompany($companyId)->active()->get();
@@ -76,7 +103,14 @@ class WorkPermitController extends Controller
         $riskAssessments = RiskAssessment::forCompany($companyId)->where('status', 'approved')->get();
         $jsas = JSA::forCompany($companyId)->where('status', 'approved')->get();
         
-        return view('work-permits.create', compact('permitTypes', 'departments', 'users', 'riskAssessments', 'jsas'));
+        // Copy from existing permit
+        $copyFrom = null;
+        if ($request->has('copy_from')) {
+            $copyFrom = WorkPermit::where('company_id', $companyId)
+                ->findOrFail($request->get('copy_from'));
+        }
+        
+        return view('work-permits.create', compact('permitTypes', 'departments', 'users', 'riskAssessments', 'jsas', 'copyFrom'));
     }
 
     public function store(Request $request)
@@ -344,5 +378,116 @@ class WorkPermitController extends Controller
         
         return redirect()->route('work-permits.show', $workPermit)
             ->with('success', 'Work permit verified successfully.');
+    }
+    
+    /**
+     * Bulk delete work permits
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:work_permits,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $deleted = WorkPermit::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->whereIn('status', ['draft', 'cancelled'])
+            ->delete();
+        
+        return redirect()->route('work-permits.index')
+            ->with('success', "Successfully deleted {$deleted} work permit(s).");
+    }
+    
+    /**
+     * Bulk update work permits status
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:work_permits,id',
+            'status' => 'required|in:draft,submitted,approved,active,expired,closed,rejected,cancelled'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        $status = $request->input('status');
+        
+        $updated = WorkPermit::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+        
+        return redirect()->route('work-permits.index')
+            ->with('success', "Successfully updated {$updated} work permit(s) status to {$status}.");
+    }
+    
+    /**
+     * Export selected work permits
+     */
+    public function bulkExport(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:work_permits,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $permits = WorkPermit::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->with(['workPermitType', 'requestedBy', 'department', 'approvedBy'])
+            ->get();
+        
+        $filename = 'work_permits_export_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($permits) {
+            $file = fopen('php://output', 'w');
+            
+            fputcsv($file, [
+                'Reference', 'Work Title', 'Type', 'Location', 'Start Date', 'End Date',
+                'Status', 'Department', 'Requested By', 'Approved By', 'Created At'
+            ]);
+            
+            foreach ($permits as $permit) {
+                fputcsv($file, [
+                    $permit->reference_number,
+                    $permit->work_title,
+                    $permit->workPermitType->name ?? 'N/A',
+                    $permit->work_location,
+                    $permit->work_start_date ? $permit->work_start_date->format('Y-m-d H:i') : 'N/A',
+                    $permit->work_end_date ? $permit->work_end_date->format('Y-m-d H:i') : 'N/A',
+                    ucfirst(str_replace('_', ' ', $permit->status)),
+                    $permit->department->name ?? 'N/A',
+                    $permit->requestedBy->name ?? 'N/A',
+                    $permit->approvedBy->name ?? 'N/A',
+                    $permit->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Copy work permit
+     */
+    public function copy(WorkPermit $workPermit)
+    {
+        if ($workPermit->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        return redirect()->route('work-permits.create', ['copy_from' => $workPermit->id]);
     }
 }
