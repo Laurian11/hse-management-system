@@ -506,6 +506,135 @@
                 </div>
             </div>
             
+            <!-- Document & Record Management - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('documents')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-folder-open text-blue-600"></i>
+                        <span class="sidebar-text">Document Management</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="documents-chevron"></i>
+                </button>
+                <div id="documents-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('documents.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('documents/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('documents.hse-documents.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('documents/hse-documents*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Documents">
+                        <i class="fas fa-file-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Documents</span>
+                    </a>
+                    <a href="{{ route('documents.versions.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('documents/versions*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Versions">
+                        <i class="fas fa-code-branch w-5 text-center"></i>
+                        <span class="sidebar-text">Versions</span>
+                    </a>
+                    <a href="{{ route('documents.templates.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('documents/templates*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Templates">
+                        <i class="fas fa-file-invoice w-5 text-center"></i>
+                        <span class="sidebar-text">Templates</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Compliance & Legal - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('compliance')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-gavel text-yellow-600"></i>
+                        <span class="sidebar-text">Compliance & Legal</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="compliance-chevron"></i>
+                </button>
+                <div id="compliance-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('compliance.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('compliance/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('compliance.requirements.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('compliance/requirements*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Requirements">
+                        <i class="fas fa-list-check w-5 text-center"></i>
+                        <span class="sidebar-text">Requirements</span>
+                    </a>
+                    <a href="{{ route('compliance.permits-licenses.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('compliance/permits-licenses*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Permits & Licenses">
+                        <i class="fas fa-id-card w-5 text-center"></i>
+                        <span class="sidebar-text">Permits & Licenses</span>
+                    </a>
+                    <a href="{{ route('compliance.audits.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('compliance/audits*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Audits">
+                        <i class="fas fa-clipboard-list w-5 text-center"></i>
+                        <span class="sidebar-text">Compliance Audits</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Housekeeping & Workplace Organization - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('housekeeping')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-broom text-green-600"></i>
+                        <span class="sidebar-text">Housekeeping</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="housekeeping-chevron"></i>
+                </button>
+                <div id="housekeeping-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('housekeeping.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('housekeeping/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('housekeeping.inspections.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('housekeeping/inspections*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Inspections">
+                        <i class="fas fa-clipboard-check w-5 text-center"></i>
+                        <span class="sidebar-text">Inspections</span>
+                    </a>
+                    <a href="{{ route('housekeeping.5s-audits.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('housekeeping/5s-audits*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="5S Audits">
+                        <i class="fas fa-star w-5 text-center"></i>
+                        <span class="sidebar-text">5S Audits</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Waste & Sustainability - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('waste-sustainability')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-recycle text-green-600"></i>
+                        <span class="sidebar-text">Waste & Sustainability</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="waste-sustainability-chevron"></i>
+                </button>
+                <div id="waste-sustainability-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('waste-sustainability.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('waste-sustainability/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('waste-sustainability.records.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('waste-sustainability/records*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Records">
+                        <i class="fas fa-list w-5 text-center"></i>
+                        <span class="sidebar-text">Waste Records</span>
+                    </a>
+                    <a href="{{ route('waste-sustainability.carbon-footprint.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('waste-sustainability/carbon-footprint*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Carbon Footprint">
+                        <i class="fas fa-cloud w-5 text-center"></i>
+                        <span class="sidebar-text">Carbon Footprint</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Notifications & Alerts - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('notifications')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-bell text-orange-600"></i>
+                        <span class="sidebar-text">Notifications & Alerts</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="notifications-chevron"></i>
+                </button>
+                <div id="notifications-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('notifications.rules.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('notifications/rules*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Notification Rules">
+                        <i class="fas fa-cog w-5 text-center"></i>
+                        <span class="sidebar-text">Notification Rules</span>
+                    </a>
+                    <a href="{{ route('notifications.escalation-matrices.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('notifications/escalation-matrices*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Escalation">
+                        <i class="fas fa-arrow-up w-5 text-center"></i>
+                        <span class="sidebar-text">Escalation Matrices</span>
+                    </a>
+                </div>
+            </div>
+            
             <!-- Administration - Collapsible -->
             @if(Auth::user()->role && (Auth::user()->role->name === 'super_admin' || Auth::user()->role->name === 'admin'))
             <div class="space-y-1">
@@ -647,10 +776,18 @@
 .sidebar-collapsed #risk-assessment-section,
 .sidebar-collapsed #communications-section,
 .sidebar-collapsed #ppe-section,
+.sidebar-collapsed #work-permits-section,
+.sidebar-collapsed #inspections-section,
+.sidebar-collapsed #emergency-section,
 .sidebar-collapsed #training-section,
 .sidebar-collapsed #environmental-section,
 .sidebar-collapsed #health-section,
 .sidebar-collapsed #procurement-section,
+.sidebar-collapsed #documents-section,
+.sidebar-collapsed #compliance-section,
+.sidebar-collapsed #housekeeping-section,
+.sidebar-collapsed #waste-sustainability-section,
+.sidebar-collapsed #notifications-section,
 .sidebar-collapsed #admin-section {
     padding-left: 0;
     border-left: none
@@ -764,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Restore section states
-    ['toolbox', 'incidents', 'risk-assessment', 'communications', 'ppe', 'training', 'environmental', 'health', 'procurement', 'admin'].forEach(sectionName => {
+    ['toolbox', 'incidents', 'risk-assessment', 'communications', 'ppe', 'work-permits', 'inspections', 'emergency', 'training', 'environmental', 'health', 'procurement', 'documents', 'compliance', 'housekeeping', 'waste-sustainability', 'notifications', 'admin'].forEach(sectionName => {
         const section = document.getElementById(sectionName + '-section');
         const chevron = document.getElementById(sectionName + '-chevron');
         const isSectionCollapsed = localStorage.getItem('section-' + sectionName + '-collapsed') === 'true';

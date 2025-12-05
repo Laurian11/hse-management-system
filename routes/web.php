@@ -75,6 +75,22 @@ use App\Http\Controllers\EquipmentCertificationController;
 use App\Http\Controllers\StockConsumptionReportController;
 use App\Http\Controllers\SafetyMaterialGapAnalysisController;
 use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\DocumentManagementDashboardController;
+use App\Http\Controllers\HSEDocumentController;
+use App\Http\Controllers\DocumentVersionController;
+use App\Http\Controllers\DocumentTemplateController;
+use App\Http\Controllers\ComplianceDashboardController;
+use App\Http\Controllers\ComplianceRequirementController;
+use App\Http\Controllers\PermitLicenseController;
+use App\Http\Controllers\ComplianceAuditController;
+use App\Http\Controllers\HousekeepingDashboardController;
+use App\Http\Controllers\HousekeepingInspectionController;
+use App\Http\Controllers\FiveSAuditController;
+use App\Http\Controllers\WasteSustainabilityDashboardController;
+use App\Http\Controllers\WasteSustainabilityRecordController;
+use App\Http\Controllers\CarbonFootprintRecordController;
+use App\Http\Controllers\NotificationRuleController;
+use App\Http\Controllers\EscalationMatrixController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -857,4 +873,40 @@ Route::middleware('auth')->prefix('procurement')->name('procurement.')->group(fu
 Route::middleware('auth')->prefix('qr')->name('qr.')->group(function () {
     Route::get('/{type}/{id}', [QRCodeController::class, 'scan'])->name('scan');
     Route::get('/{type}/{id}/printable', [QRCodeController::class, 'printable'])->name('printable');
+});
+
+// Document & Record Management Module Routes
+Route::middleware('auth')->prefix('documents')->name('documents.')->group(function () {
+    Route::get('/dashboard', [DocumentManagementDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::resource('hse-documents', HSEDocumentController::class);
+    Route::resource('versions', DocumentVersionController::class);
+    Route::resource('templates', DocumentTemplateController::class);
+});
+
+// Compliance & Legal Module Routes
+Route::middleware('auth')->prefix('compliance')->name('compliance.')->group(function () {
+    Route::get('/dashboard', [ComplianceDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::resource('requirements', ComplianceRequirementController::class);
+    Route::resource('permits-licenses', PermitLicenseController::class);
+    Route::resource('audits', ComplianceAuditController::class);
+});
+
+// Housekeeping & Workplace Organization Module Routes
+Route::middleware('auth')->prefix('housekeeping')->name('housekeeping.')->group(function () {
+    Route::get('/dashboard', [HousekeepingDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::resource('inspections', HousekeepingInspectionController::class);
+    Route::resource('5s-audits', FiveSAuditController::class);
+});
+
+// Waste & Sustainability Module Routes
+Route::middleware('auth')->prefix('waste-sustainability')->name('waste-sustainability.')->group(function () {
+    Route::get('/dashboard', [WasteSustainabilityDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::resource('records', WasteSustainabilityRecordController::class);
+    Route::resource('carbon-footprint', CarbonFootprintRecordController::class);
+});
+
+// Notifications & Alerts Module Routes
+Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function () {
+    Route::resource('rules', NotificationRuleController::class);
+    Route::resource('escalation-matrices', EscalationMatrixController::class);
 });
