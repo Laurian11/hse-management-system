@@ -65,6 +65,15 @@ class ToolboxTalkTopicController extends Controller
 
     public function store(Request $request)
     {
+        // Convert learning_objectives from string to array if needed
+        if ($request->has('learning_objectives') && is_string($request->learning_objectives)) {
+            $objectives = array_filter(
+                array_map('trim', explode("\n", $request->learning_objectives)),
+                fn($item) => !empty($item)
+            );
+            $request->merge(['learning_objectives' => $objectives]);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -73,6 +82,7 @@ class ToolboxTalkTopicController extends Controller
             'difficulty_level' => 'required|in:basic,intermediate,advanced',
             'estimated_duration_minutes' => 'required|integer|min:5|max:60',
             'learning_objectives' => 'nullable|array',
+            'learning_objectives.*' => 'nullable|string|max:500',
             'key_talking_points' => 'nullable|string',
             'real_world_examples' => 'nullable|string',
             'regulatory_references' => 'nullable|string',
@@ -93,7 +103,7 @@ class ToolboxTalkTopicController extends Controller
             'subcategory' => $request->subcategory,
             'difficulty_level' => $request->difficulty_level,
             'estimated_duration_minutes' => $request->estimated_duration_minutes,
-            'learning_objectives' => $request->learning_objectives,
+            'learning_objectives' => $request->learning_objectives ?? [],
             'key_talking_points' => $request->key_talking_points,
             'real_world_examples' => $request->real_world_examples,
             'regulatory_references' => $request->regulatory_references,
@@ -155,6 +165,15 @@ class ToolboxTalkTopicController extends Controller
 
     public function update(Request $request, ToolboxTalkTopic $topic)
     {
+        // Convert learning_objectives from string to array if needed
+        if ($request->has('learning_objectives') && is_string($request->learning_objectives)) {
+            $objectives = array_filter(
+                array_map('trim', explode("\n", $request->learning_objectives)),
+                fn($item) => !empty($item)
+            );
+            $request->merge(['learning_objectives' => $objectives]);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -163,6 +182,7 @@ class ToolboxTalkTopicController extends Controller
             'difficulty_level' => 'required|in:basic,intermediate,advanced',
             'estimated_duration_minutes' => 'required|integer|min:5|max:60',
             'learning_objectives' => 'nullable|array',
+            'learning_objectives.*' => 'nullable|string|max:500',
             'key_talking_points' => 'nullable|string',
             'real_world_examples' => 'nullable|string',
             'regulatory_references' => 'nullable|string',
@@ -183,7 +203,7 @@ class ToolboxTalkTopicController extends Controller
             'subcategory' => $request->subcategory,
             'difficulty_level' => $request->difficulty_level,
             'estimated_duration_minutes' => $request->estimated_duration_minutes,
-            'learning_objectives' => $request->learning_objectives,
+            'learning_objectives' => $request->learning_objectives ?? [],
             'key_talking_points' => $request->key_talking_points,
             'real_world_examples' => $request->real_world_examples,
             'regulatory_references' => $request->regulatory_references,

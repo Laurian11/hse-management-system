@@ -351,7 +351,7 @@
                                         </a>
                                     @endif
                                     
-                                    @if($incident->rootCauseAnalysis && $incident->related_risk_assessment_id)
+                                    @if($incident->rootCauseAnalysis)
                                         <a href="{{ route('risk-assessment.risk-reviews.create', ['incident_id' => $incident->id, 'risk_assessment_id' => $incident->related_risk_assessment_id]) }}" class="block w-full text-left px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
                                             <i class="fas fa-sync-alt mr-2"></i>Trigger Risk Review
                                         </a>
@@ -575,6 +575,37 @@
                                 <p class="text-gray-900 whitespace-pre-wrap">{{ $incident->rootCauseAnalysis->lessons_learned }}</p>
                             </div>
                         @endif
+                        
+                        <!-- Training Integration -->
+                        @if($incident->rootCauseAnalysis->training_gap_identified)
+                            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-semibold text-yellow-800 mb-1">
+                                            <i class="fas fa-graduation-cap mr-2"></i>Training Gap Identified
+                                        </h3>
+                                        @if($incident->rootCauseAnalysis->training_gap_description)
+                                            <p class="text-sm text-yellow-700 mb-3">{{ $incident->rootCauseAnalysis->training_gap_description }}</p>
+                                        @endif
+                                        @php
+                                            $trainingNeed = \App\Models\TrainingNeedsAnalysis::where('triggered_by_rca_id', $incident->rootCauseAnalysis->id)->first();
+                                        @endphp
+                                        @if($trainingNeed)
+                                            <a href="{{ route('training.training-needs.show', $trainingNeed) }}" class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm">
+                                                <i class="fas fa-eye mr-2"></i>View Training Need
+                                            </a>
+                                        @else
+                                            <form action="{{ route('training.training-needs.from-rca', $incident->rootCauseAnalysis) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm">
+                                                    <i class="fas fa-plus mr-2"></i>Create Training Need
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @else
                     <div class="bg-white rounded-lg shadow p-12 text-center">
@@ -624,10 +655,38 @@
                                             @if($capa->due_date)
                                                 <span><i class="fas fa-calendar mr-1"></i>Due: {{ $capa->due_date->format('M j, Y') }}</span>
                                             @endif
+                                            @if($capa->training_completed)
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                                                    <i class="fas fa-check-circle mr-1"></i>Training Complete
+                                                </span>
+                                            @elseif($capa->related_training_need_id)
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                                    <i class="fas fa-graduation-cap mr-1"></i>Training Planned
+                                                </span>
+                                            @endif
                                         </div>
-                                        <a href="{{ route('incidents.capas.show', [$incident, $capa]) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                            View Details <i class="fas fa-arrow-right ml-1"></i>
-                                        </a>
+                                        <div class="flex items-center space-x-3">
+                                            @php
+                                                $isTrainingCAPA = stripos($capa->title, 'training') !== false || 
+                                                                  stripos($capa->description, 'training') !== false ||
+                                                                  stripos($capa->description, 'train') !== false;
+                                            @endphp
+                                            @if($isTrainingCAPA && !$capa->related_training_need_id)
+                                                <form action="{{ route('training.training-needs.from-capa', $capa) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                                                        <i class="fas fa-graduation-cap mr-1"></i>Create Training
+                                                    </button>
+                                                </form>
+                                            @elseif($capa->related_training_need_id)
+                                                <a href="{{ route('training.training-needs.show', $capa->related_training_need_id) }}" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                                                    <i class="fas fa-eye mr-1"></i>View Training
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('incidents.capas.show', [$incident, $capa]) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
+                                                View Details <i class="fas fa-arrow-right ml-1"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach

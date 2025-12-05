@@ -7,6 +7,7 @@ use App\Models\Hazard;
 use App\Models\Department;
 use App\Models\User;
 use App\Models\Incident;
+use App\Notifications\RiskAssessmentApprovalRequiredNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -156,6 +157,24 @@ class RiskAssessmentController extends Controller
                     'related_risk_assessment_id' => $riskAssessment->id,
                     'hazard_was_identified' => true,
                 ]);
+            }
+        }
+        
+        // Send notification if status is 'under_review' and has assigned approver
+        if ($riskAssessment->status === 'under_review') {
+            if ($riskAssessment->assignedTo) {
+                $riskAssessment->assignedTo->notify(new RiskAssessmentApprovalRequiredNotification($riskAssessment));
+            } else {
+                // Notify HSE managers if no specific approver assigned
+                $hseManagers = User::where('company_id', $companyId)
+                    ->whereHas('role', function($q) {
+                        $q->whereIn('name', ['hse_manager', 'admin']);
+                    })
+                    ->get();
+                
+                foreach ($hseManagers as $manager) {
+                    $manager->notify(new RiskAssessmentApprovalRequiredNotification($riskAssessment));
+                }
             }
         }
         

@@ -43,6 +43,10 @@ class CAPA extends Model
         'verification_notes',
         'effectiveness',
         'effectiveness_evidence',
+        'related_training_need_id',
+        'related_training_plan_id',
+        'training_completed',
+        'training_completed_at',
         'closed_by',
         'closure_notes',
     ];
@@ -53,6 +57,8 @@ class CAPA extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'verified_at' => 'datetime',
+        'training_completed' => 'boolean',
+        'training_completed_at' => 'datetime',
     ];
 
     /**
@@ -119,6 +125,16 @@ class CAPA extends Model
     public function closedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function relatedTrainingNeed(): BelongsTo
+    {
+        return $this->belongsTo(TrainingNeedsAnalysis::class, 'related_training_need_id');
+    }
+
+    public function relatedTrainingPlan(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPlan::class, 'related_training_plan_id');
     }
 
     // Scopes
@@ -278,5 +294,13 @@ class CAPA extends Model
         }
 
         return now()->diffInDays($this->due_date, false);
+    }
+
+    public function markTrainingCompleted(): bool
+    {
+        return $this->update([
+            'training_completed' => true,
+            'training_completed_at' => now(),
+        ]);
     }
 }

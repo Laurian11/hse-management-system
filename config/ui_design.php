@@ -12,31 +12,37 @@ return [
     */
 
     'colors' => [
-        // Primary Colors - White & Black Theme
+        // Minimal 3-Color Theme
         'primary' => [
-            'black' => '#000000',
-            'white' => '#FFFFFF',
+            'black' => '#000000',  // Primary: Text, borders, primary actions
+            'white' => '#FFFFFF',  // Background
         ],
         
-        // Gray Scale
+        'secondary' => [
+            'gray' => '#F5F5F5',  // Secondary: Backgrounds, cards
+        ],
+        
+        'accent' => [
+            'blue' => '#0066CC',  // Accent: Links, buttons, interactive elements
+        ],
+        
+        // Simplified Gray Scale (derived from 3 colors)
         'gray' => [
-            '50' => '#f5f5f5',   // background-gray
-            '100' => '#f0f0f0',  // hover-gray
-            '200' => '#e0e0e0',  // border-gray
-            '300' => '#d0d0d0',  // light-border
-            '400' => '#999999',  // light-gray
-            '500' => '#666666',  // medium-gray
-            '600' => '#333333',  // accent-gray
-            '700' => '#1a1a1a',  // dark-gray
-            '800' => '#000000',  // primary-black
+            '50' => '#F5F5F5',   // Secondary background
+            '100' => '#E0E0E0',  // Hover states
+            '200' => '#CCCCCC',  // Borders
+            '300' => '#999999',  // Muted text
+            '400' => '#666666',  // Secondary text
+            '500' => '#333333',  // Dark text
+            '600' => '#000000',  // Primary black
         ],
         
-        // Semantic Colors (for specific use cases)
+        // Semantic Colors (minimal, using accent)
         'semantic' => [
-            'success' => '#28a745',
-            'warning' => '#ffc107',
-            'error' => '#dc3545',
-            'info' => '#17a2b8',
+            'success' => '#0066CC',  // Use accent blue
+            'warning' => '#FF9900',  // Orange for warnings
+            'error' => '#CC0000',     // Red for errors
+            'info' => '#0066CC',      // Use accent blue
         ],
     ],
 
@@ -71,19 +77,19 @@ return [
     ],
 
     'border_radius' => [
-        'none' => '0',
-        'sm' => '0.25rem',   // 4px
-        'md' => '0.5rem',    // 8px
-        'lg' => '0.75rem',   // 12px
-        'xl' => '1rem',      // 16px
-        'full' => '9999px',
+        'none' => '0',  // Flat design - no rounded corners
+        'sm' => '0',
+        'md' => '0',
+        'lg' => '0',
+        'xl' => '0',
+        'full' => '0',
     ],
 
     'shadows' => [
-        'none' => 'none',
-        'sm' => '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'md' => '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'lg' => '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'none' => 'none',  // Flat design - no shadows
+        'sm' => 'none',
+        'md' => 'none',
+        'lg' => 'none',
     ],
 
     'transitions' => [
@@ -114,25 +120,25 @@ return [
     'components' => [
         'buttons' => [
             'primary' => [
-                'bg' => '#000000',
+                'bg' => '#0066CC',  // Accent blue
                 'text' => '#FFFFFF',
-                'hover_bg' => '#1a1a1a',
-                'border' => '#000000',
-                'focus_ring' => '#666666',
+                'hover_bg' => '#0052A3',
+                'border' => '#0066CC',
+                'focus_ring' => '#0066CC',
             ],
             'secondary' => [
-                'bg' => '#FFFFFF',
+                'bg' => '#F5F5F5',  // Secondary gray
                 'text' => '#000000',
-                'hover_bg' => '#f0f0f0',
-                'border' => '#e0e0e0',
-                'focus_ring' => '#666666',
+                'hover_bg' => '#E0E0E0',
+                'border' => '#CCCCCC',
+                'focus_ring' => '#0066CC',
             ],
             'ghost' => [
                 'bg' => 'transparent',
                 'text' => '#000000',
-                'hover_bg' => '#f0f0f0',
+                'hover_bg' => '#F5F5F5',
                 'border' => 'transparent',
-                'focus_ring' => '#666666',
+                'focus_ring' => '#0066CC',
             ],
         ],
         
@@ -156,9 +162,9 @@ return [
         'cards' => [
             'bg' => '#FFFFFF',
             'text' => '#000000',
-            'border' => '#e0e0e0',
-            'hover_border' => '#000000',
-            'shadow' => 'none',
+            'border' => '#CCCCCC',  // Flat border
+            'hover_border' => '#0066CC',  // Accent on hover
+            'shadow' => 'none',  // No shadows
         ],
         
         'modals' => [

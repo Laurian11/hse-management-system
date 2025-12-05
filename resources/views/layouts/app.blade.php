@@ -9,6 +9,9 @@
     <!-- Design System Component -->
     <x-design-system />
     
+    <!-- Flat Design CSS -->
+    <link rel="stylesheet" href="{{ asset('css/flat-design.css') }}">
+    
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -87,13 +90,13 @@
             <!-- Main Content -->
             <main class="flex-1 lg:ml-64 transition-all duration-300" id="main-content">
                 <!-- Mobile Header -->
-                <header class="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+                <header class="lg:hidden bg-white border-b border-gray-300 px-4 py-3">
                     <div class="flex items-center justify-between">
                         <button onclick="toggleSidebar()" class="text-gray-500 hover:text-gray-700">
                             <i class="fas fa-bars"></i>
                         </button>
                         <div class="flex items-center space-x-2">
-                            <div class="w-6 h-6 bg-primary-black rounded flex items-center justify-center">
+                            <div class="w-6 h-6 bg-[#0066CC] flex items-center justify-center">
                                 <i class="fas fa-shield-alt text-primary-white text-xs"></i>
                             </div>
                             <span class="text-sm font-medium text-primary-black">HSE System</span>

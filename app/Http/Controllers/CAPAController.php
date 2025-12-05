@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\CAPA;
+use App\Notifications\CAPAAssignedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -58,6 +59,17 @@ class CAPAController extends Controller
         $validated['status'] = 'pending';
 
         $capa = CAPA::create($validated);
+        $capa->load('assignedTo');
+
+        // Send notification to assigned user
+        if ($capa->assignedTo) {
+            $capa->assignedTo->notify(new CAPAAssignedNotification($capa));
+        }
+
+        // Also notify supervisor if assigned user has one
+        if ($capa->assignedTo && $capa->assignedTo->directSupervisor) {
+            $capa->assignedTo->directSupervisor->notify(new CAPAAssignedNotification($capa));
+        }
 
         return redirect()
             ->route('incidents.show', $incident)

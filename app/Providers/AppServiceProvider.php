@@ -5,6 +5,18 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use App\View\Components\DesignSystem;
+use App\Models\ControlMeasure;
+use App\Models\RootCauseAnalysis;
+use App\Models\CAPA;
+use App\Models\User;
+use App\Observers\ControlMeasureObserver;
+use App\Observers\RootCauseAnalysisObserver;
+use App\Observers\CAPAObserver;
+use App\Observers\UserObserver;
+use App\Observers\ProcurementRequestObserver;
+use App\Observers\SpillIncidentObserver;
+use App\Models\ProcurementRequest;
+use App\Models\SpillIncident;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -65,5 +77,15 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('textSecondary', function () {
             return 'class="text-medium-gray"';
         });
+        
+        // Register Model Observers for Training Module Integration
+        ControlMeasure::observe(ControlMeasureObserver::class);
+        RootCauseAnalysis::observe(RootCauseAnalysisObserver::class);
+        CAPA::observe(CAPAObserver::class);
+        User::observe(UserObserver::class);
+        
+        // Register Observers for Procurement and Environmental Modules
+        ProcurementRequest::observe(ProcurementRequestObserver::class);
+        SpillIncident::observe(SpillIncidentObserver::class);
     }
 }

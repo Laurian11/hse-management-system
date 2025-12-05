@@ -1,0 +1,294 @@
+/* Minimal Flat Design System - Global Overrides */
+
+/* Remove all shadows */
+* {
+    box-shadow: none !important;
+}
+
+/* Remove all rounded corners */
+* {
+    border-radius: 0 !important;
+}
+
+/* Remove gradients */
+* {
+    background-image: none !important;
+}
+
+/* Flat buttons */
+button, .btn, a[role="button"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+/* Flat cards */
+.card, [class*="rounded"], [class*="shadow"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Flat inputs */
+input, textarea, select {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Flat badges */
+.badge, [class*="badge"], [class*="rounded-full"] {
+    border-radius: 0 !important;
+}
+
+/* Minimal spacing */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Flat sidebar */
+#sidebar {
+    box-shadow: none !important;
+    border-right: 1px solid #CCCCCC;
+}
+
+/* Flat navigation items */
+.sidebar-nav-item {
+    border-radius: 0 !important;
+}
+
+/* Flat modals */
+.modal, [class*="modal"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Flat tables */
+table {
+    border-collapse: collapse;
+}
+
+table th, table td {
+    border: 1px solid #CCCCCC;
+}
+
+/* Remove hover shadows */
+[class*="hover:shadow"] {
+    box-shadow: none !important;
+}
+
+/* Flat icons - no special effects */
+i, [class*="fa-"] {
+    text-shadow: none !important;
+}
+
+/* Minimal color palette */
+:root {
+    --color-primary: #000000;
+    --color-secondary: #F5F5F5;
+    --color-accent: #0066CC;
+    --color-border: #CCCCCC;
+    --color-text: #000000;
+    --color-text-muted: #666666;
+    --color-bg: #FFFFFF;
+    --color-bg-secondary: #F5F5F5;
+}
+
+/* Flat links */
+a {
+    text-decoration: none;
+    color: var(--color-accent);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Flat buttons - minimal styling */
+.btn-primary {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+    border: 1px solid var(--color-accent);
+    padding: 8px 16px;
+}
+
+.btn-primary:hover {
+    background-color: #0052A3;
+    border-color: #0052A3;
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    padding: 8px 16px;
+}
+
+.btn-secondary:hover {
+    background-color: #E0E0E0;
+}
+
+/* Flat cards */
+.card-flat {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    padding: 16px;
+}
+
+/* Flat forms */
+.form-input {
+    border: 1px solid var(--color-border);
+    border-radius: 0;
+    padding: 8px 12px;
+    background-color: var(--color-bg);
+}
+
+.form-input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+    border-color: var(--color-accent);
+}
+
+/* Remove all animations except essential transitions */
+* {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Flat status badges */
+.badge {
+    padding: 4px 8px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+    border-radius: 0;
+}
+
+.badge-success {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+    border-color: var(--color-accent);
+}
+
+.badge-error {
+    background-color: #CC0000;
+    color: #FFFFFF;
+    border-color: #CC0000;
+}
+
+.badge-warning {
+    background-color: #FF9900;
+    color: #FFFFFF;
+    border-color: #FF9900;
+}
+
+/* Flat charts - minimal styling */
+.chart-container {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+}
+
+/* Flat tables */
+.table-flat {
+    border: 1px solid var(--color-border);
+}
+
+.table-flat th,
+.table-flat td {
+    border: 1px solid var(--color-border);
+    padding: 12px;
+}
+
+.table-flat th {
+    background-color: var(--color-bg-secondary);
+    font-weight: 600;
+}
+
+/* Flat pagination */
+.pagination {
+    border-radius: 0;
+}
+
+.pagination a,
+.pagination span {
+    border: 1px solid var(--color-border);
+    border-radius: 0;
+    padding: 8px 12px;
+    margin: 0;
+}
+
+.pagination a:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.pagination .active {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+    border-color: var(--color-accent);
+}
+
+/* Flat dropdowns */
+.dropdown-menu {
+    border: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Flat tooltips */
+.tooltip {
+    border: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--color-text);
+    color: #FFFFFF;
+}
+
+/* Minimal spacing utilities */
+.flat-p-1 { padding: 4px; }
+.flat-p-2 { padding: 8px; }
+.flat-p-3 { padding: 12px; }
+.flat-p-4 { padding: 16px; }
+.flat-p-6 { padding: 24px; }
+
+.flat-m-1 { margin: 4px; }
+.flat-m-2 { margin: 8px; }
+.flat-m-3 { margin: 12px; }
+.flat-m-4 { margin: 16px; }
+.flat-m-6 { margin: 24px; }
+
+/* Flat grid - no gaps */
+.flat-grid {
+    gap: 0;
+}
+
+/* Remove all decorative elements */
+::before, ::after {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+/* Flat focus states */
+*:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 0;
+}
+
+/* Flat scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+

@@ -1,7 +1,11 @@
 {{-- Design System CSS Variables --}}
 <style>
 :root {
-    /* Colors */
+    /* Minimal 3-Color Theme */
+    --color-primary: {{ $colors['primary']['black'] }};
+    --color-secondary: {{ $colors['secondary']['gray'] }};
+    --color-accent: {{ $colors['accent']['blue'] }};
+    
     --color-primary-black: {{ $colors['primary']['black'] }};
     --color-primary-white: {{ $colors['primary']['white'] }};
     
@@ -12,8 +16,6 @@
     --color-gray-400: {{ $colors['gray']['400'] }};
     --color-gray-500: {{ $colors['gray']['500'] }};
     --color-gray-600: {{ $colors['gray']['600'] }};
-    --color-gray-700: {{ $colors['gray']['700'] }};
-    --color-gray-800: {{ $colors['gray']['800'] }};
     
     --color-success: {{ $colors['semantic']['success'] }};
     --color-warning: {{ $colors['semantic']['warning'] }};
@@ -139,8 +141,6 @@ window.HSEDesignSystem = {
             400: '{{ $colors['gray']['400'] }}',
             500: '{{ $colors['gray']['500'] }}',
             600: '{{ $colors['gray']['600'] }}',
-            700: '{{ $colors['gray']['700'] }}',
-            800: '{{ $colors['gray']['800'] }}',
         },
         semantic: {
             success: '{{ $colors['semantic']['success'] }}',

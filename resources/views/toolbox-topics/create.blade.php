@@ -155,7 +155,8 @@
                     <label for="learning_objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label>
                     <textarea id="learning_objectives" name="learning_objectives" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="What participants will learn from this topic">{{ old('learning_objectives') }}</textarea>
+                              placeholder="What participants will learn from this topic (one per line)">{{ is_array(old('learning_objectives')) ? implode("\n", old('learning_objectives')) : old('learning_objectives', '') }}</textarea>
+                    <p class="mt-1 text-xs text-gray-500">Enter one learning objective per line</p>
                     @error('learning_objectives')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

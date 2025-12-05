@@ -1,32 +1,48 @@
 <!-- Sidebar -->
-<aside class="w-64 bg-white shadow-lg border-r border-gray-200 fixed left-0 top-0 h-full z-10 lg:translate-x-0 -translate-x-full transition-all duration-300 overflow-y-auto" id="sidebar">
+<aside class="w-64 bg-white border-r border-gray-300 fixed left-0 top-0 h-full z-10 lg:translate-x-0 -translate-x-full transition-all duration-300 overflow-y-auto" id="sidebar">
     <div class="flex flex-col h-full">
         <!-- Sidebar Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+        <div class="flex items-center justify-between p-4 border-b border-gray-300 bg-white">
             <div class="flex items-center space-x-2 sidebar-brand">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-md">
+                <div class="w-10 h-10 bg-[#0066CC] flex items-center justify-center">
                     <i class="fas fa-shield-alt text-white text-lg"></i>
                 </div>
                 <div class="sidebar-text">
-                    <span class="text-lg font-bold text-primary-black">HSE System</span>
-                    <div class="text-xs text-medium-gray font-normal">Safety Management</div>
+                    <span class="text-lg font-bold text-black">HSE System</span>
+                    <div class="text-xs text-gray-500 font-normal">Safety Management</div>
                 </div>
             </div>
-            <button onclick="toggleSidebar()" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-lg transition-colors sidebar-toggle">
+            <button onclick="toggleSidebar()" class="text-gray-500 hover:text-black hover:bg-[#F5F5F5] p-2 transition-colors sidebar-toggle">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
         
         <!-- Quick Actions -->
-        <div class="p-4 border-b border-gray-200 bg-gray-50 sidebar-quick-actions">
-            <div class="grid grid-cols-2 gap-2 sidebar-text">
-                <a href="{{ route('incidents.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium transition-colors" data-tooltip="Report Incident">
+        <div class="p-4 border-b border-gray-300 bg-[#F5F5F5] sidebar-quick-actions">
+            <div class="grid grid-cols-2 gap-2 sidebar-text" style="grid-template-columns: repeat(2, 1fr);">
+                <a href="{{ route('incidents.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="Report Incident">
                     <i class="fas fa-plus text-xs"></i>
                     <span class="sidebar-text">Report</span>
                 </a>
-                <a href="{{ route('toolbox-talks.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium transition-colors" data-tooltip="New Talk">
+                <a href="{{ route('toolbox-talks.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="New Talk">
                     <i class="fas fa-plus text-xs"></i>
                     <span class="sidebar-text">New Talk</span>
+                </a>
+                <a href="{{ route('risk-assessment.jsas.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="New JSA">
+                    <i class="fas fa-plus text-xs"></i>
+                    <span class="sidebar-text">New JSA</span>
+                </a>
+                <a href="{{ route('training.training-plans.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="New Training Plan">
+                    <i class="fas fa-plus text-xs"></i>
+                    <span class="sidebar-text">Training</span>
+                </a>
+                <a href="{{ route('ppe.items.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="New PPE Item">
+                    <i class="fas fa-plus text-xs"></i>
+                    <span class="sidebar-text">PPE Item</span>
+                </a>
+                <a href="{{ route('ppe.issuances.create') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-white hover:bg-[#F5F5F5] text-black border border-gray-300 text-xs font-medium transition-colors" data-tooltip="Issue PPE">
+                    <i class="fas fa-plus text-xs"></i>
+                    <span class="sidebar-text">Issue PPE</span>
                 </a>
             </div>
         </div>
@@ -34,7 +50,7 @@
         <!-- Navigation -->
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
             <!-- Dashboard -->
-            <a href="{{ route('dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all {{ request()->is('dashboard') ? 'bg-blue-50 text-blue-700 shadow-sm' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Dashboard">
+            <a href="{{ route('dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2.5 transition-all {{ request()->is('dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
                 <i class="fas fa-home w-5 text-center"></i>
                 <span class="sidebar-text font-medium">Dashboard</span>
             </a>
@@ -48,37 +64,37 @@
                     </div>
                     <i class="fas fa-chevron-down text-xs transition-transform" id="toolbox-chevron"></i>
                 </button>
-                <div id="toolbox-section" class="space-y-1 pl-4 border-l-2 border-blue-100">
-                    <a href="{{ route('toolbox-talks.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks') && !request()->is('toolbox-talks/*') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="All Talks">
-                        <i class="fas fa-list w-5 text-center text-blue-600"></i>
+                <div id="toolbox-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('toolbox-talks.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks') && !request()->is('toolbox-talks/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="All Talks">
+                        <i class="fas fa-list w-5 text-center"></i>
                         <span class="sidebar-text">All Talks</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/dashboard') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Dashboard">
-                        <i class="fas fa-chart-pie w-5 text-center text-blue-600"></i>
+                    <a href="{{ route('toolbox-talks.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.schedule') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/schedule') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Schedule">
-                        <i class="fas fa-calendar-plus w-5 text-center text-green-600"></i>
+                    <a href="{{ route('toolbox-talks.schedule') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/schedule') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Schedule">
+                        <i class="fas fa-calendar-plus w-5 text-center"></i>
                         <span class="sidebar-text">Schedule</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.calendar') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/calendar') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Calendar">
-                        <i class="fas fa-calendar-alt w-5 text-center text-purple-600"></i>
+                    <a href="{{ route('toolbox-talks.calendar') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/calendar') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Calendar">
+                        <i class="fas fa-calendar-alt w-5 text-center"></i>
                         <span class="sidebar-text">Calendar</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.attendance') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/attendance') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Attendance">
-                        <i class="fas fa-users w-5 text-center text-indigo-600"></i>
+                    <a href="{{ route('toolbox-talks.attendance') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/attendance') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Attendance">
+                        <i class="fas fa-users w-5 text-center"></i>
                         <span class="sidebar-text">Attendance</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.feedback') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/feedback') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Feedback">
-                        <i class="fas fa-comment-dots w-5 text-center text-pink-600"></i>
+                    <a href="{{ route('toolbox-talks.feedback') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/feedback') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Feedback">
+                        <i class="fas fa-comment-dots w-5 text-center"></i>
                         <span class="sidebar-text">Feedback</span>
                     </a>
-                    <a href="{{ route('toolbox-talks.reporting') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-talks/reporting') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Reports">
-                        <i class="fas fa-chart-bar w-5 text-center text-yellow-600"></i>
+                    <a href="{{ route('toolbox-talks.reporting') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-talks/reporting') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reports">
+                        <i class="fas fa-chart-bar w-5 text-center"></i>
                         <span class="sidebar-text">Reports</span>
                     </a>
-                    <a href="{{ route('toolbox-topics.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('toolbox-topics*') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Topics">
-                        <i class="fas fa-book w-5 text-center text-green-600"></i>
+                    <a href="{{ route('toolbox-topics.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('toolbox-topics*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Topics">
+                        <i class="fas fa-book w-5 text-center"></i>
                         <span class="sidebar-text">Topics Library</span>
                     </a>
                 </div>
@@ -93,35 +109,35 @@
                     </div>
                     <i class="fas fa-chevron-down text-xs transition-transform" id="incidents-chevron"></i>
                 </button>
-                <div id="incidents-section" class="space-y-1 pl-4 border-l-2 border-red-100">
-                    <a href="{{ route('incidents.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('incidents') && !request()->is('incidents/*') ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="All Incidents">
-                        <i class="fas fa-list w-5 text-center text-red-600"></i>
+                <div id="incidents-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('incidents.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('incidents') && !request()->is('incidents/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="All Incidents">
+                        <i class="fas fa-list w-5 text-center"></i>
                         <span class="sidebar-text">All Incidents</span>
                     </a>
-                    <a href="{{ route('incidents.create') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('incidents/create') ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Report">
-                        <i class="fas fa-plus-circle w-5 text-center text-red-600"></i>
+                    <a href="{{ route('incidents.create') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('incidents/create') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Report">
+                        <i class="fas fa-plus-circle w-5 text-center"></i>
                         <span class="sidebar-text">Report Incident</span>
                     </a>
-                    <a href="{{ route('incidents.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('incidents/dashboard') ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Dashboard">
-                        <i class="fas fa-chart-pie w-5 text-center text-red-600"></i>
+                    <a href="{{ route('incidents.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('incidents/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
-                    <a href="{{ route('incidents.trend-analysis') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('incidents/trend-analysis') ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Trend Analysis">
-                        <i class="fas fa-chart-line w-5 text-center text-orange-600"></i>
+                    <a href="{{ route('incidents.trend-analysis') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('incidents/trend-analysis') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Trend Analysis">
+                        <i class="fas fa-chart-line w-5 text-center"></i>
                         <span class="sidebar-text">Trend Analysis</span>
                     </a>
-                    <div class="pt-2 mt-2 border-t border-red-100">
-                        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-1 mb-1 sidebar-text">Investigation</div>
-                        <a href="{{ route('incidents.index') }}?filter=investigating" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->get('filter') == 'investigating' ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Investigations">
-                            <i class="fas fa-search w-5 text-center text-blue-600"></i>
+                    <div class="pt-2 mt-2 border-t border-gray-300">
+                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-1 mb-1 sidebar-text">Investigation</div>
+                        <a href="{{ route('incidents.index') }}?filter=investigating" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->get('filter') == 'investigating' ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Investigations">
+                            <i class="fas fa-search w-5 text-center"></i>
                             <span class="sidebar-text">Investigations</span>
                         </a>
-                        <a href="{{ route('incidents.index') }}?filter=rca" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->get('filter') == 'rca' ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Root Cause">
-                            <i class="fas fa-project-diagram w-5 text-center text-purple-600"></i>
+                        <a href="{{ route('incidents.index') }}?filter=rca" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->get('filter') == 'rca' ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Root Cause">
+                            <i class="fas fa-project-diagram w-5 text-center"></i>
                             <span class="sidebar-text">Root Cause Analysis</span>
                         </a>
-                        <a href="{{ route('incidents.index') }}?filter=capa" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->get('filter') == 'capa' ? 'bg-red-50 text-red-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="CAPAs">
-                            <i class="fas fa-tasks w-5 text-center text-green-600"></i>
+                        <a href="{{ route('incidents.index') }}?filter=capa" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->get('filter') == 'capa' ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="CAPAs">
+                            <i class="fas fa-tasks w-5 text-center"></i>
                             <span class="sidebar-text">CAPAs</span>
                         </a>
                     </div>
@@ -137,39 +153,358 @@
                     </div>
                     <i class="fas fa-chevron-down text-xs transition-transform" id="risk-assessment-chevron"></i>
                 </button>
-                <div id="risk-assessment-section" class="space-y-1 pl-4 border-l-2 border-orange-100">
-                    <a href="{{ route('risk-assessment.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/dashboard') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Dashboard">
-                        <i class="fas fa-chart-pie w-5 text-center text-orange-600"></i>
+                <div id="risk-assessment-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('risk-assessment.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
-                    <a href="{{ route('risk-assessment.hazards.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/hazards*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Hazards">
-                        <i class="fas fa-exclamation-triangle w-5 text-center text-red-600"></i>
+                    <a href="{{ route('risk-assessment.hazards.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/hazards*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Hazards">
+                        <i class="fas fa-exclamation-triangle w-5 text-center"></i>
                         <span class="sidebar-text">Hazards (HAZID)</span>
                     </a>
-                    <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/risk-assessments*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Risk Register">
-                        <i class="fas fa-clipboard-list w-5 text-center text-orange-600"></i>
+                    <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/risk-assessments*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Risk Register">
+                        <i class="fas fa-clipboard-list w-5 text-center"></i>
                         <span class="sidebar-text">Risk Register</span>
                     </a>
-                    <a href="{{ route('risk-assessment.jsas.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/jsas*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="JSA">
-                        <i class="fas fa-tasks w-5 text-center text-blue-600"></i>
+                    <a href="{{ route('risk-assessment.jsas.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/jsas*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="JSA">
+                        <i class="fas fa-tasks w-5 text-center"></i>
                         <span class="sidebar-text">Job Safety Analysis</span>
                     </a>
-                    <a href="{{ route('risk-assessment.control-measures.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/control-measures*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Controls">
-                        <i class="fas fa-shield-alt w-5 text-center text-green-600"></i>
+                    <a href="{{ route('risk-assessment.control-measures.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/control-measures*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Controls">
+                        <i class="fas fa-shield-alt w-5 text-center"></i>
                         <span class="sidebar-text">Control Measures</span>
                     </a>
-                    <a href="{{ route('risk-assessment.risk-reviews.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('risk-assessment/risk-reviews*') ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Reviews">
-                        <i class="fas fa-sync-alt w-5 text-center text-purple-600"></i>
+                    <a href="{{ route('risk-assessment.risk-reviews.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/risk-reviews*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reviews">
+                        <i class="fas fa-sync-alt w-5 text-center"></i>
                         <span class="sidebar-text">Risk Reviews</span>
                     </a>
                 </div>
             </div>
             
-            <!-- Safety Communications -->
-            <a href="{{ route('safety-communications.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all {{ request()->is('safety-communications*') ? 'bg-purple-50 text-purple-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Communications">
-                <i class="fas fa-bullhorn w-5 text-center text-purple-600"></i>
-                <span class="sidebar-text font-medium">Communications</span>
-            </a>
+            <!-- Safety Communications - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('communications')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-bullhorn text-purple-600"></i>
+                        <span class="sidebar-text">Safety Communications</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="communications-chevron"></i>
+                </button>
+                <div id="communications-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('safety-communications.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('safety-communications') && !request()->is('safety-communications/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="All Communications">
+                        <i class="fas fa-list w-5 text-center"></i>
+                        <span class="sidebar-text">All Communications</span>
+                    </a>
+                    <a href="{{ route('safety-communications.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('safety-communications/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('safety-communications.create') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('safety-communications/create') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="New Communication">
+                        <i class="fas fa-plus-circle w-5 text-center"></i>
+                        <span class="sidebar-text">New Communication</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- PPE Management - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('ppe')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-hard-hat text-teal-600"></i>
+                        <span class="sidebar-text">PPE Management</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="ppe-chevron"></i>
+                </button>
+                <div id="ppe-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('ppe.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('ppe.items.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/items*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Inventory">
+                        <i class="fas fa-boxes w-5 text-center"></i>
+                        <span class="sidebar-text">Inventory</span>
+                    </a>
+                    <a href="{{ route('ppe.issuances.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/issuances*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Issuances">
+                        <i class="fas fa-hand-holding w-5 text-center"></i>
+                        <span class="sidebar-text">Issuances & Returns</span>
+                    </a>
+                    <a href="{{ route('ppe.inspections.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/inspections*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Inspections">
+                        <i class="fas fa-search w-5 text-center"></i>
+                        <span class="sidebar-text">Inspections</span>
+                    </a>
+                    <a href="{{ route('ppe.suppliers.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/suppliers*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Suppliers">
+                        <i class="fas fa-truck w-5 text-center"></i>
+                        <span class="sidebar-text">Suppliers</span>
+                    </a>
+                    <a href="{{ route('ppe.reports.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('ppe/reports*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Compliance Reports">
+                        <i class="fas fa-file-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Compliance Reports</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Permit to Work (PTW) - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('work-permits')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-file-contract"></i>
+                        <span class="sidebar-text">Permit to Work</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="work-permits-chevron"></i>
+                </button>
+                <div id="work-permits-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('work-permits.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('work-permits/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('work-permits.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('work-permits') && !request()->is('work-permits/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="All Permits">
+                        <i class="fas fa-list w-5 text-center"></i>
+                        <span class="sidebar-text">All Permits</span>
+                    </a>
+                    <a href="{{ route('work-permits.create') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('work-permits/create') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="New Permit">
+                        <i class="fas fa-plus-circle w-5 text-center"></i>
+                        <span class="sidebar-text">New Permit</span>
+                    </a>
+                    <a href="{{ route('work-permits.types.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('work-permits/types*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Permit Types">
+                        <i class="fas fa-tags w-5 text-center"></i>
+                        <span class="sidebar-text">Permit Types</span>
+                    </a>
+                    <a href="{{ route('work-permits.gca-logs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('work-permits/gca-logs*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="GCLA Logs">
+                        <i class="fas fa-clipboard-check w-5 text-center"></i>
+                        <span class="sidebar-text">GCLA Logs</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Inspection & Audit - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('inspections')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-clipboard-check text-green-600"></i>
+                        <span class="sidebar-text">Inspection & Audit</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="inspections-chevron"></i>
+                </button>
+                <div id="inspections-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('inspections.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('inspections.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections') && !request()->is('inspections/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="All Inspections">
+                        <i class="fas fa-list w-5 text-center"></i>
+                        <span class="sidebar-text">Inspections</span>
+                    </a>
+                    <a href="{{ route('inspections.schedules.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections/schedules*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Schedules">
+                        <i class="fas fa-calendar-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Schedules</span>
+                    </a>
+                    <a href="{{ route('inspections.checklists.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections/checklists*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Checklists">
+                        <i class="fas fa-tasks w-5 text-center"></i>
+                        <span class="sidebar-text">Checklists</span>
+                    </a>
+                    <a href="{{ route('inspections.ncrs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections/ncrs*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="NCRs">
+                        <i class="fas fa-exclamation-triangle w-5 text-center"></i>
+                        <span class="sidebar-text">NCRs</span>
+                    </a>
+                    <a href="{{ route('inspections.audits.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('inspections/audits*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Audits">
+                        <i class="fas fa-search w-5 text-center"></i>
+                        <span class="sidebar-text">Audits</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Emergency Preparedness - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('emergency')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                        <span class="sidebar-text">Emergency Preparedness</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="emergency-chevron"></i>
+                </button>
+                <div id="emergency-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('emergency.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('emergency.fire-drills.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/fire-drills*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Fire Drills">
+                        <i class="fas fa-fire w-5 text-center"></i>
+                        <span class="sidebar-text">Fire Drills</span>
+                    </a>
+                    <a href="{{ route('emergency.contacts.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/contacts*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Contacts">
+                        <i class="fas fa-phone w-5 text-center"></i>
+                        <span class="sidebar-text">Emergency Contacts</span>
+                    </a>
+                    <a href="{{ route('emergency.equipment.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/equipment*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Equipment">
+                        <i class="fas fa-tools w-5 text-center"></i>
+                        <span class="sidebar-text">Equipment</span>
+                    </a>
+                    <a href="{{ route('emergency.evacuation-plans.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/evacuation-plans*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Evacuation Plans">
+                        <i class="fas fa-map-marked-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Evacuation Plans</span>
+                    </a>
+                    <a href="{{ route('emergency.response-teams.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('emergency/response-teams*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Response Teams">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span class="sidebar-text">Response Teams</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Training & Competency - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('training')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-graduation-cap text-indigo-600"></i>
+                        <span class="sidebar-text">Training & Competency</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="training-chevron"></i>
+                </button>
+                <div id="training-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('training.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('training.training-needs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/training-needs*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Training Needs">
+                        <i class="fas fa-clipboard-list w-5 text-center"></i>
+                        <span class="sidebar-text">Training Needs</span>
+                    </a>
+                    <a href="{{ route('training.training-plans.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/training-plans*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Training Plans">
+                        <i class="fas fa-calendar-check w-5 text-center"></i>
+                        <span class="sidebar-text">Training Plans</span>
+                    </a>
+                    <a href="{{ route('training.training-sessions.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/training-sessions') && !request()->is('training/training-sessions/calendar') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Sessions">
+                        <i class="fas fa-chalkboard-teacher w-5 text-center"></i>
+                        <span class="sidebar-text">Training Sessions</span>
+                    </a>
+                    <a href="{{ route('training.training-sessions.calendar') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/training-sessions/calendar') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Calendar">
+                        <i class="fas fa-calendar-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Calendar</span>
+                    </a>
+                    <a href="{{ route('training.reporting.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('training/reporting*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reporting">
+                        <i class="fas fa-chart-bar w-5 text-center"></i>
+                        <span class="sidebar-text">Reporting</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Environmental Management - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('environmental')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-leaf text-green-600"></i>
+                        <span class="sidebar-text">Environmental Management</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="environmental-chevron"></i>
+                </button>
+                <div id="environmental-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('environmental.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('environmental.waste-management.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/waste-management*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Waste Management">
+                        <i class="fas fa-trash-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Waste Management</span>
+                    </a>
+                    <a href="{{ route('environmental.waste-tracking.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/waste-tracking*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Waste Tracking">
+                        <i class="fas fa-route w-5 text-center"></i>
+                        <span class="sidebar-text">Waste Tracking</span>
+                    </a>
+                    <a href="{{ route('environmental.emissions.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/emissions*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Emission Monitoring">
+                        <i class="fas fa-wind w-5 text-center"></i>
+                        <span class="sidebar-text">Emission Monitoring</span>
+                    </a>
+                    <a href="{{ route('environmental.spills.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/spills*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Spill Incidents">
+                        <i class="fas fa-tint w-5 text-center"></i>
+                        <span class="sidebar-text">Spill Incidents</span>
+                    </a>
+                    <a href="{{ route('environmental.resource-usage.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/resource-usage*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Resource Usage">
+                        <i class="fas fa-tachometer-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Resource Usage</span>
+                    </a>
+                    <a href="{{ route('environmental.iso14001.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('environmental/iso14001*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="ISO 14001">
+                        <i class="fas fa-certificate w-5 text-center"></i>
+                        <span class="sidebar-text">ISO 14001 Compliance</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Health & Wellness - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('health')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-heartbeat text-red-600"></i>
+                        <span class="sidebar-text">Health & Wellness</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="health-chevron"></i>
+                </button>
+                <div id="health-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('health.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('health.surveillance.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/surveillance*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Health Surveillance">
+                        <i class="fas fa-user-md w-5 text-center"></i>
+                        <span class="sidebar-text">Health Surveillance</span>
+                    </a>
+                    <a href="{{ route('health.first-aid.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/first-aid*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="First Aid">
+                        <i class="fas fa-first-aid w-5 text-center"></i>
+                        <span class="sidebar-text">First Aid Logbook</span>
+                    </a>
+                    <a href="{{ route('health.ergonomic.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/ergonomic*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Ergonomic">
+                        <i class="fas fa-chair w-5 text-center"></i>
+                        <span class="sidebar-text">Ergonomic Assessments</span>
+                    </a>
+                    <a href="{{ route('health.hygiene.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/hygiene*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Hygiene">
+                        <i class="fas fa-spray-can w-5 text-center"></i>
+                        <span class="sidebar-text">Hygiene Inspections</span>
+                    </a>
+                    <a href="{{ route('health.campaigns.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/campaigns*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Campaigns">
+                        <i class="fas fa-bullhorn w-5 text-center"></i>
+                        <span class="sidebar-text">Health Campaigns</span>
+                    </a>
+                    <a href="{{ route('health.sick-leave.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('health/sick-leave*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Sick Leave">
+                        <i class="fas fa-notes-medical w-5 text-center"></i>
+                        <span class="sidebar-text">Sick Leave Records</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Procurement & Resource Management - Collapsible -->
+            <div class="space-y-1">
+                <button onclick="toggleSection('procurement')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-text">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-shopping-cart text-purple-600"></i>
+                        <span class="sidebar-text">Procurement & Resources</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="procurement-chevron"></i>
+                </button>
+                <div id="procurement-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('procurement.dashboard') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/dashboard') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Dashboard">
+                        <i class="fas fa-chart-pie w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('procurement.requests.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/requests*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Requests">
+                        <i class="fas fa-shopping-cart w-5 text-center"></i>
+                        <span class="sidebar-text">Procurement Requests</span>
+                    </a>
+                    <a href="{{ route('procurement.suppliers.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/suppliers*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Suppliers">
+                        <i class="fas fa-truck w-5 text-center"></i>
+                        <span class="sidebar-text">Suppliers</span>
+                    </a>
+                    <a href="{{ route('procurement.equipment-certifications.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/equipment-certifications*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Certifications">
+                        <i class="fas fa-certificate w-5 text-center"></i>
+                        <span class="sidebar-text">Equipment Certifications</span>
+                    </a>
+                    <a href="{{ route('procurement.stock-reports.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/stock-reports*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Stock Reports">
+                        <i class="fas fa-chart-line w-5 text-center"></i>
+                        <span class="sidebar-text">Stock Reports</span>
+                    </a>
+                    <a href="{{ route('procurement.gap-analysis.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('procurement/gap-analysis*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Gap Analysis">
+                        <i class="fas fa-exclamation-circle w-5 text-center"></i>
+                        <span class="sidebar-text">Gap Analysis</span>
+                    </a>
+                </div>
+            </div>
             
             <!-- Administration - Collapsible -->
             @if(Auth::user()->role && (Auth::user()->role->name === 'super_admin' || Auth::user()->role->name === 'admin'))
@@ -181,33 +516,33 @@
                     </div>
                     <i class="fas fa-chevron-down text-xs transition-transform" id="admin-chevron"></i>
                 </button>
-                <div id="admin-section" class="space-y-1 pl-4 border-l-2 border-gray-100">
-                    <a href="{{ route('admin.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin') && !request()->is('admin/*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Admin Dashboard">
-                        <i class="fas fa-tachometer-alt w-5 text-center text-gray-600"></i>
+                <div id="admin-section" class="space-y-1 pl-4 border-l-2 border-gray-300">
+                    <a href="{{ route('admin.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin') && !request()->is('admin/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Admin Dashboard">
+                        <i class="fas fa-tachometer-alt w-5 text-center"></i>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
-                    <a href="{{ route('admin.employees.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/employees*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Employees">
-                        <i class="fas fa-user-tie w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.employees.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/employees*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Employees">
+                        <i class="fas fa-user-tie w-5 text-center"></i>
                         <span class="sidebar-text">Employees</span>
                     </a>
-                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/users*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Users">
-                        <i class="fas fa-users w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/users*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Users">
+                        <i class="fas fa-users w-5 text-center"></i>
                         <span class="sidebar-text">Users</span>
                     </a>
-                    <a href="{{ route('admin.companies.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/companies*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Companies">
-                        <i class="fas fa-building w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.companies.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/companies*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Companies">
+                        <i class="fas fa-building w-5 text-center"></i>
                         <span class="sidebar-text">Companies</span>
                     </a>
-                    <a href="{{ route('admin.departments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/departments*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Departments">
-                        <i class="fas fa-sitemap w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.departments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/departments*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Departments">
+                        <i class="fas fa-sitemap w-5 text-center"></i>
                         <span class="sidebar-text">Departments</span>
                     </a>
-                    <a href="{{ route('admin.roles.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/roles*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Roles">
-                        <i class="fas fa-user-shield w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.roles.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/roles*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Roles">
+                        <i class="fas fa-user-shield w-5 text-center"></i>
                         <span class="sidebar-text">Roles & Permissions</span>
                     </a>
-                    <a href="{{ route('admin.activity-logs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 rounded-lg transition-all {{ request()->is('admin/activity-logs*') ? 'bg-gray-50 text-gray-700' : 'hover:bg-gray-100 text-gray-700' }}" data-tooltip="Activity Logs">
-                        <i class="fas fa-history w-5 text-center text-gray-600"></i>
+                    <a href="{{ route('admin.activity-logs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/activity-logs*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Activity Logs">
+                        <i class="fas fa-history w-5 text-center"></i>
                         <span class="sidebar-text">Activity Logs</span>
                     </a>
                 </div>
@@ -216,27 +551,27 @@
         </nav>
         
         <!-- User Info -->
-        <div class="p-4 border-t border-gray-200 bg-gray-50">
+        <div class="p-4 border-t border-gray-300 bg-[#F5F5F5]">
             <div class="flex items-center space-x-3 mb-3 sidebar-user-info">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-md">
+                <div class="w-10 h-10 bg-[#0066CC] flex items-center justify-center">
                     <span class="text-white font-semibold text-sm">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                 </div>
                 <div class="flex-1 sidebar-user-info">
-                    <div class="text-sm font-semibold text-gray-900">{{ Auth::user()->name }}</div>
+                    <div class="text-sm font-semibold text-black">{{ Auth::user()->name }}</div>
                     <div class="text-xs text-gray-500">{{ Auth::user()->role->display_name ?? Auth::user()->role->name ?? 'User' }}</div>
                     @if(Auth::user()->department)
-                    <div class="text-xs text-gray-400 mt-0.5">{{ Auth::user()->department->name }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5">{{ Auth::user()->department->name }}</div>
                     @endif
                 </div>
             </div>
             <div class="flex space-x-2 sidebar-text">
-                <a href="#" onclick="alert('Profile settings coming soon!'); return false;" class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors" data-tooltip="Profile">
+                <a href="#" onclick="alert('Profile settings coming soon!'); return false;" class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-white border border-gray-300 text-black text-xs font-medium hover:bg-[#F5F5F5] transition-colors" data-tooltip="Profile">
                     <i class="fas fa-user-cog"></i>
                     <span class="sidebar-text">Profile</span>
                 </a>
                 <form action="{{ route('logout') }}" method="POST" class="flex-1">
                     @csrf
-                    <button type="submit" class="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-colors" data-tooltip="Logout">
+                    <button type="submit" class="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-[#CC0000] text-white text-xs font-medium hover:bg-[#AA0000] transition-colors" data-tooltip="Logout">
                         <i class="fas fa-sign-out-alt"></i>
                         <span class="sidebar-text">Logout</span>
                     </button>
@@ -309,9 +644,16 @@
 
 .sidebar-collapsed #toolbox-section,
 .sidebar-collapsed #incidents-section,
+.sidebar-collapsed #risk-assessment-section,
+.sidebar-collapsed #communications-section,
+.sidebar-collapsed #ppe-section,
+.sidebar-collapsed #training-section,
+.sidebar-collapsed #environmental-section,
+.sidebar-collapsed #health-section,
+.sidebar-collapsed #procurement-section,
 .sidebar-collapsed #admin-section {
     padding-left: 0;
-    border-left: none;
+    border-left: none
 }
 
 .sidebar-collapsed .pl-4 {
@@ -422,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Restore section states
-    ['toolbox', 'incidents', 'admin'].forEach(sectionName => {
+    ['toolbox', 'incidents', 'risk-assessment', 'communications', 'ppe', 'training', 'environmental', 'health', 'procurement', 'admin'].forEach(sectionName => {
         const section = document.getElementById(sectionName + '-section');
         const chevron = document.getElementById(sectionName + '-chevron');
         const isSectionCollapsed = localStorage.getItem('section-' + sectionName + '-collapsed') === 'true';

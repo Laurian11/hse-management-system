@@ -91,6 +91,11 @@ class Department extends Model
         return $query->whereNull('parent_department_id');
     }
 
+    public function scopeForCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
+    }
+
     public function scopeByCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Incident;
 use App\Http\Requests\StoreIncidentRequest;
 use App\Http\Requests\UpdateIncidentRequest;
+use App\Notifications\IncidentReportedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -118,6 +119,27 @@ class IncidentController extends Controller
 
         $incident = Incident::create($data);
 
+        // Send notifications
+        $notifyUsers = collect();
+        
+        // Notify assigned user if assigned
+        if ($incident->assignedTo) {
+            $notifyUsers->push($incident->assignedTo);
+        }
+        
+        // Notify HSE managers
+        $hseManagers = \App\Models\User::where('company_id', $user->company_id)
+            ->whereHas('role', function($q) {
+                $q->whereIn('name', ['hse_manager', 'hse_officer', 'admin']);
+            })
+            ->get();
+        
+        $notifyUsers = $notifyUsers->merge($hseManagers)->unique('id');
+        
+        foreach ($notifyUsers as $notifyUser) {
+            $notifyUser->notify(new IncidentReportedNotification($incident));
+        }
+
         return redirect()
             ->route('incidents.show', $incident)
             ->with('success', 'Incident reported successfully!');
@@ -137,7 +159,8 @@ class IncidentController extends Controller
             'investigations',
             'investigation',
             'rootCauseAnalysis',
-            'capas',
+            'capas.relatedTrainingNeed',
+            'capas.assignedTo',
             'attachments',
             'approvedBy',
             // Risk Assessment Integration

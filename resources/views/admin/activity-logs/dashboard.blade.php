@@ -16,48 +16,48 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
+    <div class="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-3 md:p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Logs</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($stats['total_logs']) }}</p>
+                    <p class="text-xs md:text-sm font-medium text-gray-600">Total Logs</p>
+                    <p class="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{{ number_format($stats['total_logs']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-list text-blue-600 text-2xl"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-list text-blue-600 text-lg md:text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-3 md:p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Critical Events</p>
-                    <p class="text-3xl font-bold text-red-600 mt-2">{{ number_format($stats['critical_events']) }}</p>
+                    <p class="text-xs md:text-sm font-medium text-gray-600">Critical Events</p>
+                    <p class="text-xl md:text-3xl font-bold text-red-600 mt-1 md:mt-2">{{ number_format($stats['critical_events']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-lg md:text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-3 md:p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Login Attempts Today</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">{{ number_format($stats['login_attempts_today']) }}</p>
+                    <p class="text-xs md:text-sm font-medium text-gray-600">Login Attempts Today</p>
+                    <p class="text-xl md:text-3xl font-bold text-green-600 mt-1 md:mt-2">{{ number_format($stats['login_attempts_today']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-sign-in-alt text-green-600 text-2xl"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt text-green-600 text-lg md:text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-3 md:p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Failed Logins Today</p>
-                    <p class="text-3xl font-bold text-yellow-600 mt-2">{{ number_format($stats['failed_logins_today']) }}</p>
+                    <p class="text-xs md:text-sm font-medium text-gray-600">Failed Logins Today</p>
+                    <p class="text-xl md:text-3xl font-bold text-yellow-600 mt-1 md:mt-2">{{ number_format($stats['failed_logins_today']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-times-circle text-yellow-600 text-2xl"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times-circle text-yellow-600 text-lg md:text-2xl"></i>
                 </div>
             </div>
         </div>

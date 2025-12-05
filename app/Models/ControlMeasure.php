@@ -42,6 +42,11 @@ class ControlMeasure extends Model
         'last_maintenance_date',
         'next_maintenance_date',
         'related_capa_id',
+        'related_training_need_id',
+        'related_training_plan_id',
+        'training_required',
+        'training_verified',
+        'training_verified_at',
         'priority',
         'is_active',
     ];
@@ -56,6 +61,9 @@ class ControlMeasure extends Model
         'actual_cost' => 'decimal:2',
         'is_effective' => 'boolean',
         'is_active' => 'boolean',
+        'training_required' => 'boolean',
+        'training_verified' => 'boolean',
+        'training_verified_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -122,6 +130,16 @@ class ControlMeasure extends Model
         return $this->belongsTo(CAPA::class, 'related_capa_id');
     }
 
+    public function relatedTrainingNeed(): BelongsTo
+    {
+        return $this->belongsTo(TrainingNeedsAnalysis::class, 'related_training_need_id');
+    }
+
+    public function relatedTrainingPlan(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPlan::class, 'related_training_plan_id');
+    }
+
     // Scopes
     public function scopeForCompany($query, $companyId)
     {
@@ -183,5 +201,18 @@ class ControlMeasure extends Model
         return $this->target_completion_date && 
                $this->target_completion_date->isPast() && 
                in_array($this->status, ['planned', 'in_progress']);
+    }
+
+    public function requiresTraining(): bool
+    {
+        return $this->control_type === 'administrative' || $this->training_required;
+    }
+
+    public function verifyTraining(): bool
+    {
+        return $this->update([
+            'training_verified' => true,
+            'training_verified_at' => now(),
+        ]);
     }
 }

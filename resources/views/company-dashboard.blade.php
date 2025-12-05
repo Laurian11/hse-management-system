@@ -175,7 +175,7 @@
                 new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                        labels: @json($dashboardData['month_labels']),
                         datasets: [{
                             label: 'Incidents',
                             data: @json($dashboardData['monthly_incidents']),

@@ -25,6 +25,56 @@ use App\Http\Controllers\JSAController;
 use App\Http\Controllers\ControlMeasureController;
 use App\Http\Controllers\RiskReviewController;
 use App\Http\Controllers\RiskAssessmentDashboardController;
+use App\Http\Controllers\TrainingNeedsAnalysisController;
+use App\Http\Controllers\TrainingPlanController;
+use App\Http\Controllers\TrainingSessionController;
+use App\Http\Controllers\TrainingDashboardController;
+use App\Http\Controllers\TrainingCertificateController;
+use App\Http\Controllers\TrainingReportingController;
+use App\Http\Controllers\PPEController;
+use App\Http\Controllers\PPEItemController;
+use App\Http\Controllers\PPEIssuanceController;
+use App\Http\Controllers\PPEInspectionController;
+use App\Http\Controllers\PPESupplierController;
+use App\Http\Controllers\PPEComplianceReportController;
+use App\Http\Controllers\WorkPermitController;
+use App\Http\Controllers\WorkPermitTypeController;
+use App\Http\Controllers\WorkPermitDashboardController;
+use App\Http\Controllers\GCALogController;
+use App\Http\Controllers\InspectionDashboardController;
+use App\Http\Controllers\InspectionScheduleController;
+use App\Http\Controllers\InspectionController;
+use App\Http\Controllers\InspectionChecklistController;
+use App\Http\Controllers\NonConformanceReportController;
+use App\Http\Controllers\AuditController;
+use App\Http\Controllers\AuditFindingController;
+use App\Http\Controllers\EmergencyPreparednessDashboardController;
+use App\Http\Controllers\FireDrillController;
+use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\EmergencyEquipmentController;
+use App\Http\Controllers\EvacuationPlanController;
+use App\Http\Controllers\EmergencyResponseTeamController;
+use App\Http\Controllers\EnvironmentalDashboardController;
+use App\Http\Controllers\WasteManagementRecordController;
+use App\Http\Controllers\WasteTrackingRecordController;
+use App\Http\Controllers\EmissionMonitoringRecordController;
+use App\Http\Controllers\SpillIncidentController;
+use App\Http\Controllers\ResourceUsageRecordController;
+use App\Http\Controllers\ISO14001ComplianceRecordController;
+use App\Http\Controllers\HealthWellnessDashboardController;
+use App\Http\Controllers\HealthSurveillanceRecordController;
+use App\Http\Controllers\FirstAidLogbookEntryController;
+use App\Http\Controllers\ErgonomicAssessmentController;
+use App\Http\Controllers\WorkplaceHygieneInspectionController;
+use App\Http\Controllers\HealthCampaignController;
+use App\Http\Controllers\SickLeaveRecordController;
+use App\Http\Controllers\ProcurementDashboardController;
+use App\Http\Controllers\ProcurementRequestController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\EquipmentCertificationController;
+use App\Http\Controllers\StockConsumptionReportController;
+use App\Http\Controllers\SafetyMaterialGapAnalysisController;
+use App\Http\Controllers\QRCodeController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -58,6 +108,7 @@ Route::prefix('toolbox-talks')->name('toolbox-talks.')->group(function () {
     Route::get('/calendar', [ToolboxTalkController::class, 'calendar'])->name('calendar');
     Route::post('/', [ToolboxTalkController::class, 'store'])->name('store');
     Route::post('/bulk-import', [ToolboxTalkController::class, 'bulkImport'])->name('bulk-import');
+    Route::get('/bulk-import/template', [ToolboxTalkController::class, 'downloadTemplate'])->name('bulk-import-template');
     
     // Parameterized routes (must come after static routes)
     Route::get('/{toolboxTalk}', [ToolboxTalkController::class, 'show'])->name('show');
@@ -199,6 +250,72 @@ Route::prefix('risk-assessment')->name('risk-assessment.')->group(function () {
     Route::post('/risk-reviews/{riskReview}/complete', [RiskReviewController::class, 'complete'])->name('risk-reviews.complete');
 });
 
+// Training & Competency Module Routes
+Route::prefix('training')->name('training.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [TrainingDashboardController::class, 'dashboard'])->name('dashboard');
+    
+    // Training Needs Analysis (TNA)
+    Route::prefix('training-needs')->name('training-needs.')->group(function () {
+        Route::get('/', [TrainingNeedsAnalysisController::class, 'index'])->name('index');
+        Route::get('/export', [TrainingNeedsAnalysisController::class, 'export'])->name('export');
+        Route::get('/create', [TrainingNeedsAnalysisController::class, 'create'])->name('create');
+        Route::post('/', [TrainingNeedsAnalysisController::class, 'store'])->name('store');
+        Route::get('/{trainingNeedsAnalysis}', [TrainingNeedsAnalysisController::class, 'show'])->name('show');
+        Route::get('/{trainingNeedsAnalysis}/edit', [TrainingNeedsAnalysisController::class, 'edit'])->name('edit');
+        Route::put('/{trainingNeedsAnalysis}', [TrainingNeedsAnalysisController::class, 'update'])->name('update');
+        Route::delete('/{trainingNeedsAnalysis}', [TrainingNeedsAnalysisController::class, 'destroy'])->name('destroy');
+        Route::post('/{trainingNeedsAnalysis}/validate', [TrainingNeedsAnalysisController::class, 'validateTNA'])->name('validate');
+        
+        // Integration triggers
+        Route::post('/from-control-measure/{controlMeasure}', [TrainingNeedsAnalysisController::class, 'createFromControlMeasure'])->name('from-control-measure');
+        Route::post('/from-rca/{rootCauseAnalysis}', [TrainingNeedsAnalysisController::class, 'createFromRCA'])->name('from-rca');
+        Route::post('/from-capa/{capa}', [TrainingNeedsAnalysisController::class, 'createFromCAPA'])->name('from-capa');
+    });
+    
+    // Training Plans
+    Route::prefix('training-plans')->name('training-plans.')->group(function () {
+        Route::get('/', [TrainingPlanController::class, 'index'])->name('index');
+        Route::get('/export', [TrainingPlanController::class, 'export'])->name('export');
+        Route::get('/create', [TrainingPlanController::class, 'create'])->name('create');
+        Route::post('/', [TrainingPlanController::class, 'store'])->name('store');
+        Route::get('/{trainingPlan}', [TrainingPlanController::class, 'show'])->name('show');
+        Route::get('/{trainingPlan}/edit', [TrainingPlanController::class, 'edit'])->name('edit');
+        Route::put('/{trainingPlan}', [TrainingPlanController::class, 'update'])->name('update');
+        Route::delete('/{trainingPlan}', [TrainingPlanController::class, 'destroy'])->name('destroy');
+        Route::post('/{trainingPlan}/approve', [TrainingPlanController::class, 'approve'])->name('approve');
+        Route::post('/{trainingPlan}/approve-budget', [TrainingPlanController::class, 'approveBudget'])->name('approve-budget');
+    });
+    
+    // Training Sessions
+    Route::prefix('training-sessions')->name('training-sessions.')->group(function () {
+        Route::get('/', [TrainingSessionController::class, 'index'])->name('index');
+        Route::get('/export', [TrainingSessionController::class, 'export'])->name('export');
+        Route::get('/calendar', [TrainingSessionController::class, 'calendar'])->name('calendar');
+        Route::get('/create', [TrainingSessionController::class, 'create'])->name('create');
+        Route::post('/', [TrainingSessionController::class, 'store'])->name('store');
+        Route::get('/{trainingSession}', [TrainingSessionController::class, 'show'])->name('show');
+        Route::get('/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->name('edit');
+        Route::put('/{trainingSession}', [TrainingSessionController::class, 'update'])->name('update');
+        Route::delete('/{trainingSession}', [TrainingSessionController::class, 'destroy'])->name('destroy');
+        Route::post('/{trainingSession}/start', [TrainingSessionController::class, 'start'])->name('start');
+        Route::post('/{trainingSession}/complete', [TrainingSessionController::class, 'complete'])->name('complete');
+        Route::post('/{trainingSession}/attendance', [TrainingSessionController::class, 'markAttendance'])->name('attendance');
+    });
+    
+    // Training Certificates
+    Route::prefix('certificates')->name('certificates.')->group(function () {
+        Route::get('/{certificate}', [TrainingCertificateController::class, 'show'])->name('show');
+        Route::get('/{certificate}/generate-pdf', [TrainingCertificateController::class, 'generatePDF'])->name('generate-pdf');
+    });
+    
+    // Training Reporting
+    Route::prefix('reporting')->name('reporting.')->group(function () {
+        Route::get('/', [TrainingReportingController::class, 'index'])->name('index');
+        Route::get('/export', [TrainingReportingController::class, 'export'])->name('export');
+    });
+});
+
 // Administrative Module Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
@@ -302,4 +419,442 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/export', [ActivityLogController::class, 'export'])->name('export');
         Route::post('/cleanup', [ActivityLogController::class, 'cleanup'])->name('cleanup');
     });
+});
+
+// PPE Management Module Routes
+Route::prefix('ppe')->name('ppe.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [PPEController::class, 'dashboard'])->name('dashboard');
+    
+    // PPE Inventory Management
+    Route::prefix('items')->name('items.')->group(function () {
+        Route::get('/', [PPEItemController::class, 'index'])->name('index');
+        Route::get('/export', [PPEItemController::class, 'export'])->name('export');
+        Route::get('/create', [PPEItemController::class, 'create'])->name('create');
+        Route::post('/', [PPEItemController::class, 'store'])->name('store');
+        Route::get('/{item}', [PPEItemController::class, 'show'])->name('show');
+        Route::get('/{item}/edit', [PPEItemController::class, 'edit'])->name('edit');
+        Route::put('/{item}', [PPEItemController::class, 'update'])->name('update');
+        Route::delete('/{item}', [PPEItemController::class, 'destroy'])->name('destroy');
+        Route::post('/{item}/adjust-stock', [PPEItemController::class, 'adjustStock'])->name('adjust-stock');
+    });
+    
+    // PPE Issuance & Returns
+    Route::prefix('issuances')->name('issuances.')->group(function () {
+        Route::get('/', [PPEIssuanceController::class, 'index'])->name('index');
+        Route::get('/create', [PPEIssuanceController::class, 'create'])->name('create');
+        Route::post('/', [PPEIssuanceController::class, 'store'])->name('store');
+        Route::post('/bulk-issue', [PPEIssuanceController::class, 'bulkIssue'])->name('bulk-issue');
+        Route::get('/{issuance}', [PPEIssuanceController::class, 'show'])->name('show');
+        Route::post('/{issuance}/return', [PPEIssuanceController::class, 'returnItem'])->name('return');
+    });
+    
+    // PPE Inspections
+    Route::prefix('inspections')->name('inspections.')->group(function () {
+        Route::get('/', [PPEInspectionController::class, 'index'])->name('index');
+        Route::get('/create', [PPEInspectionController::class, 'create'])->name('create');
+        Route::post('/', [PPEInspectionController::class, 'store'])->name('store');
+        Route::get('/{inspection}', [PPEInspectionController::class, 'show'])->name('show');
+    });
+    
+    // PPE Suppliers
+    Route::prefix('suppliers')->name('suppliers.')->group(function () {
+        Route::get('/', [PPESupplierController::class, 'index'])->name('index');
+        Route::get('/create', [PPESupplierController::class, 'create'])->name('create');
+        Route::post('/', [PPESupplierController::class, 'store'])->name('store');
+        Route::get('/{supplier}', [PPESupplierController::class, 'show'])->name('show');
+        Route::get('/{supplier}/edit', [PPESupplierController::class, 'edit'])->name('edit');
+        Route::put('/{supplier}', [PPESupplierController::class, 'update'])->name('update');
+        Route::delete('/{supplier}', [PPESupplierController::class, 'destroy'])->name('destroy');
+    });
+    
+    // PPE Compliance Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [PPEComplianceReportController::class, 'index'])->name('index');
+        Route::get('/create', [PPEComplianceReportController::class, 'create'])->name('create');
+        Route::post('/', [PPEComplianceReportController::class, 'store'])->name('store');
+        Route::get('/{report}', [PPEComplianceReportController::class, 'show'])->name('show');
+    });
+});
+
+// Permit to Work (PTW) Module Routes
+Route::middleware('auth')->prefix('work-permits')->name('work-permits.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [WorkPermitDashboardController::class, 'dashboard'])->name('dashboard');
+    
+    // Work Permits
+    Route::get('/', [WorkPermitController::class, 'index'])->name('index');
+    Route::get('/create', [WorkPermitController::class, 'create'])->name('create');
+    Route::post('/', [WorkPermitController::class, 'store'])->name('store');
+    
+    // Work Permit Types (must come before parameterized routes)
+    Route::prefix('types')->name('types.')->group(function () {
+        Route::get('/', [WorkPermitTypeController::class, 'index'])->name('index');
+        Route::get('/create', [WorkPermitTypeController::class, 'create'])->name('create');
+        Route::post('/', [WorkPermitTypeController::class, 'store'])->name('store');
+        Route::get('/{workPermitType}', [WorkPermitTypeController::class, 'show'])->name('show');
+        Route::get('/{workPermitType}/edit', [WorkPermitTypeController::class, 'edit'])->name('edit');
+        Route::put('/{workPermitType}', [WorkPermitTypeController::class, 'update'])->name('update');
+        Route::delete('/{workPermitType}', [WorkPermitTypeController::class, 'destroy'])->name('destroy');
+    });
+    
+    // GCLA Logs (must come before parameterized routes)
+    Route::prefix('gca-logs')->name('gca-logs.')->group(function () {
+        Route::get('/', [GCALogController::class, 'index'])->name('index');
+        Route::get('/create', [GCALogController::class, 'create'])->name('create');
+        Route::post('/', [GCALogController::class, 'store'])->name('store');
+        Route::get('/{gcaLog}', [GCALogController::class, 'show'])->name('show');
+        Route::get('/{gcaLog}/edit', [GCALogController::class, 'edit'])->name('edit');
+        Route::put('/{gcaLog}', [GCALogController::class, 'update'])->name('update');
+        Route::delete('/{gcaLog}', [GCALogController::class, 'destroy'])->name('destroy');
+        Route::post('/{gcaLog}/complete-action', [GCALogController::class, 'completeAction'])->name('complete-action');
+        Route::post('/{gcaLog}/verify', [GCALogController::class, 'verify'])->name('verify');
+    });
+    
+    // Work Permit parameterized routes (must come after static routes)
+    Route::get('/{workPermit}', [WorkPermitController::class, 'show'])->name('show');
+    Route::get('/{workPermit}/edit', [WorkPermitController::class, 'edit'])->name('edit');
+    Route::put('/{workPermit}', [WorkPermitController::class, 'update'])->name('update');
+    Route::delete('/{workPermit}', [WorkPermitController::class, 'destroy'])->name('destroy');
+    
+    // Workflow actions
+    Route::post('/{workPermit}/submit', [WorkPermitController::class, 'submit'])->name('submit');
+    Route::post('/{workPermit}/approve', [WorkPermitController::class, 'approve'])->name('approve');
+    Route::post('/{workPermit}/reject', [WorkPermitController::class, 'reject'])->name('reject');
+    Route::post('/{workPermit}/activate', [WorkPermitController::class, 'activate'])->name('activate');
+    Route::post('/{workPermit}/close', [WorkPermitController::class, 'close'])->name('close');
+    Route::post('/{workPermit}/verify', [WorkPermitController::class, 'verify'])->name('verify');
+});
+
+// Inspection & Audit Module Routes
+Route::middleware('auth')->prefix('inspections')->name('inspections.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [InspectionDashboardController::class, 'dashboard'])->name('dashboard');
+    
+    // Inspection Schedules
+    Route::prefix('schedules')->name('schedules.')->group(function () {
+        Route::get('/', [InspectionScheduleController::class, 'index'])->name('index');
+        Route::get('/create', [InspectionScheduleController::class, 'create'])->name('create');
+        Route::post('/', [InspectionScheduleController::class, 'store'])->name('store');
+        Route::get('/{schedule}', [InspectionScheduleController::class, 'show'])->name('show');
+        Route::get('/{schedule}/edit', [InspectionScheduleController::class, 'edit'])->name('edit');
+        Route::put('/{schedule}', [InspectionScheduleController::class, 'update'])->name('update');
+        Route::delete('/{schedule}', [InspectionScheduleController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Inspections
+    Route::get('/', [InspectionController::class, 'index'])->name('index');
+    Route::get('/create', [InspectionController::class, 'create'])->name('create');
+    Route::post('/', [InspectionController::class, 'store'])->name('store');
+    Route::get('/{inspection}', [InspectionController::class, 'show'])->name('show');
+    Route::get('/{inspection}/edit', [InspectionController::class, 'edit'])->name('edit');
+    Route::put('/{inspection}', [InspectionController::class, 'update'])->name('update');
+    Route::delete('/{inspection}', [InspectionController::class, 'destroy'])->name('destroy');
+    
+    // Inspection Checklists
+    Route::prefix('checklists')->name('checklists.')->group(function () {
+        Route::get('/', [InspectionChecklistController::class, 'index'])->name('index');
+        Route::get('/create', [InspectionChecklistController::class, 'create'])->name('create');
+        Route::post('/', [InspectionChecklistController::class, 'store'])->name('store');
+        Route::get('/{checklist}', [InspectionChecklistController::class, 'show'])->name('show');
+        Route::get('/{checklist}/edit', [InspectionChecklistController::class, 'edit'])->name('edit');
+        Route::put('/{checklist}', [InspectionChecklistController::class, 'update'])->name('update');
+        Route::delete('/{checklist}', [InspectionChecklistController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Non-Conformance Reports (NCR)
+    Route::prefix('ncrs')->name('ncrs.')->group(function () {
+        Route::get('/', [NonConformanceReportController::class, 'index'])->name('index');
+        Route::get('/create', [NonConformanceReportController::class, 'create'])->name('create');
+        Route::post('/', [NonConformanceReportController::class, 'store'])->name('store');
+        Route::get('/{ncr}', [NonConformanceReportController::class, 'show'])->name('show');
+        Route::get('/{ncr}/edit', [NonConformanceReportController::class, 'edit'])->name('edit');
+        Route::put('/{ncr}', [NonConformanceReportController::class, 'update'])->name('update');
+        Route::delete('/{ncr}', [NonConformanceReportController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Audits
+    Route::prefix('audits')->name('audits.')->group(function () {
+        Route::get('/', [AuditController::class, 'index'])->name('index');
+        Route::get('/create', [AuditController::class, 'create'])->name('create');
+        Route::post('/', [AuditController::class, 'store'])->name('store');
+        Route::get('/{audit}', [AuditController::class, 'show'])->name('show');
+        Route::get('/{audit}/edit', [AuditController::class, 'edit'])->name('edit');
+        Route::put('/{audit}', [AuditController::class, 'update'])->name('update');
+        Route::delete('/{audit}', [AuditController::class, 'destroy'])->name('destroy');
+        
+        // Audit Findings
+        Route::prefix('{audit}/findings')->name('findings.')->group(function () {
+            Route::get('/', [AuditFindingController::class, 'index'])->name('index');
+            Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
+            Route::post('/', [AuditFindingController::class, 'store'])->name('store');
+            Route::get('/{finding}', [AuditFindingController::class, 'show'])->name('show');
+            Route::get('/{finding}/edit', [AuditFindingController::class, 'edit'])->name('edit');
+            Route::put('/{finding}', [AuditFindingController::class, 'update'])->name('update');
+            Route::delete('/{finding}', [AuditFindingController::class, 'destroy'])->name('destroy');
+        });
+    });
+    
+    // Audit Findings (Standalone)
+    Route::prefix('audit-findings')->name('audit-findings.')->group(function () {
+        Route::get('/', [AuditFindingController::class, 'index'])->name('index');
+        Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
+        Route::post('/', [AuditFindingController::class, 'store'])->name('store');
+        Route::get('/{finding}', [AuditFindingController::class, 'show'])->name('show');
+        Route::get('/{finding}/edit', [AuditFindingController::class, 'edit'])->name('edit');
+        Route::put('/{finding}', [AuditFindingController::class, 'update'])->name('update');
+        Route::delete('/{finding}', [AuditFindingController::class, 'destroy'])->name('destroy');
+    });
+});
+
+// Emergency Preparedness & Response Module Routes
+Route::middleware('auth')->prefix('emergency')->name('emergency.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [EmergencyPreparednessDashboardController::class, 'dashboard'])->name('dashboard');
+    
+    // Fire Drills
+    Route::prefix('fire-drills')->name('fire-drills.')->group(function () {
+        Route::get('/', [FireDrillController::class, 'index'])->name('index');
+        Route::get('/create', [FireDrillController::class, 'create'])->name('create');
+        Route::post('/', [FireDrillController::class, 'store'])->name('store');
+        Route::get('/{fireDrill}', [FireDrillController::class, 'show'])->name('show');
+        Route::get('/{fireDrill}/edit', [FireDrillController::class, 'edit'])->name('edit');
+        Route::put('/{fireDrill}', [FireDrillController::class, 'update'])->name('update');
+        Route::delete('/{fireDrill}', [FireDrillController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Emergency Contacts
+    Route::prefix('contacts')->name('contacts.')->group(function () {
+        Route::get('/', [EmergencyContactController::class, 'index'])->name('index');
+        Route::get('/create', [EmergencyContactController::class, 'create'])->name('create');
+        Route::post('/', [EmergencyContactController::class, 'store'])->name('store');
+        Route::get('/{contact}', [EmergencyContactController::class, 'show'])->name('show');
+        Route::get('/{contact}/edit', [EmergencyContactController::class, 'edit'])->name('edit');
+        Route::put('/{contact}', [EmergencyContactController::class, 'update'])->name('update');
+        Route::delete('/{contact}', [EmergencyContactController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Emergency Equipment
+    Route::prefix('equipment')->name('equipment.')->group(function () {
+        Route::get('/', [EmergencyEquipmentController::class, 'index'])->name('index');
+        Route::get('/create', [EmergencyEquipmentController::class, 'create'])->name('create');
+        Route::post('/', [EmergencyEquipmentController::class, 'store'])->name('store');
+        Route::get('/{equipment}', [EmergencyEquipmentController::class, 'show'])->name('show');
+        Route::get('/{equipment}/edit', [EmergencyEquipmentController::class, 'edit'])->name('edit');
+        Route::put('/{equipment}', [EmergencyEquipmentController::class, 'update'])->name('update');
+        Route::delete('/{equipment}', [EmergencyEquipmentController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Evacuation Plans
+    Route::prefix('evacuation-plans')->name('evacuation-plans.')->group(function () {
+        Route::get('/', [EvacuationPlanController::class, 'index'])->name('index');
+        Route::get('/create', [EvacuationPlanController::class, 'create'])->name('create');
+        Route::post('/', [EvacuationPlanController::class, 'store'])->name('store');
+        Route::get('/{plan}', [EvacuationPlanController::class, 'show'])->name('show');
+        Route::get('/{plan}/edit', [EvacuationPlanController::class, 'edit'])->name('edit');
+        Route::put('/{plan}', [EvacuationPlanController::class, 'update'])->name('update');
+        Route::delete('/{plan}', [EvacuationPlanController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Emergency Response Teams
+    Route::prefix('response-teams')->name('response-teams.')->group(function () {
+        Route::get('/', [EmergencyResponseTeamController::class, 'index'])->name('index');
+        Route::get('/create', [EmergencyResponseTeamController::class, 'create'])->name('create');
+        Route::post('/', [EmergencyResponseTeamController::class, 'store'])->name('store');
+        Route::get('/{team}', [EmergencyResponseTeamController::class, 'show'])->name('show');
+        Route::get('/{team}/edit', [EmergencyResponseTeamController::class, 'edit'])->name('edit');
+        Route::put('/{team}', [EmergencyResponseTeamController::class, 'update'])->name('update');
+        Route::delete('/{team}', [EmergencyResponseTeamController::class, 'destroy'])->name('destroy');
+    });
+});
+
+// Environmental Management Module Routes
+Route::middleware('auth')->prefix('environmental')->name('environmental.')->group(function () {
+        Route::get('/dashboard', [EnvironmentalDashboardController::class, 'dashboard'])->name('dashboard');
+        
+        Route::prefix('waste-management')->name('waste-management.')->group(function () {
+            Route::get('/', [WasteManagementRecordController::class, 'index'])->name('index');
+            Route::get('/create', [WasteManagementRecordController::class, 'create'])->name('create');
+            Route::post('/', [WasteManagementRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [WasteManagementRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [WasteManagementRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [WasteManagementRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [WasteManagementRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('waste-tracking')->name('waste-tracking.')->group(function () {
+            Route::get('/', [WasteTrackingRecordController::class, 'index'])->name('index');
+            Route::get('/create', [WasteTrackingRecordController::class, 'create'])->name('create');
+            Route::post('/', [WasteTrackingRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [WasteTrackingRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [WasteTrackingRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [WasteTrackingRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [WasteTrackingRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('emissions')->name('emissions.')->group(function () {
+            Route::get('/', [EmissionMonitoringRecordController::class, 'index'])->name('index');
+            Route::get('/create', [EmissionMonitoringRecordController::class, 'create'])->name('create');
+            Route::post('/', [EmissionMonitoringRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [EmissionMonitoringRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [EmissionMonitoringRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [EmissionMonitoringRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [EmissionMonitoringRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('spills')->name('spills.')->group(function () {
+            Route::get('/', [SpillIncidentController::class, 'index'])->name('index');
+            Route::get('/create', [SpillIncidentController::class, 'create'])->name('create');
+            Route::post('/', [SpillIncidentController::class, 'store'])->name('store');
+            Route::get('/{incident}', [SpillIncidentController::class, 'show'])->name('show');
+            Route::get('/{incident}/edit', [SpillIncidentController::class, 'edit'])->name('edit');
+            Route::put('/{incident}', [SpillIncidentController::class, 'update'])->name('update');
+            Route::delete('/{incident}', [SpillIncidentController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('resource-usage')->name('resource-usage.')->group(function () {
+            Route::get('/', [ResourceUsageRecordController::class, 'index'])->name('index');
+            Route::get('/create', [ResourceUsageRecordController::class, 'create'])->name('create');
+            Route::post('/', [ResourceUsageRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [ResourceUsageRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [ResourceUsageRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [ResourceUsageRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [ResourceUsageRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('iso14001')->name('iso14001.')->group(function () {
+            Route::get('/', [ISO14001ComplianceRecordController::class, 'index'])->name('index');
+            Route::get('/create', [ISO14001ComplianceRecordController::class, 'create'])->name('create');
+            Route::post('/', [ISO14001ComplianceRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [ISO14001ComplianceRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [ISO14001ComplianceRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [ISO14001ComplianceRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [ISO14001ComplianceRecordController::class, 'destroy'])->name('destroy');
+        });
+});
+
+// Health & Wellness Module Routes
+Route::middleware('auth')->prefix('health')->name('health.')->group(function () {
+        Route::get('/dashboard', [HealthWellnessDashboardController::class, 'dashboard'])->name('dashboard');
+        
+        Route::prefix('surveillance')->name('surveillance.')->group(function () {
+            Route::get('/', [HealthSurveillanceRecordController::class, 'index'])->name('index');
+            Route::get('/create', [HealthSurveillanceRecordController::class, 'create'])->name('create');
+            Route::post('/', [HealthSurveillanceRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [HealthSurveillanceRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [HealthSurveillanceRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [HealthSurveillanceRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [HealthSurveillanceRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('first-aid')->name('first-aid.')->group(function () {
+            Route::get('/', [FirstAidLogbookEntryController::class, 'index'])->name('index');
+            Route::get('/create', [FirstAidLogbookEntryController::class, 'create'])->name('create');
+            Route::post('/', [FirstAidLogbookEntryController::class, 'store'])->name('store');
+            Route::get('/{entry}', [FirstAidLogbookEntryController::class, 'show'])->name('show');
+            Route::get('/{entry}/edit', [FirstAidLogbookEntryController::class, 'edit'])->name('edit');
+            Route::put('/{entry}', [FirstAidLogbookEntryController::class, 'update'])->name('update');
+            Route::delete('/{entry}', [FirstAidLogbookEntryController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('ergonomic')->name('ergonomic.')->group(function () {
+            Route::get('/', [ErgonomicAssessmentController::class, 'index'])->name('index');
+            Route::get('/create', [ErgonomicAssessmentController::class, 'create'])->name('create');
+            Route::post('/', [ErgonomicAssessmentController::class, 'store'])->name('store');
+            Route::get('/{assessment}', [ErgonomicAssessmentController::class, 'show'])->name('show');
+            Route::get('/{assessment}/edit', [ErgonomicAssessmentController::class, 'edit'])->name('edit');
+            Route::put('/{assessment}', [ErgonomicAssessmentController::class, 'update'])->name('update');
+            Route::delete('/{assessment}', [ErgonomicAssessmentController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('hygiene')->name('hygiene.')->group(function () {
+            Route::get('/', [WorkplaceHygieneInspectionController::class, 'index'])->name('index');
+            Route::get('/create', [WorkplaceHygieneInspectionController::class, 'create'])->name('create');
+            Route::post('/', [WorkplaceHygieneInspectionController::class, 'store'])->name('store');
+            Route::get('/{inspection}', [WorkplaceHygieneInspectionController::class, 'show'])->name('show');
+            Route::get('/{inspection}/edit', [WorkplaceHygieneInspectionController::class, 'edit'])->name('edit');
+            Route::put('/{inspection}', [WorkplaceHygieneInspectionController::class, 'update'])->name('update');
+            Route::delete('/{inspection}', [WorkplaceHygieneInspectionController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('campaigns')->name('campaigns.')->group(function () {
+            Route::get('/', [HealthCampaignController::class, 'index'])->name('index');
+            Route::get('/create', [HealthCampaignController::class, 'create'])->name('create');
+            Route::post('/', [HealthCampaignController::class, 'store'])->name('store');
+            Route::get('/{campaign}', [HealthCampaignController::class, 'show'])->name('show');
+            Route::get('/{campaign}/edit', [HealthCampaignController::class, 'edit'])->name('edit');
+            Route::put('/{campaign}', [HealthCampaignController::class, 'update'])->name('update');
+            Route::delete('/{campaign}', [HealthCampaignController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('sick-leave')->name('sick-leave.')->group(function () {
+            Route::get('/', [SickLeaveRecordController::class, 'index'])->name('index');
+            Route::get('/create', [SickLeaveRecordController::class, 'create'])->name('create');
+            Route::post('/', [SickLeaveRecordController::class, 'store'])->name('store');
+            Route::get('/{record}', [SickLeaveRecordController::class, 'show'])->name('show');
+            Route::get('/{record}/edit', [SickLeaveRecordController::class, 'edit'])->name('edit');
+            Route::put('/{record}', [SickLeaveRecordController::class, 'update'])->name('update');
+            Route::delete('/{record}', [SickLeaveRecordController::class, 'destroy'])->name('destroy');
+        });
+});
+
+// Procurement & Resource Management Module Routes
+Route::middleware('auth')->prefix('procurement')->name('procurement.')->group(function () {
+        Route::get('/dashboard', [ProcurementDashboardController::class, 'dashboard'])->name('dashboard');
+        
+        Route::prefix('requests')->name('requests.')->group(function () {
+            Route::get('/', [ProcurementRequestController::class, 'index'])->name('index');
+            Route::get('/create', [ProcurementRequestController::class, 'create'])->name('create');
+            Route::post('/', [ProcurementRequestController::class, 'store'])->name('store');
+            Route::get('/{request}', [ProcurementRequestController::class, 'show'])->name('show');
+            Route::get('/{request}/edit', [ProcurementRequestController::class, 'edit'])->name('edit');
+            Route::put('/{request}', [ProcurementRequestController::class, 'update'])->name('update');
+            Route::delete('/{request}', [ProcurementRequestController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('suppliers')->name('suppliers.')->group(function () {
+            Route::get('/', [SupplierController::class, 'index'])->name('index');
+            Route::get('/create', [SupplierController::class, 'create'])->name('create');
+            Route::post('/', [SupplierController::class, 'store'])->name('store');
+            Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show');
+            Route::get('/{supplier}/edit', [SupplierController::class, 'edit'])->name('edit');
+            Route::put('/{supplier}', [SupplierController::class, 'update'])->name('update');
+            Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('equipment-certifications')->name('equipment-certifications.')->group(function () {
+            Route::get('/', [EquipmentCertificationController::class, 'index'])->name('index');
+            Route::get('/create', [EquipmentCertificationController::class, 'create'])->name('create');
+            Route::post('/', [EquipmentCertificationController::class, 'store'])->name('store');
+            Route::get('/{certification}', [EquipmentCertificationController::class, 'show'])->name('show');
+            Route::get('/{certification}/edit', [EquipmentCertificationController::class, 'edit'])->name('edit');
+            Route::put('/{certification}', [EquipmentCertificationController::class, 'update'])->name('update');
+            Route::delete('/{certification}', [EquipmentCertificationController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('stock-reports')->name('stock-reports.')->group(function () {
+            Route::get('/', [StockConsumptionReportController::class, 'index'])->name('index');
+            Route::get('/create', [StockConsumptionReportController::class, 'create'])->name('create');
+            Route::post('/', [StockConsumptionReportController::class, 'store'])->name('store');
+            Route::get('/{report}', [StockConsumptionReportController::class, 'show'])->name('show');
+            Route::get('/{report}/edit', [StockConsumptionReportController::class, 'edit'])->name('edit');
+            Route::put('/{report}', [StockConsumptionReportController::class, 'update'])->name('update');
+            Route::delete('/{report}', [StockConsumptionReportController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('gap-analysis')->name('gap-analysis.')->group(function () {
+            Route::get('/', [SafetyMaterialGapAnalysisController::class, 'index'])->name('index');
+            Route::get('/create', [SafetyMaterialGapAnalysisController::class, 'create'])->name('create');
+            Route::post('/', [SafetyMaterialGapAnalysisController::class, 'store'])->name('store');
+            Route::get('/{analysis}', [SafetyMaterialGapAnalysisController::class, 'show'])->name('show');
+            Route::get('/{analysis}/edit', [SafetyMaterialGapAnalysisController::class, 'edit'])->name('edit');
+            Route::put('/{analysis}', [SafetyMaterialGapAnalysisController::class, 'update'])->name('update');
+            Route::delete('/{analysis}', [SafetyMaterialGapAnalysisController::class, 'destroy'])->name('destroy');
+        });
+});
+
+// QR Code Routes
+Route::middleware('auth')->prefix('qr')->name('qr.')->group(function () {
+    Route::get('/{type}/{id}', [QRCodeController::class, 'scan'])->name('scan');
+    Route::get('/{type}/{id}/printable', [QRCodeController::class, 'printable'])->name('printable');
 });

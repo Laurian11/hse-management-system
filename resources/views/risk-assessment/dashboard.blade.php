@@ -26,79 +26,79 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
             <!-- Hazards -->
-            <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-14 h-14 bg-red-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            <div class="bg-white rounded-lg shadow p-3 md:p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between mb-2 md:mb-4">
+                    <div class="w-10 h-10 md:w-14 md:h-14 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-lg md:text-2xl"></i>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_hazards']) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ $stats['identified_hazards'] }} identified</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ number_format($stats['total_hazards']) }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 md:mt-1">{{ $stats['identified_hazards'] }} identified</p>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-700 mb-1">Total Hazards</h3>
-                <div class="flex items-center mt-2">
+                <h3 class="text-xs md:text-sm font-medium text-gray-700 mb-1">Total Hazards</h3>
+                <div class="flex items-center mt-1 md:mt-2">
                     <a href="{{ route('risk-assessment.hazards.index') }}" class="text-xs text-blue-600 hover:text-blue-700">
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+                        View All <i class="fas fa-arrow-right ml-1 hidden md:inline"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Risk Assessments -->
-            <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-clipboard-list text-orange-600 text-2xl"></i>
+            <div class="bg-white rounded-lg shadow p-3 md:p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between mb-2 md:mb-4">
+                    <div class="w-10 h-10 md:w-14 md:h-14 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-orange-600 text-lg md:text-2xl"></i>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_risk_assessments']) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ $stats['high_risk_assessments'] }} high risk</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ number_format($stats['total_risk_assessments']) }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 md:mt-1">{{ $stats['high_risk_assessments'] }} high risk</p>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-700 mb-1">Risk Assessments</h3>
-                <div class="flex items-center mt-2">
+                <h3 class="text-xs md:text-sm font-medium text-gray-700 mb-1">Risk Assessments</h3>
+                <div class="flex items-center mt-1 md:mt-2">
                     <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="text-xs text-blue-600 hover:text-blue-700">
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+                        View All <i class="fas fa-arrow-right ml-1 hidden md:inline"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Control Measures -->
-            <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
+            <div class="bg-white rounded-lg shadow p-3 md:p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between mb-2 md:mb-4">
+                    <div class="w-10 h-10 md:w-14 md:h-14 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-green-600 text-lg md:text-2xl"></i>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_control_measures']) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ $stats['verified_controls'] }} verified</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ number_format($stats['total_control_measures']) }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 md:mt-1">{{ $stats['verified_controls'] }} verified</p>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-700 mb-1">Control Measures</h3>
-                <div class="flex items-center mt-2">
+                <h3 class="text-xs md:text-sm font-medium text-gray-700 mb-1">Control Measures</h3>
+                <div class="flex items-center mt-1 md:mt-2">
                     <a href="{{ route('risk-assessment.control-measures.index') }}" class="text-xs text-blue-600 hover:text-blue-700">
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+                        View All <i class="fas fa-arrow-right ml-1 hidden md:inline"></i>
                     </a>
                 </div>
             </div>
 
             <!-- Overdue Reviews -->
-            <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="w-14 h-14 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-sync-alt text-yellow-600 text-2xl"></i>
+            <div class="bg-white rounded-lg shadow p-3 md:p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between mb-2 md:mb-4">
+                    <div class="w-10 h-10 md:w-14 md:h-14 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-sync-alt text-yellow-600 text-lg md:text-2xl"></i>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['overdue_reviews']) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ $stats['due_for_review'] }} due</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ number_format($stats['overdue_reviews']) }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 md:mt-1">{{ $stats['due_for_review'] }} due</p>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-700 mb-1">Overdue Reviews</h3>
-                <div class="flex items-center mt-2">
+                <h3 class="text-xs md:text-sm font-medium text-gray-700 mb-1">Overdue Reviews</h3>
+                <div class="flex items-center mt-1 md:mt-2">
                     <a href="{{ route('risk-assessment.risk-reviews.index') }}?overdue=1" class="text-xs text-blue-600 hover:text-blue-700">
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+                        View All <i class="fas fa-arrow-right ml-1 hidden md:inline"></i>
                     </a>
                 </div>
             </div>

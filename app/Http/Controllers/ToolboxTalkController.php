@@ -1057,7 +1057,7 @@ class ToolboxTalkController extends Controller
         }
 
         $request->validate([
-            'file' => 'required|mimes:csv,txt|max:5120',
+            'file' => 'required|mimes:csv,txt,xlsx,xls|max:10240',
         ]);
 
         $companyId = Auth::user()->company_id;
@@ -1069,38 +1069,81 @@ class ToolboxTalkController extends Controller
         ];
 
         try {
-            $handle = fopen($file->getRealPath(), 'r');
-            $header = fgetcsv($handle); // Skip header row
+            $extension = $file->getClientOriginalExtension();
             
-            while (($row = fgetcsv($handle)) !== false) {
-                try {
-                    $talk = ToolboxTalk::create([
-                        'reference_number' => 'TT-' . date('Ym') . '-TEMP',
-                        'company_id' => $companyId,
-                        'title' => $row[0] ?? 'Imported Talk',
-                        'description' => $row[1] ?? null,
-                        'scheduled_date' => $row[2] ?? now(),
-                        'start_time' => ($row[2] ?? now()) . ' ' . ($row[3] ?? '09:00'),
-                        'duration_minutes' => (int)($row[4] ?? 15),
-                        'location' => $row[5] ?? 'Main Hall',
-                        'talk_type' => $row[6] ?? 'safety',
-                        'department_id' => !empty($row[7]) ? (int)$row[7] : null,
-                        'supervisor_id' => !empty($row[8]) ? (int)$row[8] : null,
-                        'status' => 'scheduled',
-                        'biometric_required' => isset($row[9]) ? (bool)$row[9] : true,
-                    ]);
-                    
-                    // Generate proper reference number
-                    $talk->reference_number = $talk->generateReferenceNumber();
-                    $talk->save();
-                    
-                    $results['success']++;
-                } catch (\Exception $e) {
-                    $results['failed']++;
-                    $results['errors'][] = "Row " . ($results['success'] + $results['failed']) . ": " . $e->getMessage();
+            if (in_array($extension, ['xlsx', 'xls'])) {
+                // Excel import
+                $data = Excel::toArray([], $file);
+                $rows = $data[0] ?? [];
+                
+                // Skip header row
+                array_shift($rows);
+                
+                foreach ($rows as $rowIndex => $row) {
+                    try {
+                        $talk = ToolboxTalk::create([
+                            'reference_number' => 'TT-' . date('Ym') . '-TEMP',
+                            'company_id' => $companyId,
+                            'title' => $row[0] ?? 'Imported Talk',
+                            'description' => $row[1] ?? null,
+                            'scheduled_date' => $row[2] ?? now(),
+                            'start_time' => ($row[2] ?? now()) . ' ' . ($row[3] ?? '09:00'),
+                            'duration_minutes' => (int)($row[4] ?? 15),
+                            'location' => $row[5] ?? 'Main Hall',
+                            'talk_type' => $row[6] ?? 'safety',
+                            'department_id' => !empty($row[7]) ? (int)$row[7] : null,
+                            'supervisor_id' => !empty($row[8]) ? (int)$row[8] : null,
+                            'status' => 'scheduled',
+                            'biometric_required' => isset($row[9]) ? (bool)$row[9] : true,
+                        ]);
+                        
+                        // Generate proper reference number
+                        $talk->reference_number = $talk->generateReferenceNumber();
+                        $talk->save();
+                        
+                        $results['success']++;
+                    } catch (\Exception $e) {
+                        $results['failed']++;
+                        $results['errors'][] = "Row " . ($rowIndex + 2) . ": " . $e->getMessage();
+                    }
                 }
+            } else {
+                // CSV import
+                $handle = fopen($file->getRealPath(), 'r');
+                $header = fgetcsv($handle); // Skip header row
+                
+                $rowIndex = 1;
+                while (($row = fgetcsv($handle)) !== false) {
+                    try {
+                        $talk = ToolboxTalk::create([
+                            'reference_number' => 'TT-' . date('Ym') . '-TEMP',
+                            'company_id' => $companyId,
+                            'title' => $row[0] ?? 'Imported Talk',
+                            'description' => $row[1] ?? null,
+                            'scheduled_date' => $row[2] ?? now(),
+                            'start_time' => ($row[2] ?? now()) . ' ' . ($row[3] ?? '09:00'),
+                            'duration_minutes' => (int)($row[4] ?? 15),
+                            'location' => $row[5] ?? 'Main Hall',
+                            'talk_type' => $row[6] ?? 'safety',
+                            'department_id' => !empty($row[7]) ? (int)$row[7] : null,
+                            'supervisor_id' => !empty($row[8]) ? (int)$row[8] : null,
+                            'status' => 'scheduled',
+                            'biometric_required' => isset($row[9]) ? (bool)$row[9] : true,
+                        ]);
+                        
+                        // Generate proper reference number
+                        $talk->reference_number = $talk->generateReferenceNumber();
+                        $talk->save();
+                        
+                        $results['success']++;
+                    } catch (\Exception $e) {
+                        $results['failed']++;
+                        $results['errors'][] = "Row " . ($rowIndex + 1) . ": " . $e->getMessage();
+                    }
+                    $rowIndex++;
+                }
+                fclose($handle);
             }
-            fclose($handle);
         } catch (\Exception $e) {
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
@@ -1111,6 +1154,66 @@ class ToolboxTalkController extends Controller
         }
         
         return back()->with('success', $message);
+    }
+
+    /**
+     * Download bulk import template
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="toolbox-talks-import-template.csv"',
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            
+            // Headers
+            fputcsv($file, [
+                'title',
+                'description',
+                'scheduled_date',
+                'start_time',
+                'duration_minutes',
+                'location',
+                'talk_type',
+                'department_id',
+                'supervisor_id',
+                'biometric_required'
+            ]);
+            
+            // Example rows
+            fputcsv($file, [
+                'Fire Safety Procedures',
+                'Fire safety and evacuation procedures',
+                '2025-12-15',
+                '09:00',
+                '30',
+                'Main Hall',
+                'safety',
+                '1',
+                '5',
+                '1'
+            ]);
+            
+            fputcsv($file, [
+                'First Aid Basics',
+                'Basic first aid training',
+                '2025-12-16',
+                '10:00',
+                '45',
+                'Training Room',
+                'health',
+                '2',
+                '6',
+                '0'
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**

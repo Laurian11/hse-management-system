@@ -9,6 +9,7 @@ use App\Models\JSA;
 use App\Models\Incident;
 use App\Models\CAPA;
 use App\Models\User;
+use App\Notifications\ControlMeasureVerificationRequiredNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -134,6 +135,14 @@ class ControlMeasureController extends Controller
         $validated['status'] = $validated['status'] ?? 'planned';
         
         $controlMeasure = ControlMeasure::create($validated);
+        $controlMeasure->load('assignedTo', 'responsibleParty');
+        
+        // Send notification to assigned user or responsible party
+        $notifyUser = $controlMeasure->assignedTo ?? $controlMeasure->responsibleParty;
+        
+        if ($notifyUser) {
+            $notifyUser->notify(new ControlMeasureVerificationRequiredNotification($controlMeasure));
+        }
         
         return redirect()
             ->route('risk-assessment.control-measures.show', $controlMeasure)
@@ -155,6 +164,8 @@ class ControlMeasureController extends Controller
             'responsibleParty',
             'verifiedBy',
             'relatedCAPA',
+            'relatedTrainingNeed',
+            'relatedTrainingPlan',
         ]);
         
         return view('risk-assessment.control-measures.show', compact('controlMeasure'));

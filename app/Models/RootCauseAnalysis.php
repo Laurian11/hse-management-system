@@ -37,6 +37,8 @@ class RootCauseAnalysis extends Model
         'causal_factors',
         'barriers_failed',
         'prevention_possible',
+        'training_gap_identified',
+        'training_gap_description',
         'lessons_learned',
         'status',
         'completed_at',
@@ -80,6 +82,11 @@ class RootCauseAnalysis extends Model
     public function capas(): HasMany
     {
         return $this->hasMany(CAPA::class, 'root_cause_analysis_id');
+    }
+
+    public function trainingNeeds(): HasMany
+    {
+        return $this->hasMany(TrainingNeedsAnalysis::class, 'triggered_by_rca_id');
     }
 
     // Scopes

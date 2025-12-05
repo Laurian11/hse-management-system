@@ -26,71 +26,71 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-3 md:p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600">Total Talks</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ $stats['total_talks'] }}</p>
+                        <p class="text-xs md:text-sm text-gray-600">Total Talks</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ $stats['total_talks'] }}</p>
                     </div>
-                    <div class="bg-blue-100 p-3 rounded-full">
-                        <i class="fas fa-comments text-blue-600"></i>
+                    <div class="bg-blue-100 p-2 md:p-3 rounded-full">
+                        <i class="fas fa-comments text-blue-600 text-sm md:text-base"></i>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <span class="text-sm text-green-600">
-                        <i class="fas fa-arrow-up mr-1"></i>
+                <div class="mt-2 md:mt-4">
+                    <span class="text-xs md:text-sm text-green-600">
+                        <i class="fas fa-arrow-up mr-1 hidden md:inline"></i>
                         {{ $stats['this_month'] }} this month
                     </span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white rounded-lg shadow p-3 md:p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600">Completed</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ $stats['completed_this_month'] }}</p>
+                        <p class="text-xs md:text-sm text-gray-600">Completed</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ $stats['completed_this_month'] }}</p>
                     </div>
-                    <div class="bg-green-100 p-3 rounded-full">
-                        <i class="fas fa-check-circle text-green-600"></i>
+                    <div class="bg-green-100 p-2 md:p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-600 text-sm md:text-base"></i>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <span class="text-sm text-gray-600">
+                <div class="mt-2 md:mt-4">
+                    <span class="text-xs md:text-sm text-gray-600">
                         {{ $stats['this_month'] > 0 ? round(($stats['completed_this_month'] / $stats['this_month']) * 100) : 0 }}% completion rate
                     </span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white rounded-lg shadow p-3 md:p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600">Avg Attendance</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ round($stats['avg_attendance_rate']) }}%</p>
+                        <p class="text-xs md:text-sm text-gray-600">Avg Attendance</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ round($stats['avg_attendance_rate']) }}%</p>
                     </div>
-                    <div class="bg-purple-100 p-3 rounded-full">
-                        <i class="fas fa-users text-purple-600"></i>
+                    <div class="bg-purple-100 p-2 md:p-3 rounded-full">
+                        <i class="fas fa-users text-purple-600 text-sm md:text-base"></i>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <span class="text-sm {{ $stats['avg_attendance_rate'] >= 80 ? 'text-green-600' : 'text-yellow-600' }}">
+                <div class="mt-2 md:mt-4">
+                    <span class="text-xs md:text-sm {{ $stats['avg_attendance_rate'] >= 80 ? 'text-green-600' : 'text-yellow-600' }}">
                         {{ $stats['avg_attendance_rate'] >= 80 ? 'Good' : 'Needs Improvement' }}
                     </span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white rounded-lg shadow p-3 md:p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600">Avg Feedback</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['avg_feedback_score'], 1) }}</p>
+                        <p class="text-xs md:text-sm text-gray-600">Avg Feedback</p>
+                        <p class="text-xl md:text-3xl font-bold text-gray-900">{{ number_format($stats['avg_feedback_score'], 1) }}</p>
                     </div>
-                    <div class="bg-yellow-100 p-3 rounded-full">
-                        <i class="fas fa-star text-yellow-600"></i>
+                    <div class="bg-yellow-100 p-2 md:p-3 rounded-full">
+                        <i class="fas fa-star text-yellow-600 text-sm md:text-base"></i>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <span class="text-sm {{ $stats['avg_feedback_score'] >= 4.0 ? 'text-green-600' : 'text-yellow-600' }}">
+                <div class="mt-2 md:mt-4">
+                    <span class="text-xs md:text-sm {{ $stats['avg_feedback_score'] >= 4.0 ? 'text-green-600' : 'text-yellow-600' }}">
                         {{ $stats['avg_feedback_score'] >= 4.0 ? 'Excellent' : 'Good' }}
                     </span>
                 </div>

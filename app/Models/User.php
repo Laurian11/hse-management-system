@@ -35,6 +35,8 @@ class User extends Authenticatable
         'date_of_hire',
         'employment_type',
         'job_title',
+        'job_role_code',
+        'job_competency_matrix_id',
         'direct_supervisor_id',
         'hse_training_history',
         'competency_certificates',
@@ -125,6 +127,41 @@ class User extends Authenticatable
         return $this->hasMany(UserSession::class);
     }
 
+    public function jobCompetencyMatrix()
+    {
+        return $this->belongsTo(JobCompetencyMatrix::class, 'job_competency_matrix_id');
+    }
+
+    public function trainingRecords()
+    {
+        return $this->hasMany(TrainingRecord::class, 'user_id');
+    }
+
+    public function trainingAttendances()
+    {
+        return $this->hasMany(TrainingAttendance::class, 'user_id');
+    }
+
+    public function competencyAssessments()
+    {
+        return $this->hasMany(CompetencyAssessment::class, 'user_id');
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(TrainingCertificate::class, 'user_id');
+    }
+
+    public function activeCertificates()
+    {
+        return $this->hasMany(TrainingCertificate::class, 'user_id')
+                    ->where('status', 'active')
+                    ->where(function($q) {
+                        $q->where('has_expiry', false)
+                          ->orWhere('expiry_date', '>', now());
+                    });
+    }
+
     /**
      * Scopes
      */
@@ -136,6 +173,11 @@ class User extends Authenticatable
     public function scopeInactive($query)
     {
         return $query->where('is_active', false);
+    }
+
+    public function scopeForCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
     }
 
     public function scopeByCompany($query, $companyId)
