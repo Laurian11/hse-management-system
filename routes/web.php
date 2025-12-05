@@ -922,7 +922,7 @@ Route::middleware('auth')->prefix('compliance')->name('compliance.')->group(func
 Route::middleware('auth')->prefix('housekeeping')->name('housekeeping.')->group(function () {
     Route::get('/dashboard', [HousekeepingDashboardController::class, 'dashboard'])->name('dashboard');
     Route::resource('inspections', HousekeepingInspectionController::class);
-    Route::resource('5s-audits', FiveSAuditController::class);
+    Route::resource('5s-audits', FiveSAuditController::class)->parameters(['5s-audits' => 'audit']);
 });
 
 // Waste & Sustainability Module Routes
