@@ -51,7 +51,35 @@ class RiskAssessmentController extends Controller
             $query->dueForReview();
         }
         
-        $riskAssessments = $query->latest()->paginate(15);
+        // Date range filters
+        if ($request->filled('date_from')) {
+            $query->where('assessment_date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->where('assessment_date', '<=', $request->date_to);
+        }
+        
+        // Sorting
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        // Validate sort column
+        $allowedSortColumns = ['reference_number', 'title', 'risk_level', 'risk_score', 'status', 'assessment_date', 'next_review_date', 'created_at'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'created_at';
+        }
+        
+        // Validate sort direction
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        
+        $riskAssessments = $query->orderBy($sortColumn, $sortDirection)->paginate(15);
+        
+        // Append query parameters to pagination links
+        $riskAssessments->appends($request->query());
+        
         $departments = Department::where('company_id', $companyId)->active()->get();
         
         // Statistics
@@ -84,7 +112,14 @@ class RiskAssessmentController extends Controller
             $selectedIncident = Incident::where('company_id', $companyId)->findOrFail($request->incident_id);
         }
         
-        return view('risk-assessment.risk-assessments.create', compact('hazards', 'departments', 'users', 'selectedHazard', 'selectedIncident'));
+        // Copy from existing assessment
+        $copyFrom = null;
+        if ($request->has('copy_from')) {
+            $copyFrom = RiskAssessment::where('company_id', $companyId)
+                ->findOrFail($request->get('copy_from'));
+        }
+        
+        return view('risk-assessment.risk-assessments.create', compact('hazards', 'departments', 'users', 'selectedHazard', 'selectedIncident', 'copyFrom'));
     }
 
     public function store(Request $request)
@@ -291,6 +326,118 @@ class RiskAssessmentController extends Controller
             ->with('success', 'Risk assessment deleted successfully!');
     }
 
+    /**
+     * Bulk delete risk assessments
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:risk_assessments,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $deleted = RiskAssessment::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->delete();
+        
+        return redirect()->route('risk-assessment.risk-assessments.index')
+            ->with('success', "Successfully deleted {$deleted} risk assessment(s).");
+    }
+    
+    /**
+     * Bulk update risk assessments status
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:risk_assessments,id',
+            'status' => 'required|in:draft,under_review,approved,implementation,monitoring,closed,archived'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        $status = $request->input('status');
+        
+        $updated = RiskAssessment::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+        
+        return redirect()->route('risk-assessment.risk-assessments.index')
+            ->with('success', "Successfully updated {$updated} risk assessment(s) status to {$status}.");
+    }
+    
+    /**
+     * Export selected risk assessments
+     */
+    public function bulkExport(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:risk_assessments,id'
+        ]);
+        
+        $companyId = Auth::user()->company_id;
+        $ids = $request->input('ids');
+        
+        $assessments = RiskAssessment::where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->with(['hazard', 'creator', 'assignedTo', 'department'])
+            ->get();
+        
+        $filename = 'risk_assessments_export_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($assessments) {
+            $file = fopen('php://output', 'w');
+            
+            fputcsv($file, [
+                'Reference', 'Title', 'Risk Level', 'Risk Score', 'Status', 
+                'Assessment Type', 'Department', 'Assigned To', 'Assessment Date', 
+                'Next Review Date', 'Created By', 'Created At'
+            ]);
+            
+            foreach ($assessments as $assessment) {
+                fputcsv($file, [
+                    $assessment->reference_number,
+                    $assessment->title,
+                    strtoupper($assessment->risk_level),
+                    $assessment->risk_score,
+                    ucfirst($assessment->status),
+                    ucfirst(str_replace('_', ' ', $assessment->assessment_type)),
+                    $assessment->department->name ?? 'N/A',
+                    $assessment->assignedTo->name ?? 'N/A',
+                    $assessment->assessment_date ? $assessment->assessment_date->format('Y-m-d') : 'N/A',
+                    $assessment->next_review_date ? $assessment->next_review_date->format('Y-m-d') : 'N/A',
+                    $assessment->creator->name ?? 'N/A',
+                    $assessment->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Copy risk assessment
+     */
+    public function copy(RiskAssessment $riskAssessment)
+    {
+        if ($riskAssessment->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        return redirect()->route('risk-assessment.risk-assessments.create', ['copy_from' => $riskAssessment->id]);
+    }
+    
     /**
      * Calculate next review date based on frequency
      */
