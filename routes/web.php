@@ -265,6 +265,10 @@ Route::prefix('risk-assessment')->name('risk-assessment.')->group(function () {
     
     // Risk Assessments (Risk Register)
     Route::resource('risk-assessments', RiskAssessmentController::class);
+    Route::post('/risk-assessments/bulk-delete', [RiskAssessmentController::class, 'bulkDelete'])->name('risk-assessments.bulk-delete');
+    Route::post('/risk-assessments/bulk-update', [RiskAssessmentController::class, 'bulkUpdate'])->name('risk-assessments.bulk-update');
+    Route::post('/risk-assessments/bulk-export', [RiskAssessmentController::class, 'bulkExport'])->name('risk-assessments.bulk-export');
+    Route::get('/risk-assessments/{riskAssessment}/copy', [RiskAssessmentController::class, 'copy'])->name('risk-assessments.copy');
     
     // Job Safety Analysis (JSA/JHA)
     Route::resource('jsas', JSAController::class);

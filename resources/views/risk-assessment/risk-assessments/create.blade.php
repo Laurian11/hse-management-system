@@ -10,7 +10,12 @@
                 <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="text-gray-600 hover:text-gray-700">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Risk Register
                 </a>
-                <h1 class="text-2xl font-bold text-gray-900">Create Risk Assessment</h1>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {{ isset($copyFrom) ? 'Copy Risk Assessment' : 'Create Risk Assessment' }}
+                    @if(isset($copyFrom))
+                        <span class="text-sm font-normal text-gray-500">(from {{ $copyFrom->reference_number }})</span>
+                    @endif
+                </h1>
             </div>
         </div>
     </div>
@@ -27,7 +32,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
                     <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Assessment Title *</label>
-                    <input type="text" id="title" name="title" required value="{{ old('title') }}"
+                    <input type="text" id="title" name="title" required value="{{ old('title', isset($copyFrom) ? $copyFrom->title : '') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="Brief title for this risk assessment">
                     @error('title')
@@ -39,7 +44,7 @@
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                     <textarea id="description" name="description" rows="4" required
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Detailed description of the risk">{{ old('description') }}</textarea>
+                              placeholder="Detailed description of the risk">{{ old('description', isset($copyFrom) ? $copyFrom->description : '') }}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -51,7 +56,7 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Hazard (Optional)</option>
                         @foreach($hazards as $hazard)
-                            <option value="{{ $hazard->id }}" {{ old('hazard_id', $selectedHazard?->id) == $hazard->id ? 'selected' : '' }}>
+                            <option value="{{ $hazard->id }}" {{ old('hazard_id', isset($copyFrom) ? $copyFrom->hazard_id : $selectedHazard?->id) == $hazard->id ? 'selected' : '' }}>
                                 {{ $hazard->reference_number }} - {{ $hazard->title }}
                             </option>
                         @endforeach
@@ -63,13 +68,13 @@
                     <select id="assessment_type" name="assessment_type" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Type</option>
-                        <option value="general" {{ old('assessment_type') == 'general' ? 'selected' : '' }}>General</option>
-                        <option value="process" {{ old('assessment_type') == 'process' ? 'selected' : '' }}>Process</option>
-                        <option value="task" {{ old('assessment_type') == 'task' ? 'selected' : '' }}>Task</option>
-                        <option value="equipment" {{ old('assessment_type') == 'equipment' ? 'selected' : '' }}>Equipment</option>
-                        <option value="chemical" {{ old('assessment_type') == 'chemical' ? 'selected' : '' }}>Chemical</option>
-                        <option value="workplace" {{ old('assessment_type') == 'workplace' ? 'selected' : '' }}>Workplace</option>
-                        <option value="environmental" {{ old('assessment_type') == 'environmental' ? 'selected' : '' }}>Environmental</option>
+                        <option value="general" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'general' ? 'selected' : '' }}>General</option>
+                        <option value="process" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'process' ? 'selected' : '' }}>Process</option>
+                        <option value="task" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'task' ? 'selected' : '' }}>Task</option>
+                        <option value="equipment" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'equipment' ? 'selected' : '' }}>Equipment</option>
+                        <option value="chemical" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'chemical' ? 'selected' : '' }}>Chemical</option>
+                        <option value="workplace" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'workplace' ? 'selected' : '' }}>Workplace</option>
+                        <option value="environmental" {{ old('assessment_type', isset($copyFrom) ? $copyFrom->assessment_type : '') == 'environmental' ? 'selected' : '' }}>Environmental</option>
                     </select>
                     @error('assessment_type')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -82,7 +87,7 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Department</option>
                         @foreach($departments as $department)
-                            <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                            <option value="{{ $department->id }}" {{ old('department_id', isset($copyFrom) ? $copyFrom->department_id : '') == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -93,7 +98,7 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Person</option>
                         @foreach($users as $user)
-                            <option value="{{ $user->id }}" {{ old('assigned_to') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                            <option value="{{ $user->id }}" {{ old('assigned_to', isset($copyFrom) ? $copyFrom->assigned_to : '') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -122,13 +127,13 @@
                     <select id="severity" name="severity" required onchange="updateRiskScore()"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Severity</option>
-                        <option value="negligible" data-score="1" {{ old('severity') == 'negligible' ? 'selected' : '' }}>1 - Negligible</option>
-                        <option value="minor" data-score="2" {{ old('severity') == 'minor' ? 'selected' : '' }}>2 - Minor</option>
-                        <option value="moderate" data-score="3" {{ old('severity') == 'moderate' ? 'selected' : '' }}>3 - Moderate</option>
-                        <option value="major" data-score="4" {{ old('severity') == 'major' ? 'selected' : '' }}>4 - Major</option>
-                        <option value="catastrophic" data-score="5" {{ old('severity') == 'catastrophic' ? 'selected' : '' }}>5 - Catastrophic</option>
+                        <option value="negligible" data-score="1" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'negligible' ? 'selected' : '' }}>1 - Negligible</option>
+                        <option value="minor" data-score="2" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'minor' ? 'selected' : '' }}>2 - Minor</option>
+                        <option value="moderate" data-score="3" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'moderate' ? 'selected' : '' }}>3 - Moderate</option>
+                        <option value="major" data-score="4" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'major' ? 'selected' : '' }}>4 - Major</option>
+                        <option value="catastrophic" data-score="5" {{ old('severity', isset($copyFrom) ? $copyFrom->severity : '') == 'catastrophic' ? 'selected' : '' }}>5 - Catastrophic</option>
                     </select>
-                    <input type="hidden" id="severity_score" name="severity_score" value="{{ old('severity_score', 1) }}">
+                    <input type="hidden" id="severity_score" name="severity_score" value="{{ old('severity_score', isset($copyFrom) ? $copyFrom->severity_score : 1) }}">
                     @error('severity')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -139,13 +144,13 @@
                     <select id="likelihood" name="likelihood" required onchange="updateRiskScore()"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Likelihood</option>
-                        <option value="rare" data-score="1" {{ old('likelihood') == 'rare' ? 'selected' : '' }}>1 - Rare</option>
-                        <option value="unlikely" data-score="2" {{ old('likelihood') == 'unlikely' ? 'selected' : '' }}>2 - Unlikely</option>
-                        <option value="possible" data-score="3" {{ old('likelihood') == 'possible' ? 'selected' : '' }}>3 - Possible</option>
-                        <option value="likely" data-score="4" {{ old('likelihood') == 'likely' ? 'selected' : '' }}>4 - Likely</option>
-                        <option value="almost_certain" data-score="5" {{ old('likelihood') == 'almost_certain' ? 'selected' : '' }}>5 - Almost Certain</option>
+                        <option value="rare" data-score="1" {{ old('likelihood', isset($copyFrom) ? $copyFrom->likelihood : '') == 'rare' ? 'selected' : '' }}>1 - Rare</option>
+                        <option value="unlikely" data-score="2" {{ old('likelihood', isset($copyFrom) ? $copyFrom->likelihood : '') == 'unlikely' ? 'selected' : '' }}>2 - Unlikely</option>
+                        <option value="possible" data-score="3" {{ old('likelihood', isset($copyFrom) ? $copyFrom->likelihood : '') == 'possible' ? 'selected' : '' }}>3 - Possible</option>
+                        <option value="likely" data-score="4" {{ old('likelihood', isset($copyFrom) ? $copyFrom->likelihood : '') == 'likely' ? 'selected' : '' }}>4 - Likely</option>
+                        <option value="almost_certain" data-score="5" {{ old('likelihood', isset($copyFrom) ? $copyFrom->likelihood : '') == 'almost_certain' ? 'selected' : '' }}>5 - Almost Certain</option>
                     </select>
-                    <input type="hidden" id="likelihood_score" name="likelihood_score" value="{{ old('likelihood_score', 1) }}">
+                    <input type="hidden" id="likelihood_score" name="likelihood_score" value="{{ old('likelihood_score', isset($copyFrom) ? $copyFrom->likelihood_score : 1) }}">
                     @error('likelihood')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
