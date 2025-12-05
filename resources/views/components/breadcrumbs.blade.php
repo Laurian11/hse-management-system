@@ -13,53 +13,70 @@
             'icon' => 'fa-home'
         ];
         
-        // Parse route name to generate breadcrumbs
-        $parts = explode('.', $routeName);
-        $url = '';
-        
-        foreach ($parts as $index => $part) {
-            if ($index === 0) {
-                // First part is usually the module
-                $url = route($part . '.index');
-                $label = ucfirst(str_replace('-', ' ', $part));
-            } else {
-                // Subsequent parts
-                if ($part === 'index') {
-                    continue; // Skip index
-                } elseif ($part === 'create') {
-                    $label = 'Create';
-                } elseif ($part === 'edit') {
-                    $label = 'Edit';
-                } elseif ($part === 'show') {
-                    $label = 'View';
-                } else {
-                    $label = ucfirst(str_replace('-', ' ', $part));
-                }
-                
-                // Build URL
-                $routeParts = array_slice($parts, 0, $index + 1);
-                $routeName = implode('.', $routeParts);
-                
-                try {
-                    $url = route($routeName);
-                } catch (\Exception $e) {
-                    $url = null;
-                }
-            }
+        // Special cases - routes that don't follow the module.index pattern
+        $specialRoutes = ['dashboard'];
+        if (in_array($routeName, $specialRoutes)) {
+            // For special routes like 'dashboard', don't show breadcrumbs (it's the home page)
+            $breadcrumbs = [];
+        } else {
+            // Parse route name to generate breadcrumbs
+            $parts = explode('.', $routeName);
+            $url = '';
             
-            // Don't add if it's the last item and it's a show/edit/create
-            if ($index === count($parts) - 1 && in_array($part, ['show', 'edit', 'create'])) {
-                $breadcrumbs[] = [
-                    'label' => $label,
-                    'url' => null,
-                    'active' => true
-                ];
-            } else {
-                $breadcrumbs[] = [
-                    'label' => $label,
-                    'url' => $url,
-                    'active' => false
-                ];
+            foreach ($parts as $index => $part) {
+                if ($index === 0) {
+                    // First part is usually the module
+                    // Try to get the index route, but handle cases where it doesn't exist
+                    try {
+                        $url = route($part . '.index');
+                    } catch (\Exception $e) {
+                        // If .index doesn't exist, try the route name itself
+                        try {
+                            $url = route($part);
+                        } catch (\Exception $e2) {
+                            $url = null;
+                        }
+                    }
+                    $label = ucfirst(str_replace('-', ' ', $part));
+                } else {
+                    // Subsequent parts
+                    if ($part === 'index') {
+                        continue; // Skip index
+                    } elseif ($part === 'create') {
+                        $label = 'Create';
+                    } elseif ($part === 'edit') {
+                        $label = 'Edit';
+                    } elseif ($part === 'show') {
+                        $label = 'View';
+                    } else {
+                        $label = ucfirst(str_replace('-', ' ', $part));
+                    }
+                    
+                    // Build URL
+                    $routeParts = array_slice($parts, 0, $index + 1);
+                    $routeNameToTry = implode('.', $routeParts);
+                    
+                    try {
+                        $url = route($routeNameToTry);
+                    } catch (\Exception $e) {
+                        $url = null;
+                    }
+                }
+                
+                // Don't add if it's the last item and it's a show/edit/create
+                if ($index === count($parts) - 1 && in_array($part, ['show', 'edit', 'create'])) {
+                    $breadcrumbs[] = [
+                        'label' => $label,
+                        'url' => null,
+                        'active' => true
+                    ];
+                } else {
+                    $breadcrumbs[] = [
+                        'label' => $label,
+                        'url' => $url,
+                        'active' => false
+                    ];
+                }
             }
         }
     }
