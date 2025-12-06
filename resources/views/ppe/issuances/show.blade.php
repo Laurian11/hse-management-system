@@ -12,11 +12,17 @@
                 </a>
                 <h1 class="text-2xl font-bold text-gray-900">PPE Issuance: {{ $issuance->reference_number }}</h1>
             </div>
-            @if($issuance->status === 'active')
-                <button onclick="document.getElementById('returnForm').classList.toggle('hidden')" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
-                    <i class="fas fa-undo mr-2"></i>Return Item
-                </button>
-            @endif
+            <div class="flex space-x-3">
+                <a href="{{ route('qr.printable', ['type' => 'issuance', 'id' => $issuance->id]) }}" target="_blank" 
+                   class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700" title="Print QR Code">
+                    <i class="fas fa-qrcode mr-2"></i>QR Code
+                </a>
+                @if($issuance->status === 'active')
+                    <button onclick="document.getElementById('returnForm').classList.toggle('hidden')" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
+                        <i class="fas fa-undo mr-2"></i>Return Item
+                    </button>
+                @endif
+            </div>
         </div>
     </div>
 </div>
@@ -130,6 +136,23 @@
 
         <!-- Sidebar -->
         <div class="space-y-6">
+            <!-- QR Code -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">QR Code</h2>
+                @php
+                    $qrData = \App\Services\QRCodeService::forIssuance($issuance->id, $issuance->reference_number);
+                    $qrUrl = \App\Services\QRCodeService::generateUrl($qrData, 200);
+                @endphp
+                <div class="text-center">
+                    <img src="{{ $qrUrl }}" alt="QR Code" class="mx-auto mb-4 border-2 border-gray-200 p-2">
+                    <p class="text-xs text-gray-500 mb-2">Scan for inspection & auditing</p>
+                    <a href="{{ route('qr.printable', ['type' => 'issuance', 'id' => $issuance->id]) }}" target="_blank" 
+                       class="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                        <i class="fas fa-print mr-2"></i>Print QR Code
+                    </a>
+                </div>
+            </div>
+
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div class="space-y-2">

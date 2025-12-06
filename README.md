@@ -2,6 +2,11 @@
 
 A comprehensive Health, Safety, and Environment (HSE) Management System built with Laravel 12, designed for multi-tenant organizations to manage safety compliance, incidents, toolbox talks, and safety communications.
 
+**Developed by:** Laurian Lawrence Mwakitalu  
+**Year:** 2025-2026  
+**Location:** Tanzania  
+**Currency:** TZS (Tanzanian Shillings)
+
 ## Features
 
 ### 🎯 Core Modules

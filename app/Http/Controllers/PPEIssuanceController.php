@@ -125,6 +125,15 @@ class PPEIssuanceController extends Controller
         $validated['company_id'] = $companyId;
         $validated['issued_by'] = Auth::id();
         
+        // Set status based on transaction type
+        $statusMap = [
+            'issuance' => 'active',
+            'return' => 'returned',
+            'replacement' => 'replaced',
+            'exchange' => 'active',
+        ];
+        $validated['status'] = $statusMap[$validated['transaction_type']] ?? 'active';
+        
         $issuance = PPEIssuance::create($validated);
         
         return redirect()->route('ppe.issuances.show', $issuance)

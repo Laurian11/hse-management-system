@@ -1217,7 +1217,7 @@ class ToolboxTalkController extends Controller
     }
 
     /**
-     * Mark attendance manually
+     * Mark attendance manually (supports single or multiple employees)
      */
     public function markAttendance(Request $request, ToolboxTalk $toolboxTalk)
     {
@@ -1226,14 +1226,68 @@ class ToolboxTalkController extends Controller
         }
 
         $request->validate([
-            'employee_id' => 'required|exists:users,id',
+            'employee_id' => 'nullable|exists:users,id',
+            'employee_names' => 'nullable|string', // Comma-separated names
             'status' => 'required|in:present,absent,late,excused',
             'absence_reason' => 'nullable|string|required_if:status,absent,excused',
         ]);
 
-        $employee = User::findOrFail($request->employee_id);
+        $companyId = Auth::user()->company_id;
+        $markedCount = 0;
+        $notFoundNames = [];
 
-        $attendance = ToolboxTalkAttendance::updateOrCreate(
+        // Handle single employee by ID
+        if ($request->filled('employee_id')) {
+            $employee = User::forCompany($companyId)->findOrFail($request->employee_id);
+            $this->createAttendanceRecord($toolboxTalk, $employee, $request->status, $request->absence_reason);
+            $markedCount = 1;
+        }
+        // Handle multiple employees by comma-separated names
+        elseif ($request->filled('employee_names')) {
+            $names = array_map('trim', explode(',', $request->employee_names));
+            $names = array_filter($names, fn($name) => !empty($name));
+
+            foreach ($names as $name) {
+                // Search for employee by name (case-insensitive, partial match)
+                $employee = User::forCompany($companyId)
+                    ->where(function($q) use ($name) {
+                        $q->where('name', 'like', "%{$name}%")
+                          ->orWhere('email', 'like', "%{$name}%")
+                          ->orWhere('employee_id_number', 'like', "%{$name}%");
+                    })
+                    ->first();
+
+                if ($employee) {
+                    $this->createAttendanceRecord($toolboxTalk, $employee, $request->status, $request->absence_reason);
+                    $markedCount++;
+                } else {
+                    $notFoundNames[] = $name;
+                }
+            }
+        } else {
+            return back()->withErrors(['employee_id' => 'Please provide either employee ID or employee names.']);
+        }
+
+        // Update talk statistics
+        $toolboxTalk->total_attendees = $toolboxTalk->attendances()->count();
+        $toolboxTalk->present_attendees = $toolboxTalk->attendances()->present()->count();
+        $toolboxTalk->calculateAttendanceRate();
+        $toolboxTalk->save();
+
+        $message = "Attendance marked for {$markedCount} employee(s).";
+        if (!empty($notFoundNames)) {
+            $message .= " Could not find: " . implode(', ', $notFoundNames);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Helper method to create attendance record
+     */
+    private function createAttendanceRecord(ToolboxTalk $toolboxTalk, User $employee, string $status, ?string $absenceReason = null): void
+    {
+        ToolboxTalkAttendance::updateOrCreate(
             [
                 'toolbox_talk_id' => $toolboxTalk->id,
                 'employee_id' => $employee->id,
@@ -1242,22 +1296,14 @@ class ToolboxTalkController extends Controller
                 'employee_name' => $employee->name,
                 'employee_id_number' => $employee->employee_id_number,
                 'department' => $employee->department?->name,
-                'attendance_status' => $request->status,
-                'check_in_time' => $request->status === 'present' ? now() : null,
+                'attendance_status' => $status,
+                'check_in_time' => $status === 'present' ? now() : null,
                 'check_in_method' => 'manual',
-                'absence_reason' => $request->absence_reason,
+                'absence_reason' => $absenceReason,
                 'is_supervisor' => $employee->role?->name === 'supervisor',
                 'is_presenter' => $toolboxTalk->supervisor_id === $employee->id,
             ]
         );
-
-        // Update talk statistics
-        $toolboxTalk->total_attendees = $toolboxTalk->attendances()->count();
-        $toolboxTalk->present_attendees = $toolboxTalk->attendances()->present()->count();
-        $toolboxTalk->calculateAttendanceRate();
-        $toolboxTalk->save();
-
-        return back()->with('success', 'Attendance marked successfully!');
     }
 
     /**

@@ -74,7 +74,7 @@ class ToolboxTalk extends Model
 
     public function topic(): BelongsTo
     {
-        return $this->belongsTo(ToolboxTalkTopic::class);
+        return $this->belongsTo(ToolboxTalkTopic::class, 'topic_id');
     }
 
     public function attendances(): HasMany

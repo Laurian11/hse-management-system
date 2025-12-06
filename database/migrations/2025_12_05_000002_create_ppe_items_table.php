@@ -46,7 +46,7 @@ return new class extends Migration
             // Supplier & Procurement
             $table->foreignId('supplier_id')->nullable()->constrained('ppe_suppliers')->onDelete('set null');
             $table->decimal('unit_cost', 15, 2)->nullable();
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('TZS');
             $table->date('last_purchase_date')->nullable();
             $table->integer('last_purchase_quantity')->nullable();
             

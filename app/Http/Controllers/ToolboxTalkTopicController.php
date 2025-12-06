@@ -74,6 +74,15 @@ class ToolboxTalkTopicController extends Controller
             $request->merge(['learning_objectives' => $objectives]);
         }
 
+        // Convert required_materials from string to array if needed
+        if ($request->has('required_materials') && is_string($request->required_materials)) {
+            $materials = array_filter(
+                array_map('trim', explode("\n", $request->required_materials)),
+                fn($item) => !empty($item)
+            );
+            $request->merge(['required_materials' => $materials]);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -107,13 +116,13 @@ class ToolboxTalkTopicController extends Controller
             'key_talking_points' => $request->key_talking_points,
             'real_world_examples' => $request->real_world_examples,
             'regulatory_references' => $request->regulatory_references,
-            'department_relevance' => $request->department_relevance,
+            'department_relevance' => $request->department_relevance ? array_map('intval', $request->department_relevance) : null,
             'seasonal_relevance' => $request->seasonal_relevance,
             'is_mandatory' => $request->boolean('is_mandatory', false),
             'presentation_content' => $request->presentation_content,
             'discussion_questions' => $request->discussion_questions,
             'quiz_questions' => $request->quiz_questions,
-            'required_materials' => $request->required_materials,
+            'required_materials' => $request->required_materials ?? [],
             'created_by' => Auth::id(),
             'representer_id' => $request->representer_id,
         ]);
@@ -147,10 +156,14 @@ class ToolboxTalkTopicController extends Controller
         $departmentUsage = $topic->toolboxTalks
             ->groupBy('department_id')
             ->map(function($talks) {
+                $firstTalk = $talks->first();
                 return [
                     'count' => $talks->count(),
-                    'department' => $talks->first()->department,
+                    'department' => $firstTalk ? $firstTalk->department : null,
                 ];
+            })
+            ->filter(function($usage) {
+                return $usage['department'] !== null;
             });
 
         return view('toolbox-topics.show', compact('topic', 'usageStats', 'departmentUsage'));

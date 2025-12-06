@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('consumption', 12, 2)->nullable(); // Calculated: current - previous
             $table->string('unit')->nullable(); // kWh, liters, cubic_meters, etc.
             $table->decimal('cost', 10, 2)->nullable();
-            $table->string('currency')->default('USD');
+            $table->string('currency')->default('TZS');
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
             $table->text('notes')->nullable();
             $table->foreignId('recorded_by')->nullable()->constrained('users')->onDelete('set null');

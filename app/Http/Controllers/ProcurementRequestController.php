@@ -43,7 +43,21 @@ class ProcurementRequestController extends Controller
     {
         $companyId = Auth::user()->company_id;
         $departments = Department::forCompany($companyId)->active()->get();
-        return view('procurement.requests.create', compact('departments'));
+        
+        // Get suggested suppliers based on category (if provided in request)
+        $suggestedSuppliers = collect();
+        if (request()->has('item_category') && request('item_category')) {
+            $suggestedSuppliers = Supplier::forCompany($companyId)
+                ->active()
+                ->where(function($q) {
+                    $q->where('supplier_type', request('item_category'))
+                      ->orWhere('supplier_type', 'other');
+                })
+                ->orderBy('name')
+                ->get();
+        }
+        
+        return view('procurement.requests.create', compact('departments', 'suggestedSuppliers'));
     }
 
     public function store(Request $request)
@@ -92,9 +106,20 @@ class ProcurementRequestController extends Controller
     {
         $companyId = Auth::user()->company_id;
         $departments = Department::forCompany($companyId)->active()->get();
-        $suppliers = Supplier::forCompany($companyId)->active()->get();
+        $allSuppliers = Supplier::forCompany($companyId)->active()->get();
+        
+        // Get suggested suppliers based on item category
+        $suggestedSuppliers = Supplier::forCompany($companyId)
+            ->active()
+            ->where(function($q) use ($procurementRequest) {
+                $q->where('supplier_type', $procurementRequest->item_category)
+                  ->orWhere('supplier_type', 'other');
+            })
+            ->orderBy('name')
+            ->get();
+        
         $users = User::forCompany($companyId)->active()->get();
-        return view('procurement.requests.edit', compact('procurementRequest', 'departments', 'suppliers', 'users'));
+        return view('procurement.requests.edit', compact('procurementRequest', 'departments', 'allSuppliers', 'suggestedSuppliers', 'users'));
     }
 
     public function update(Request $request, ProcurementRequest $procurementRequest)

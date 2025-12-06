@@ -32,6 +32,9 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ $item->name }}</h1>
             </div>
             <div class="flex space-x-3">
+                <a href="{{ route('qr.printable', ['type' => 'ppe', 'id' => $item->id]) }}" target="_blank" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700" title="Print QR Code">
+                    <i class="fas fa-qrcode mr-2"></i>QR Code
+                </a>
                 <a href="{{ route('ppe.items.create', ['copy_from' => $item->id]) }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700" title="Copy this item">
                     <i class="fas fa-copy mr-2"></i>Copy
                 </a>
@@ -136,6 +139,22 @@
 
         <!-- Sidebar -->
         <div class="space-y-6">
+            <!-- QR Code -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">QR Code</h2>
+                @php
+                    $qrData = \App\Services\QRCodeService::forPPEItem($item->id, $item->reference_number ?? $item->name);
+                    $qrUrl = \App\Services\QRCodeService::generateUrl($qrData, 200);
+                @endphp
+                <div class="text-center">
+                    <img src="{{ $qrUrl }}" alt="QR Code" class="mx-auto mb-4 border-2 border-gray-200 p-2">
+                    <p class="text-xs text-gray-500 mb-2">Scan for stock checking & inspection</p>
+                    <a href="{{ route('qr.printable', ['type' => 'ppe', 'id' => $item->id]) }}" target="_blank" 
+                       class="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                        <i class="fas fa-print mr-2"></i>Print QR Code
+                    </a>
+                </div>
+            </div>
             <!-- Quick Info -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Info</h3>
@@ -149,7 +168,7 @@
                     @if($item->unit_cost)
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Unit Cost</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $item->currency }} {{ number_format($item->unit_cost, 2) }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ format_currency($item->unit_cost, $item->currency) }}</dd>
                     </div>
                     @endif
                     @if($item->has_expiry)

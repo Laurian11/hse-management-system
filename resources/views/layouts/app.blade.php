@@ -86,12 +86,12 @@
 </head>
 <body class="font-inter bg-gray-50 dark:bg-gray-900 min-h-screen" data-theme="light">
     @if(auth()->check())
-        <div class="flex min-h-screen">
+        <div class="flex flex-col min-h-screen">
             <!-- Include Sidebar -->
             @include('layouts.sidebar')
             
             <!-- Main Content -->
-            <main class="flex-1 lg:ml-64 transition-all duration-300" id="main-content">
+            <main class="flex-1 lg:ml-64 transition-all duration-300 flex flex-col" id="main-content">
                 <!-- Mobile Header -->
                 <header class="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-4 py-3">
                     <div class="flex items-center justify-between mb-2">
@@ -202,10 +202,25 @@
                 <x-recent-items />
                 
                 <!-- Page Content -->
-                <div class="p-6">
+                <div class="p-6 flex-1">
                     @yield('content')
                 </div>
             </main>
+            
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-300">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
+                        <div>
+                            <p>&copy; 2025-2026 HSE Management System. All rights reserved.</p>
+                        </div>
+                        <div class="mt-2 md:mt-0">
+                            <p>Developed by <strong>Laurian Lawrence Mwakitalu</strong></p>
+                            <p class="text-xs text-gray-500 mt-1">Tanzania • Currency: TZS (Tanzanian Shillings)</p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     @else
         <!-- Guest layout (login/register pages) -->

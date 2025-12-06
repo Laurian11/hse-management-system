@@ -125,6 +125,29 @@
             </div>
         </div>
 
+        <!-- Supplier Suggestions (shown when category is selected) -->
+        @if(isset($suggestedSuppliers) && $suggestedSuppliers->isNotEmpty())
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+            <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>Suggested Suppliers
+            </h3>
+            <p class="text-xs text-blue-700 mb-3">Based on your selected category, here are some suppliers you might consider:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                @foreach($suggestedSuppliers as $supplier)
+                    <div class="bg-white border border-blue-200 p-2 rounded text-sm">
+                        <div class="font-medium text-black">{{ $supplier->name }}</div>
+                        @if($supplier->contact_person)
+                            <div class="text-xs text-gray-600">Contact: {{ $supplier->contact_person }}</div>
+                        @endif
+                        @if($supplier->email)
+                            <div class="text-xs text-gray-600">{{ $supplier->email }}</div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <!-- Submit Button -->
         <div class="flex justify-end space-x-3">
             <a href="{{ route('procurement.requests.index') }}" class="px-6 py-2 border border-gray-300 hover:bg-[#F5F5F5]">Cancel</a>
@@ -134,5 +157,18 @@
         </div>
     </form>
 </div>
+
+<script>
+// Load suggested suppliers when category changes
+document.getElementById('item_category')?.addEventListener('change', function() {
+    const category = this.value;
+    if (category) {
+        // Reload page with category parameter to get suggestions
+        const url = new URL(window.location);
+        url.searchParams.set('item_category', category);
+        window.location.href = url.toString();
+    }
+});
+</script>
 @endsection
 

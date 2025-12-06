@@ -144,6 +144,76 @@
             </div>
         </div>
 
+        <!-- Supplier Information -->
+        <div class="bg-white border border-gray-300 p-6">
+            <h2 class="text-lg font-semibold text-black mb-4">Supplier Information</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="supplier_id" class="block text-sm font-medium text-black mb-1">Supplier</label>
+                    <select id="supplier_id" name="supplier_id"
+                            class="w-full px-3 py-2 border border-gray-300 focus:border-[#0066CC] focus:ring-1 focus:ring-[#0066CC]">
+                        <option value="">Select Supplier</option>
+                        @foreach($allSuppliers ?? [] as $supplier)
+                            <option value="{{ $supplier->id }}" {{ old('supplier_id', $procurementRequest->supplier_id) == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->name }} ({{ ucfirst(str_replace('_', ' ', $supplier->supplier_type)) }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('supplier_id')
+                        <p class="mt-1 text-sm text-[#CC0000]">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="purchase_cost" class="block text-sm font-medium text-black mb-1">Purchase Cost</label>
+                    <input type="number" id="purchase_cost" name="purchase_cost" step="0.01" min="0" 
+                           value="{{ old('purchase_cost', $procurementRequest->purchase_cost) }}"
+                           class="w-full px-3 py-2 border border-gray-300 focus:border-[#0066CC] focus:ring-1 focus:ring-[#0066CC]">
+                </div>
+
+                <div>
+                    <label for="purchase_date" class="block text-sm font-medium text-black mb-1">Purchase Date</label>
+                    <input type="date" id="purchase_date" name="purchase_date" 
+                           value="{{ old('purchase_date', $procurementRequest->purchase_date ? $procurementRequest->purchase_date->format('Y-m-d') : '') }}"
+                           class="w-full px-3 py-2 border border-gray-300 focus:border-[#0066CC] focus:ring-1 focus:ring-[#0066CC]">
+                </div>
+
+                <div>
+                    <label for="received_date" class="block text-sm font-medium text-black mb-1">Received Date</label>
+                    <input type="date" id="received_date" name="received_date" 
+                           value="{{ old('received_date', $procurementRequest->received_date ? $procurementRequest->received_date->format('Y-m-d') : '') }}"
+                           class="w-full px-3 py-2 border border-gray-300 focus:border-[#0066CC] focus:ring-1 focus:ring-[#0066CC]">
+                </div>
+            </div>
+
+            <!-- Suggested Suppliers -->
+            @if(isset($suggestedSuppliers) && $suggestedSuppliers->isNotEmpty())
+            <div class="mt-4 bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                    <i class="fas fa-lightbulb mr-2"></i>Suggested Suppliers for {{ ucfirst(str_replace('_', ' ', $procurementRequest->item_category)) }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    @foreach($suggestedSuppliers as $supplier)
+                        <div class="bg-white border border-blue-200 p-2 rounded text-sm cursor-pointer hover:bg-blue-50"
+                             onclick="document.getElementById('supplier_id').value='{{ $supplier->id }}'">
+                            <div class="font-medium text-black">{{ $supplier->name }}</div>
+                            @if($supplier->contact_person)
+                                <div class="text-xs text-gray-600">Contact: {{ $supplier->contact_person }}</div>
+                            @endif
+                            @if($supplier->email)
+                                <div class="text-xs text-gray-600">{{ $supplier->email }}</div>
+                            @endif
+                            @if($supplier->phone)
+                                <div class="text-xs text-gray-600">{{ $supplier->phone }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+        </div>
+
         <!-- Submit Button -->
         <div class="flex justify-end space-x-3">
             <a href="{{ route('procurement.requests.show', $procurementRequest) }}" class="px-6 py-2 border border-gray-300 hover:bg-[#F5F5F5]">Cancel</a>

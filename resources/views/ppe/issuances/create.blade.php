@@ -113,6 +113,20 @@
                 </div>
 
                 <div>
+                    <label for="transaction_type" class="block text-sm font-medium text-gray-700 mb-1">Transaction Type *</label>
+                    <select id="transaction_type" name="transaction_type" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                        <option value="issuance" {{ old('transaction_type', 'issuance') == 'issuance' ? 'selected' : '' }}>Issuance</option>
+                        <option value="return" {{ old('transaction_type') == 'return' ? 'selected' : '' }}>Return</option>
+                        <option value="replacement" {{ old('transaction_type') == 'replacement' ? 'selected' : '' }}>Replacement</option>
+                        <option value="exchange" {{ old('transaction_type') == 'exchange' ? 'selected' : '' }}>Exchange</option>
+                    </select>
+                    @error('transaction_type')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
                     <label for="initial_condition" class="block text-sm font-medium text-gray-700 mb-1">Initial Condition *</label>
                     <select id="initial_condition" name="initial_condition" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
@@ -121,6 +135,9 @@
                         <option value="fair" {{ old('initial_condition') == 'fair' ? 'selected' : '' }}>Fair</option>
                         <option value="poor" {{ old('initial_condition') == 'poor' ? 'selected' : '' }}>Poor</option>
                     </select>
+                    @error('initial_condition')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="md:col-span-2">
@@ -165,6 +182,11 @@ function toggleIssueType() {
 document.querySelector('form').addEventListener('submit', function(e) {
     const issueType = document.querySelector('input[name="issue_type"]:checked').value;
     if (issueType === 'bulk') {
+        // For bulk, ensure transaction_type is set to issuance
+        const transactionTypeField = document.getElementById('transaction_type');
+        if (transactionTypeField) {
+            transactionTypeField.value = 'issuance';
+        }
         this.action = '{{ route("ppe.issuances.bulk-issue") }}';
     } else {
         this.action = '{{ route("ppe.issuances.store") }}';

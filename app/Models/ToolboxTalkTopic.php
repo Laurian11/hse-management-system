@@ -58,7 +58,7 @@ class ToolboxTalkTopic extends Model
 
     public function toolboxTalks(): HasMany
     {
-        return $this->hasMany(ToolboxTalk::class);
+        return $this->hasMany(ToolboxTalk::class, 'topic_id');
     }
 
     public function scopeActive($query)

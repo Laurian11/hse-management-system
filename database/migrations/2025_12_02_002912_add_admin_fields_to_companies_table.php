@@ -15,7 +15,7 @@ return new class extends Migration
             // Company Settings & Configuration
             $table->json('settings')->nullable()->after('description');
             $table->string('timezone', 50)->default('UTC')->after('settings');
-            $table->string('currency', 3)->default('USD')->after('timezone');
+            $table->string('currency', 3)->default('TZS')->after('timezone');
             $table->string('language', 10)->default('en')->after('currency');
             
             // Licensing & Subscription

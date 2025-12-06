@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->string('unit')->nullable();
             $table->decimal('estimated_cost', 10, 2)->nullable();
-            $table->string('currency')->default('USD');
+            $table->string('currency')->default('TZS');
             $table->text('justification')->nullable();
             $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
             $table->date('required_date')->nullable();

@@ -24,12 +24,14 @@ class QRCodeService
      * @param string $type Item type (e.g., 'ppe', 'equipment', 'stock')
      * @param int $itemId Item ID
      * @param string $referenceNumber Reference number
+     * @param string $action Optional action (check, inspect, audit)
      * @return string QR code data
      */
-    public static function generateItemData(string $type, int $itemId, string $referenceNumber): string
+    public static function generateItemData(string $type, int $itemId, string $referenceNumber, string $action = ''): string
     {
         $baseUrl = config('app.url');
-        return "{$baseUrl}/qr/{$type}/{$itemId}?ref={$referenceNumber}";
+        $actionParam = $action ? "&action={$action}" : '';
+        return "{$baseUrl}/qr/{$type}/{$itemId}?ref={$referenceNumber}{$actionParam}";
     }
 
     /**
@@ -54,6 +56,31 @@ class QRCodeService
     public static function forInspection(int $itemId, string $referenceNumber): string
     {
         return self::generateItemData('inspection', $itemId, $referenceNumber);
+    }
+
+    /**
+     * Generate QR code for PPE issuance
+     */
+    public static function forIssuance(int $issuanceId, string $referenceNumber, string $action = 'check'): string
+    {
+        return self::generateItemData('issuance', $issuanceId, $referenceNumber, $action);
+    }
+
+    /**
+     * Generate QR code for PPE item (stock)
+     */
+    public static function forPPEItem(int $itemId, string $referenceNumber, string $action = 'check'): string
+    {
+        return self::generateItemData('ppe', $itemId, $referenceNumber, $action);
+    }
+
+    /**
+     * Generate QR code for procurement item
+     */
+    public static function forProcurement(int $itemId, string $referenceNumber): string
+    {
+        $baseUrl = config('app.url');
+        return "{$baseUrl}/qr/procurement/{$itemId}?ref={$referenceNumber}";
     }
 
     /**

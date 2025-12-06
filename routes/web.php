@@ -111,6 +111,9 @@ Route::middleware('auth')->group(function () {
     // Recent Items
     Route::post('/api/recent-items/track', [\App\Http\Controllers\RecentItemsController::class, 'track'])->name('recent-items.track');
     Route::post('/api/recent-items/clear', [\App\Http\Controllers\RecentItemsController::class, 'clear'])->name('recent-items.clear');
+    
+    // Email Sharing
+    Route::post('/email/share', [\App\Http\Controllers\EmailShareController::class, 'share'])->name('email.share');
 });
 
 Route::get('/', [LandingPageController::class, 'index'])->name('landing');

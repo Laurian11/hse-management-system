@@ -67,27 +67,48 @@ class PPEIssuance extends Model
             }
             
             // Auto-calculate expiry date if item has expiry
-            if ($issuance->ppeItem && $issuance->ppeItem->has_expiry && $issuance->ppeItem->expiry_days) {
-                $issuance->expiry_date = Carbon::parse($issuance->issue_date)->addDays($issuance->ppeItem->expiry_days);
-                $issuance->replacement_due_date = Carbon::parse($issuance->expiry_date)->subDays($issuance->ppeItem->replacement_alert_days ?? 30);
-            }
-            
-            // Auto-calculate next inspection date
-            if ($issuance->ppeItem && $issuance->ppeItem->requires_inspection && $issuance->ppeItem->inspection_frequency_days) {
-                $issuance->next_inspection_date = Carbon::parse($issuance->issue_date)->addDays($issuance->ppeItem->inspection_frequency_days);
+            if ($issuance->ppe_item_id) {
+                $item = PPEItem::find($issuance->ppe_item_id);
+                if ($item && $item->has_expiry && $item->expiry_days && $issuance->issue_date) {
+                    $issuance->expiry_date = Carbon::parse($issuance->issue_date)->addDays($item->expiry_days);
+                    $issuance->replacement_due_date = Carbon::parse($issuance->expiry_date)->subDays($item->replacement_alert_days ?? 30);
+                }
+                
+                // Auto-calculate next inspection date
+                if ($item && $item->requires_inspection && $item->inspection_frequency_days && $issuance->issue_date) {
+                    $issuance->next_inspection_date = Carbon::parse($issuance->issue_date)->addDays($item->inspection_frequency_days);
+                    $issuance->requires_inspection = true;
+                }
             }
         });
 
         static::created(function ($issuance) {
-            // Update item quantities
+            // Update item quantities based on transaction type
+            $item = $issuance->ppeItem;
+            
             if ($issuance->transaction_type === 'issuance') {
-                $item = $issuance->ppeItem;
                 $item->issued_quantity += $issuance->quantity;
                 $item->available_quantity -= $issuance->quantity;
-                $item->save();
+            } elseif ($issuance->transaction_type === 'return') {
+                // For returns, increase available quantity (if not damaged/lost)
+                if ($issuance->return_condition && !in_array($issuance->return_condition, ['damaged', 'lost'])) {
+                    $item->available_quantity += $issuance->quantity;
+                }
+                // Decrease issued quantity
+                $item->issued_quantity = max(0, $item->issued_quantity - $issuance->quantity);
+            } elseif ($issuance->transaction_type === 'replacement') {
+                // Replacement: new item issued, old item returned
+                $item->issued_quantity += $issuance->quantity;
+                $item->available_quantity -= $issuance->quantity;
+            } elseif ($issuance->transaction_type === 'exchange') {
+                // Exchange: similar to issuance
+                $item->issued_quantity += $issuance->quantity;
+                $item->available_quantity -= $issuance->quantity;
             }
             
-            ActivityLog::log('create', 'ppe', 'PPEIssuance', $issuance->id, "Created PPE issuance: {$issuance->reference_number}");
+            $item->save();
+            
+            ActivityLog::log('create', 'ppe', 'PPEIssuance', $issuance->id, "Created PPE {$issuance->transaction_type}: {$issuance->reference_number}");
         });
 
         static::updated(function ($issuance) {

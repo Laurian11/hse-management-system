@@ -13,6 +13,8 @@ class HSEDocument extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'hse_documents';
+
     protected $fillable = [
         'company_id', 'reference_number', 'title', 'description', 'document_type',
         'category', 'document_code', 'department_id', 'created_by', 'approved_by',

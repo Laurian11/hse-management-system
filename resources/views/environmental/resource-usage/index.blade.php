@@ -56,7 +56,7 @@
                         <td class="px-6 py-4 text-sm text-black">{{ $record->reading_date->format('M d, Y') }}</td>
                         <td class="px-6 py-4 text-sm text-black">{{ ucfirst($record->resource_type) }}</td>
                         <td class="px-6 py-4 text-sm text-black">{{ $record->consumption ?? 'N/A' }} {{ $record->unit ?? '' }}</td>
-                        <td class="px-6 py-4 text-sm text-black">{{ $record->cost ? $record->currency . ' ' . number_format($record->cost, 2) : 'N/A' }}</td>
+                        <td class="px-6 py-4 text-sm text-black">{{ $record->cost ? format_currency($record->cost, $record->currency) : 'N/A' }}</td>
                         <td class="px-6 py-4 text-right text-sm">
                             <a href="{{ route('environmental.resource-usage.show', $record) }}" class="text-[#0066CC] hover:underline mr-3">View</a>
                             <a href="{{ route('environmental.resource-usage.edit', $record) }}" class="text-[#0066CC] hover:underline">Edit</a>

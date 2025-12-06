@@ -59,7 +59,7 @@
                     @if($procurementRequest->estimated_cost)
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Estimated Cost</dt>
-                        <dd class="mt-1 text-sm text-black">{{ $procurementRequest->currency ?? '' }} {{ number_format($procurementRequest->estimated_cost, 2) }}</dd>
+                        <dd class="mt-1 text-sm text-black">{{ format_currency($procurementRequest->estimated_cost, $procurementRequest->currency) }}</dd>
                     </div>
                     @endif
                     @if($procurementRequest->required_date)
