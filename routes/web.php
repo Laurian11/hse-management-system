@@ -223,8 +223,26 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     Route::get('/dashboard', [IncidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/trend-analysis', [IncidentController::class, 'trendAnalysis'])->name('trend-analysis');
     Route::get('/create', [IncidentController::class, 'create'])->name('create');
-    Route::post('/{incident}/assign-company', [IncidentController::class, 'assignCompany'])->name('assign-company');
     Route::post('/', [IncidentController::class, 'store'])->name('store');
+    
+    // Reports routes - MUST come before {incident} routes
+    Route::get('/reports', [\App\Http\Controllers\IncidentReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/department', [\App\Http\Controllers\IncidentReportController::class, 'departmentReport'])->name('reports.department');
+    Route::get('/reports/employee', [\App\Http\Controllers\IncidentReportController::class, 'employeeReport'])->name('reports.employee');
+    Route::get('/reports/period', [\App\Http\Controllers\IncidentReportController::class, 'periodReport'])->name('reports.period');
+    Route::get('/reports/companies', [\App\Http\Controllers\IncidentReportController::class, 'companiesReport'])->name('reports.companies');
+    
+    // Export routes
+    Route::post('/export', [IncidentController::class, 'export'])->name('export');
+    Route::get('/export/all', [IncidentController::class, 'exportAll'])->name('export-all');
+    
+    // Bulk actions
+    Route::post('/bulk-delete', [IncidentController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-update', [IncidentController::class, 'bulkUpdate'])->name('bulk-update');
+    
+    // Incident-specific routes - MUST come after reports routes
+    Route::post('/{incident}/assign-company', [IncidentController::class, 'assignCompany'])->name('assign-company');
+    Route::get('/{incident}/export/pdf', [IncidentController::class, 'exportPDF'])->name('export-pdf');
     Route::get('/{incident}', [IncidentController::class, 'show'])->name('show');
     Route::get('/{incident}/edit', [IncidentController::class, 'edit'])->name('edit');
     Route::put('/{incident}', [IncidentController::class, 'update'])->name('update');
@@ -233,6 +251,15 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     // Specialized routes
     Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
     Route::post('/{incident}/investigate', [IncidentController::class, 'investigate'])->name('investigate');
+});
+
+// Incident Reports Routes (legacy - keeping for backward compatibility)
+Route::prefix('incidents/reports')->name('incidents.reports.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\IncidentReportController::class, 'index'])->name('index');
+    Route::get('/department', [\App\Http\Controllers\IncidentReportController::class, 'departmentReport'])->name('department');
+    Route::get('/employee', [\App\Http\Controllers\IncidentReportController::class, 'employeeReport'])->name('employee');
+    Route::get('/period', [\App\Http\Controllers\IncidentReportController::class, 'periodReport'])->name('period');
+    Route::get('/companies', [\App\Http\Controllers\IncidentReportController::class, 'companiesReport'])->name('companies');
     Route::post('/{incident}/close', [IncidentController::class, 'close'])->name('close');
     Route::post('/{incident}/reopen', [IncidentController::class, 'reopen'])->name('reopen');
     Route::post('/{incident}/request-closure', [IncidentController::class, 'requestClosure'])->name('request-closure');

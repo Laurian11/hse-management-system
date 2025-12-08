@@ -6,8 +6,11 @@ use App\Models\Incident;
 use App\Http\Requests\StoreIncidentRequest;
 use App\Http\Requests\UpdateIncidentRequest;
 use App\Notifications\IncidentReportedNotification;
+use App\Notifications\IncidentStatusChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class IncidentController extends Controller
 {
@@ -275,6 +278,10 @@ class IncidentController extends Controller
         $data['incident_date'] = $data['date_occurred'] ?? $incident->incident_date;
         $data['incident_type'] = $data['title']; // Use title as incident type for now
 
+        // Track status change for notifications
+        $oldStatus = $incident->status;
+        $statusChanged = isset($data['status']) && $data['status'] !== $oldStatus;
+
         // Handle image uploads
         if ($request->hasFile('images')) {
             $imagePaths = [];
@@ -288,6 +295,11 @@ class IncidentController extends Controller
         }
 
         $incident->update($data);
+        
+        // Send notification if status changed
+        if ($statusChanged) {
+            $this->notifyStatusChange($incident, $oldStatus, $data['status']);
+        }
 
         return redirect()
             ->route('incidents.show', $incident)
@@ -319,10 +331,16 @@ class IncidentController extends Controller
             'assigned_to' => 'required|exists:users,id',
         ]);
 
+        $oldStatus = $incident->status;
         $incident->update([
             'assigned_to' => $request->assigned_to,
             'status' => 'investigating',
         ]);
+        
+        // Send notification if status changed
+        if ($oldStatus !== 'investigating') {
+            $this->notifyStatusChange($incident, $oldStatus, 'investigating');
+        }
 
         return back()->with('success', 'Incident assigned successfully!');
     }
@@ -334,7 +352,13 @@ class IncidentController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        $oldStatus = $incident->status;
         $incident->update(['status' => 'investigating']);
+        
+        // Send notification if status changed
+        if ($oldStatus !== 'investigating') {
+            $this->notifyStatusChange($incident, $oldStatus, 'investigating');
+        }
 
         return back()->with('success', 'Investigation started!');
     }
@@ -350,7 +374,13 @@ class IncidentController extends Controller
             'resolution_notes' => 'required|string',
         ]);
 
+        $oldStatus = $incident->status;
         $incident->close($request->resolution_notes);
+        
+        // Send notification if status changed
+        if ($oldStatus !== 'closed') {
+            $this->notifyStatusChange($incident, $oldStatus, 'closed');
+        }
 
         return back()->with('success', 'Incident closed successfully!');
     }
@@ -362,12 +392,18 @@ class IncidentController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        $oldStatus = $incident->status;
         $incident->update([
             'status' => 'open',
             'closure_status' => null,
             'resolution_notes' => null,
             'closed_at' => null,
         ]);
+        
+        // Send notification if status changed
+        if ($oldStatus !== 'open') {
+            $this->notifyStatusChange($incident, $oldStatus, 'open');
+        }
 
         return back()->with('success', 'Incident reopened!');
     }
@@ -626,5 +662,211 @@ class IncidentController extends Controller
         };
         
         return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Export all incidents (filtered by current filters)
+     */
+    public function exportAll(Request $request)
+    {
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
+        
+        // Build query same as index method
+        if ($isSuperAdmin) {
+            $query = Incident::with(['reporter', 'assignedTo', 'department', 'company']);
+        } else {
+            $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
+            $query = Incident::whereIn('company_id', $companyGroupIds)
+                ->with(['reporter', 'assignedTo', 'department']);
+        }
+        
+        // Apply same filters as index
+        if ($request->has('filter')) {
+            $filter = $request->get('filter');
+            switch ($filter) {
+                case 'open':
+                    $query->open();
+                    break;
+                case 'investigating':
+                    $query->investigating();
+                    break;
+                case 'injury':
+                    $query->injuryIllness();
+                    break;
+                case 'property':
+                    $query->propertyDamage();
+                    break;
+                case 'near_miss':
+                    $query->nearMiss();
+                    break;
+                case 'critical':
+                    $query->critical();
+                    break;
+            }
+        }
+        
+        if ($request->has('status') && $request->get('status')) {
+            $query->byStatus($request->get('status'));
+        }
+        
+        if ($request->has('severity') && $request->get('severity')) {
+            $query->bySeverity($request->get('severity'));
+        }
+        
+        if ($request->has('event_type') && $request->get('event_type')) {
+            $query->byEventType($request->get('event_type'));
+        }
+        
+        if ($request->has('date_from') && $request->get('date_from')) {
+            $query->where('incident_date', '>=', $request->get('date_from'));
+        }
+        
+        if ($request->has('date_to') && $request->get('date_to')) {
+            $query->where('incident_date', '<=', $request->get('date_to'));
+        }
+        
+        $incidents = $query->orderBy('created_at', 'desc')->get();
+        
+        $format = $request->get('format', 'excel');
+        
+        if ($format === 'pdf') {
+            return $this->exportToPDF($incidents, $request);
+        }
+        
+        return $this->exportToExcel($incidents);
+    }
+    
+    /**
+     * Export incidents to Excel (CSV)
+     */
+    private function exportToExcel($incidents)
+    {
+        $filename = 'incidents_export_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($incidents) {
+            $file = fopen('php://output', 'w');
+            
+            // Headers
+            fputcsv($file, [
+                'Reference Number',
+                'Title',
+                'Event Type',
+                'Severity',
+                'Status',
+                'Department',
+                'Reported By',
+                'Assigned To',
+                'Incident Date',
+                'Location',
+                'Description',
+                'Actions Taken',
+                'Resolution Notes',
+                'Created At'
+            ]);
+            
+            // Data
+            foreach ($incidents as $incident) {
+                fputcsv($file, [
+                    $incident->reference_number,
+                    $incident->title ?? $incident->incident_type,
+                    $incident->event_type ?? 'N/A',
+                    ucfirst($incident->severity ?? 'N/A'),
+                    ucfirst($incident->status ?? 'N/A'),
+                    $incident->department?->name ?? 'N/A',
+                    $incident->reporter?->name ?? $incident->reporter_name ?? 'N/A',
+                    $incident->assignedTo?->name ?? 'N/A',
+                    $incident->incident_date ? $incident->incident_date->format('Y-m-d H:i:s') : 'N/A',
+                    $incident->location ?? 'N/A',
+                    $incident->description ?? 'N/A',
+                    $incident->actions_taken ?? 'N/A',
+                    $incident->resolution_notes ?? 'N/A',
+                    $incident->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Export incidents to PDF
+     */
+    private function exportToPDF($incidents, $request)
+    {
+        $pdf = Pdf::loadView('incidents.exports.pdf', [
+            'incidents' => $incidents,
+            'filters' => $request->all(),
+        ]);
+        
+        return $pdf->download('incidents_export_' . date('Y-m-d_His') . '.pdf');
+    }
+    
+    /**
+     * Export single incident to PDF
+     */
+    public function exportPDF(Incident $incident)
+    {
+        if ($incident->company_id !== Auth::user()->company_id && 
+            !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $incident->load(['reporter', 'assignedTo', 'department', 'company', 'investigation', 'rootCauseAnalysis', 'capas', 'attachments']);
+        
+        $pdf = Pdf::loadView('incidents.exports.single-pdf', [
+            'incident' => $incident,
+        ]);
+        
+        return $pdf->download("incident-{$incident->reference_number}.pdf");
+    }
+    
+    /**
+     * Notify relevant users about status change
+     */
+    private function notifyStatusChange(Incident $incident, string $oldStatus, string $newStatus)
+    {
+        $user = Auth::user();
+        $notifyUsers = collect();
+        
+        // Notify reporter
+        if ($incident->reporter) {
+            $notifyUsers->push($incident->reporter);
+        }
+        
+        // Notify assigned user
+        if ($incident->assignedTo) {
+            $notifyUsers->push($incident->assignedTo);
+        }
+        
+        // Notify HSE managers
+        $hseManagers = \App\Models\User::where('company_id', $incident->company_id)
+            ->whereHas('role', function($q) {
+                $q->whereIn('name', ['hse_manager', 'hse_officer', 'admin', 'super_admin']);
+            })
+            ->get();
+        
+        $notifyUsers = $notifyUsers->merge($hseManagers)->unique('id');
+        
+        // Don't notify the user who made the change
+        $notifyUsers = $notifyUsers->reject(function($notifyUser) use ($user) {
+            return $notifyUser->id === $user->id;
+        });
+        
+        foreach ($notifyUsers as $notifyUser) {
+            $notifyUser->notify(new IncidentStatusChangedNotification(
+                $incident,
+                $oldStatus,
+                $newStatus,
+                $user->name
+            ));
+        }
     }
 }

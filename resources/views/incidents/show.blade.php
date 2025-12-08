@@ -45,6 +45,9 @@ $breadcrumbs = [
                     </div>
                 </div>
                 <div class="flex space-x-3">
+                    <a href="{{ route('incidents.export-pdf', $incident) }}" class="px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </a>
                     <x-print-button />
                     <a href="{{ route('incidents.create', ['copy_from' => $incident->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this incident">
                         <i class="fas fa-copy mr-2"></i>Copy
