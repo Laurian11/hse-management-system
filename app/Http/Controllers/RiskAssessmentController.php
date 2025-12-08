@@ -8,10 +8,13 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\Incident;
 use App\Notifications\RiskAssessmentApprovalRequiredNotification;
+use App\Notifications\RiskAssessmentStatusChangedNotification;
+use App\Notifications\RiskAssessmentReviewDueNotification;
 use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RiskAssessmentController extends Controller
 {
@@ -306,7 +309,16 @@ class RiskAssessmentController extends Controller
             $validated['next_review_date'] = $this->calculateNextReviewDate($validated['review_frequency'], $validated['assessment_date'] ?? $riskAssessment->assessment_date);
         }
         
+        // Track status change for notifications
+        $oldStatus = $riskAssessment->status;
+        $statusChanged = isset($validated['status']) && $validated['status'] !== $oldStatus;
+        
         $riskAssessment->update($validated);
+        
+        // Send notification if status changed
+        if ($statusChanged) {
+            $this->notifyStatusChange($riskAssessment, $oldStatus, $validated['status']);
+        }
         
         return redirect()
             ->route('risk-assessment.risk-assessments.show', $riskAssessment)
@@ -432,6 +444,159 @@ class RiskAssessmentController extends Controller
     }
     
     /**
+     * Export all risk assessments (filtered by current filters)
+     */
+    public function exportAll(Request $request)
+    {
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        // Build query same as index method
+        $query = RiskAssessment::whereIn('company_id', $companyGroupIds)
+            ->with(['hazard', 'creator', 'assignedTo', 'department']);
+        
+        // Apply same filters as index
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('reference_number', 'like', "%{$search}%");
+            });
+        }
+        
+        if ($request->filled('risk_level')) {
+            $query->byRiskLevel($request->risk_level);
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+        
+        if ($request->filled('assessment_type')) {
+            $query->where('assessment_type', $request->assessment_type);
+        }
+        
+        if ($request->filled('overdue_reviews')) {
+            $query->dueForReview();
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->where('assessment_date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->where('assessment_date', '<=', $request->date_to);
+        }
+        
+        $assessments = $query->orderBy('created_at', 'desc')->get();
+        
+        $format = $request->get('format', 'excel');
+        
+        if ($format === 'pdf') {
+            return $this->exportToPDF($assessments, $request);
+        }
+        
+        return $this->exportToExcel($assessments);
+    }
+    
+    /**
+     * Export risk assessments to Excel (CSV)
+     */
+    private function exportToExcel($assessments)
+    {
+        $filename = 'risk_assessments_export_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+        
+        $callback = function() use ($assessments) {
+            $file = fopen('php://output', 'w');
+            
+            // Headers
+            fputcsv($file, [
+                'Reference Number',
+                'Title',
+                'Assessment Type',
+                'Risk Level',
+                'Risk Score',
+                'Severity',
+                'Likelihood',
+                'Status',
+                'Department',
+                'Created By',
+                'Assigned To',
+                'Assessment Date',
+                'Next Review Date',
+                'Hazard',
+                'Description'
+            ]);
+            
+            // Data
+            foreach ($assessments as $assessment) {
+                fputcsv($file, [
+                    $assessment->reference_number,
+                    $assessment->title,
+                    ucfirst($assessment->assessment_type ?? 'N/A'),
+                    ucfirst($assessment->risk_level ?? 'N/A'),
+                    $assessment->risk_score ?? 'N/A',
+                    ucfirst($assessment->severity ?? 'N/A'),
+                    ucfirst($assessment->likelihood ?? 'N/A'),
+                    ucfirst($assessment->status ?? 'N/A'),
+                    $assessment->department?->name ?? 'N/A',
+                    $assessment->creator?->name ?? 'N/A',
+                    $assessment->assignedTo?->name ?? 'N/A',
+                    $assessment->assessment_date ? $assessment->assessment_date->format('Y-m-d') : 'N/A',
+                    $assessment->next_review_date ? $assessment->next_review_date->format('Y-m-d') : 'N/A',
+                    $assessment->hazard?->title ?? 'N/A',
+                    $assessment->description ?? 'N/A',
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Export risk assessments to PDF
+     */
+    private function exportToPDF($assessments, $request)
+    {
+        $pdf = Pdf::loadView('risk-assessment.risk-assessments.exports.pdf', [
+            'assessments' => $assessments,
+            'filters' => $request->all(),
+        ]);
+        
+        return $pdf->download('risk_assessments_export_' . date('Y-m-d_His') . '.pdf');
+    }
+    
+    /**
+     * Export single risk assessment to PDF
+     */
+    public function exportPDF(RiskAssessment $riskAssessment)
+    {
+        if ($riskAssessment->company_id !== Auth::user()->company_id && 
+            !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $riskAssessment->load(['hazard', 'creator', 'assignedTo', 'department', 'company', 'controlMeasures', 'reviews', 'relatedIncident', 'relatedJSA']);
+        
+        $pdf = Pdf::loadView('risk-assessment.risk-assessments.exports.single-pdf', [
+            'assessment' => $riskAssessment,
+        ]);
+        
+        return $pdf->download("risk-assessment-{$riskAssessment->reference_number}.pdf");
+    }
+    
+    /**
      * Copy risk assessment
      */
     public function copy(RiskAssessment $riskAssessment)
@@ -458,5 +623,47 @@ class RiskAssessmentController extends Controller
             'biannually' => $base->addYears(2),
             default => $base->addYear(),
         };
+    }
+    
+    /**
+     * Notify relevant users about status change
+     */
+    private function notifyStatusChange(RiskAssessment $riskAssessment, string $oldStatus, string $newStatus)
+    {
+        $user = Auth::user();
+        $notifyUsers = collect();
+        
+        // Notify creator
+        if ($riskAssessment->creator) {
+            $notifyUsers->push($riskAssessment->creator);
+        }
+        
+        // Notify assigned user
+        if ($riskAssessment->assignedTo) {
+            $notifyUsers->push($riskAssessment->assignedTo);
+        }
+        
+        // Notify HSE managers
+        $hseManagers = User::where('company_id', $riskAssessment->company_id)
+            ->whereHas('role', function($q) {
+                $q->whereIn('name', ['hse_manager', 'hse_officer', 'admin', 'super_admin']);
+            })
+            ->get();
+        
+        $notifyUsers = $notifyUsers->merge($hseManagers)->unique('id');
+        
+        // Don't notify the user who made the change
+        $notifyUsers = $notifyUsers->reject(function($notifyUser) use ($user) {
+            return $notifyUser->id === $user->id;
+        });
+        
+        foreach ($notifyUsers as $notifyUser) {
+            $notifyUser->notify(new RiskAssessmentStatusChangedNotification(
+                $riskAssessment,
+                $oldStatus,
+                $newStatus,
+                $user->name
+            ));
+        }
     }
 }

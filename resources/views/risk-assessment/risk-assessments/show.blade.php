@@ -12,6 +12,9 @@
                     <p class="text-sm text-gray-500 mt-1">{{ $riskAssessment->reference_number }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <a href="{{ route('risk-assessment.risk-assessments.export-pdf', $riskAssessment) }}" class="px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </a>
                     <x-print-button />
                     <a href="{{ route('risk-assessment.risk-assessments.create', ['copy_from' => $riskAssessment->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this risk assessment">
                         <i class="fas fa-copy mr-2"></i>Copy

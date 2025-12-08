@@ -68,3 +68,6 @@ Schedule::command('toolbox-talks:process-status')->hourly()->name('toolbox-talks
 
 // Send day-before notifications (Daily at 9 AM)
 Schedule::command('toolbox-talks:send-day-before-notifications')->dailyAt('09:00')->name('toolbox-talks.day-before-notifications');
+
+// Risk Assessment Review Notifications (Daily at 8:00 AM)
+Schedule::command('risk-assessment:send-review-notifications')->dailyAt('08:00')->name('risk-assessment.review-notifications');

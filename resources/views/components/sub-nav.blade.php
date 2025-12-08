@@ -7,6 +7,8 @@
             $section = 'toolbox';
         } elseif (request()->is('incidents*')) {
             $section = 'incidents';
+        } elseif (request()->is('risk-assessment*')) {
+            $section = 'risk-assessment';
         } elseif (request()->is('safety-communications*')) {
             $section = 'communications';
         } elseif (request()->is('admin/*')) {
@@ -34,11 +36,23 @@
             ['route' => 'incidents.index', 'label' => 'All Incidents', 'icon' => 'fa-list', 'pattern' => 'incidents', 'exclude' => ['incidents/*']],
             ['route' => 'incidents.create', 'label' => 'Report Incident', 'icon' => 'fa-plus-circle', 'pattern' => 'incidents/create'],
             ['route' => 'incidents.dashboard', 'label' => 'Analytics', 'icon' => 'fa-chart-line', 'pattern' => 'incidents/dashboard'],
+            ['route' => 'incidents.trend-analysis', 'label' => 'Trend Analysis', 'icon' => 'fa-chart-line', 'pattern' => 'incidents/trend-analysis'],
+            ['route' => 'incidents.reports.index', 'label' => 'Reports', 'icon' => 'fa-chart-bar', 'pattern' => 'incidents/reports*'],
+        ],
+        'risk-assessment' => [
+            ['route' => 'risk-assessment.dashboard', 'label' => 'Dashboard', 'icon' => 'fa-chart-pie', 'pattern' => 'risk-assessment/dashboard'],
+            ['route' => 'risk-assessment.hazards.index', 'label' => 'Hazards', 'icon' => 'fa-exclamation-triangle', 'pattern' => 'risk-assessment/hazards*'],
+            ['route' => 'risk-assessment.risk-assessments.index', 'label' => 'Risk Register', 'icon' => 'fa-clipboard-list', 'pattern' => 'risk-assessment/risk-assessments*', 'exclude' => ['risk-assessment/reports*']],
+            ['route' => 'risk-assessment.jsas.index', 'label' => 'JSA', 'icon' => 'fa-tasks', 'pattern' => 'risk-assessment/jsas*'],
+            ['route' => 'risk-assessment.control-measures.index', 'label' => 'Control Measures', 'icon' => 'fa-shield-alt', 'pattern' => 'risk-assessment/control-measures*'],
+            ['route' => 'risk-assessment.risk-reviews.index', 'label' => 'Risk Reviews', 'icon' => 'fa-sync-alt', 'pattern' => 'risk-assessment/risk-reviews*'],
+            ['route' => 'risk-assessment.reports.index', 'label' => 'Reports', 'icon' => 'fa-chart-bar', 'pattern' => 'risk-assessment/reports*'],
         ],
         'communications' => [
             ['route' => 'safety-communications.index', 'label' => 'All Communications', 'icon' => 'fa-list', 'pattern' => 'safety-communications', 'exclude' => ['safety-communications/*']],
             ['route' => 'safety-communications.create', 'label' => 'New Communication', 'icon' => 'fa-plus', 'pattern' => 'safety-communications/create'],
             ['route' => 'safety-communications.dashboard', 'label' => 'Dashboard', 'icon' => 'fa-chart-pie', 'pattern' => 'safety-communications/dashboard'],
+            ['route' => 'safety-communications.reports.index', 'label' => 'Reports', 'icon' => 'fa-chart-bar', 'pattern' => 'safety-communications/reports*'],
         ],
         'admin' => [
             ['route' => 'admin.users.index', 'label' => 'Users', 'icon' => 'fa-users', 'pattern' => 'admin/users*'],

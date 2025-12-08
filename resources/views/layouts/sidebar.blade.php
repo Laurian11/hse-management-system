@@ -126,6 +126,10 @@
                         <i class="fas fa-chart-line w-5 text-center"></i>
                         <span class="sidebar-text">Trend Analysis</span>
                     </a>
+                    <a href="{{ route('incidents.reports.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('incidents/reports*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reports">
+                        <i class="fas fa-chart-bar w-5 text-center"></i>
+                        <span class="sidebar-text">Reports</span>
+                    </a>
                     <div class="pt-2 mt-2 border-t border-gray-300">
                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-1 mb-1 sidebar-text">Investigation</div>
                         <a href="{{ route('incidents.index') }}?filter=investigating" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->get('filter') == 'investigating' ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Investigations">
@@ -162,7 +166,7 @@
                         <i class="fas fa-exclamation-triangle w-5 text-center"></i>
                         <span class="sidebar-text">Hazards (HAZID)</span>
                     </a>
-                    <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/risk-assessments*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Risk Register">
+                    <a href="{{ route('risk-assessment.risk-assessments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/risk-assessments*') && !request()->is('risk-assessment/reports*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Risk Register">
                         <i class="fas fa-clipboard-list w-5 text-center"></i>
                         <span class="sidebar-text">Risk Register</span>
                     </a>
@@ -177,6 +181,10 @@
                     <a href="{{ route('risk-assessment.risk-reviews.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/risk-reviews*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reviews">
                         <i class="fas fa-sync-alt w-5 text-center"></i>
                         <span class="sidebar-text">Risk Reviews</span>
+                    </a>
+                    <a href="{{ route('risk-assessment.reports.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('risk-assessment/reports*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Reports">
+                        <i class="fas fa-chart-bar w-5 text-center"></i>
+                        <span class="sidebar-text">Reports</span>
                     </a>
                 </div>
             </div>

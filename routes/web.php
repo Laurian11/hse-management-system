@@ -203,14 +203,31 @@ Route::prefix('toolbox-topics')->name('toolbox-topics.')->group(function () {
 
 // Safety Communication Routes
 Route::prefix('safety-communications')->name('safety-communications.')->group(function () {
+    // Reports routes - MUST come before resource routes
+    Route::get('/reports', [\App\Http\Controllers\SafetyCommunicationReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/department', [\App\Http\Controllers\SafetyCommunicationReportController::class, 'departmentReport'])->name('reports.department');
+    Route::get('/reports/employee', [\App\Http\Controllers\SafetyCommunicationReportController::class, 'employeeReport'])->name('reports.employee');
+    Route::get('/reports/period', [\App\Http\Controllers\SafetyCommunicationReportController::class, 'periodReport'])->name('reports.period');
+    Route::get('/reports/companies', [\App\Http\Controllers\SafetyCommunicationReportController::class, 'companiesReport'])->name('reports.companies');
+    
     Route::get('/', [SafetyCommunicationController::class, 'index'])->name('index');
     Route::get('/dashboard', [SafetyCommunicationController::class, 'dashboard'])->name('dashboard');
     Route::get('/create', [SafetyCommunicationController::class, 'create'])->name('create');
     Route::post('/', [SafetyCommunicationController::class, 'store'])->name('store');
+    
+    // Export routes
+    Route::get('/export/all', [SafetyCommunicationController::class, 'exportAll'])->name('export-all');
+    Route::get('/{communication}/export/pdf', [SafetyCommunicationController::class, 'exportPDF'])->name('export-pdf');
+    
     Route::get('/{communication}', [SafetyCommunicationController::class, 'show'])->name('show');
     Route::get('/{communication}/edit', [SafetyCommunicationController::class, 'edit'])->name('edit');
     Route::put('/{communication}', [SafetyCommunicationController::class, 'update'])->name('update');
     Route::delete('/{communication}', [SafetyCommunicationController::class, 'destroy'])->name('destroy');
+    
+    // Bulk actions
+    Route::post('/bulk-delete', [SafetyCommunicationController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-update', [SafetyCommunicationController::class, 'bulkUpdate'])->name('bulk-update');
+    Route::post('/bulk-export', [SafetyCommunicationController::class, 'bulkExport'])->name('bulk-export');
     
     // Specialized routes
     Route::post('/{communication}/send', [SafetyCommunicationController::class, 'send'])->name('send');
@@ -319,11 +336,24 @@ Route::prefix('risk-assessment')->name('risk-assessment.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [RiskAssessmentDashboardController::class, 'index'])->name('dashboard');
     
+    // Reports routes - MUST come before resource routes
+    Route::get('/reports', [\App\Http\Controllers\RiskAssessmentReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/department', [\App\Http\Controllers\RiskAssessmentReportController::class, 'departmentReport'])->name('reports.department');
+    Route::get('/reports/employee', [\App\Http\Controllers\RiskAssessmentReportController::class, 'employeeReport'])->name('reports.employee');
+    Route::get('/reports/period', [\App\Http\Controllers\RiskAssessmentReportController::class, 'periodReport'])->name('reports.period');
+    Route::get('/reports/companies', [\App\Http\Controllers\RiskAssessmentReportController::class, 'companiesReport'])->name('reports.companies');
+    
     // Hazards (HAZID)
     Route::resource('hazards', HazardController::class);
     
     // Risk Assessments (Risk Register)
     Route::resource('risk-assessments', RiskAssessmentController::class);
+    
+    // Export routes
+    Route::get('/risk-assessments/export/all', [RiskAssessmentController::class, 'exportAll'])->name('risk-assessments.export-all');
+    Route::get('/risk-assessments/{riskAssessment}/export/pdf', [RiskAssessmentController::class, 'exportPDF'])->name('risk-assessments.export-pdf');
+    
+    // Bulk actions
     Route::post('/risk-assessments/bulk-delete', [RiskAssessmentController::class, 'bulkDelete'])->name('risk-assessments.bulk-delete');
     Route::post('/risk-assessments/bulk-update', [RiskAssessmentController::class, 'bulkUpdate'])->name('risk-assessments.bulk-update');
     Route::post('/risk-assessments/bulk-export', [RiskAssessmentController::class, 'bulkExport'])->name('risk-assessments.bulk-export');

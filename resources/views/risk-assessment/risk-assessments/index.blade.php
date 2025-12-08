@@ -21,11 +21,21 @@ $breadcrumbs = [
                     <p class="text-sm text-gray-500 mt-1">Central repository of all risk assessments</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <x-print-button />
-                    <a href="{{ route('risk-assessment.dashboard') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <a href="{{ route('risk-assessment.risk-assessments.export-all', array_merge(request()->all(), ['format' => 'excel'])) }}" 
+                       class="px-4 py-2 text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50">
+                        <i class="fas fa-file-excel mr-2"></i>Export Excel
+                    </a>
+                    <a href="{{ route('risk-assessment.risk-assessments.export-all', array_merge(request()->all(), ['format' => 'pdf'])) }}" 
+                       class="px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </a>
+                    <a href="{{ route('risk-assessment.reports.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-chart-bar mr-2"></i>Reports
+                    </a>
+                    <a href="{{ route('risk-assessment.dashboard') }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                         <i class="fas fa-chart-pie mr-2"></i>Dashboard
                     </a>
-                    <a href="{{ route('risk-assessment.risk-assessments.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <a href="{{ route('risk-assessment.risk-assessments.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         <i class="fas fa-plus mr-2"></i>New Assessment
                     </a>
                 </div>
@@ -356,12 +366,6 @@ $breadcrumbs = [
         csrf.name = '_token';
         csrf.value = '{{ csrf_token() }}';
         form.appendChild(csrf);
-        
-        const method = document.createElement('input');
-        method.type = 'hidden';
-        method.name = '_method';
-        method.value = 'DELETE';
-        form.appendChild(method);
         
         selected.forEach(id => {
             const input = document.createElement('input');

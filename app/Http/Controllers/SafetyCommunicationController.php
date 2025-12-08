@@ -7,20 +7,34 @@ use App\Models\Company;
 use App\Models\Department;
 use App\Models\User;
 use App\Models\Role;
+use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SafetyCommunicationController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function index(Request $request)
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
-        $query = SafetyCommunication::forCompany($companyId)
+        $query = SafetyCommunication::whereIn('company_id', $companyGroupIds)
             ->with(['creator', 'company']);
         
         // Filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%")
+                  ->orWhere('reference_number', 'like', "%{$search}%");
+            });
+        }
+        
         if ($request->filled('type')) {
             $query->where('communication_type', $request->type);
         }
@@ -45,12 +59,12 @@ class SafetyCommunicationController extends Controller
         
         // Statistics
         $stats = [
-            'total' => SafetyCommunication::forCompany($companyId)->count(),
-            'sent' => SafetyCommunication::forCompany($companyId)->sent()->count(),
-            'scheduled' => SafetyCommunication::forCompany($companyId)->scheduled()->count(),
-            'draft' => SafetyCommunication::forCompany($companyId)->draft()->count(),
-            'requires_ack' => SafetyCommunication::forCompany($companyId)->requiresAcknowledgment()->count(),
-            'avg_ack_rate' => SafetyCommunication::forCompany($companyId)
+            'total' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->count(),
+            'sent' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->sent()->count(),
+            'scheduled' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->scheduled()->count(),
+            'draft' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->draft()->count(),
+            'requires_ack' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->requiresAcknowledgment()->count(),
+            'avg_ack_rate' => SafetyCommunication::whereIn('company_id', $companyGroupIds)
                 ->whereNotNull('acknowledgment_rate')
                 ->avg('acknowledgment_rate') ?? 0,
         ];
@@ -60,10 +74,11 @@ class SafetyCommunicationController extends Controller
 
     public function create()
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
-        $departments = Department::where('company_id', $companyId)->get();
-        $roles = Role::where('company_id', $companyId)->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $roles = Role::whereIn('company_id', $companyGroupIds)->get();
         
         return view('safety-communications.create', compact('departments', 'roles'));
     }
@@ -126,7 +141,11 @@ class SafetyCommunicationController extends Controller
 
     public function show(SafetyCommunication $communication)
     {
-        $this->authorize('view', $communication);
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($communication->company_id, $companyGroupIds)) {
+            abort(403, 'Unauthorized');
+        }
         
         $communication->load(['creator', 'company']);
 
@@ -138,18 +157,18 @@ class SafetyCommunicationController extends Controller
 
     public function edit(SafetyCommunication $communication)
     {
-        $this->authorize('update', $communication);
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($communication->company_id, $companyGroupIds)) {
+            abort(403, 'Unauthorized');
+        }
         
         if (!$communication->canBeEdited()) {
             return back()->with('error', 'Cannot edit communications that have been sent or expired.');
         }
 
-        $companyId = Auth::user()->company_id;
-        
-        $departments = Department::where('company_id', $companyId)->get();
-        $roles = User::where('company_id', $companyId)
-            ->distinct()
-            ->pluck('role');
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $roles = Role::whereIn('company_id', $companyGroupIds)->get();
 
         return view('safety-communications.edit', compact('communication', 'departments', 'roles'));
     }
@@ -207,7 +226,11 @@ class SafetyCommunicationController extends Controller
 
     public function destroy(SafetyCommunication $communication)
     {
-        $this->authorize('delete', $communication);
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($communication->company_id, $companyGroupIds)) {
+            abort(403, 'Unauthorized');
+        }
         
         if ($communication->isSent()) {
             return back()->with('error', 'Cannot delete communications that have been sent.');
@@ -238,8 +261,14 @@ class SafetyCommunicationController extends Controller
             'total_recipients' => $recipientCount,
         ]);
 
-        // Here you would implement the actual sending logic
-        // - Send emails
+        // Send notifications to recipients
+        $recipients = $this->getRecipients($communication);
+        
+        foreach ($recipients as $recipient) {
+            $recipient->notify(new \App\Notifications\SafetyCommunicationSentNotification($communication));
+        }
+
+        // Here you would implement additional sending logic
         // - Send SMS
         // - Update digital signage
         // - Send mobile push notifications
@@ -250,7 +279,11 @@ class SafetyCommunicationController extends Controller
 
     public function duplicate(SafetyCommunication $communication)
     {
-        $this->authorize('view', $communication);
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($communication->company_id, $companyGroupIds)) {
+            abort(403, 'Unauthorized');
+        }
         
         $newCommunication = $communication->replicate();
         $newCommunication->reference_number = 'SC-' . date('Ym') . '-TEMP';
@@ -274,17 +307,17 @@ class SafetyCommunicationController extends Controller
 
     public function dashboard()
     {
-        $companyId = Auth::user()->company_id;
+        $companyGroupIds = $this->getCompanyGroupIds();
         
         // Recent communications
-        $recentCommunications = SafetyCommunication::forCompany($companyId)
+        $recentCommunications = SafetyCommunication::whereIn('company_id', $companyGroupIds)
             ->with(['creator'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         // Scheduled communications
-        $scheduledCommunications = SafetyCommunication::forCompany($companyId)
+        $scheduledCommunications = SafetyCommunication::whereIn('company_id', $companyGroupIds)
             ->scheduled()
             ->where('scheduled_send_time', '>', now())
             ->with(['creator'])
@@ -294,22 +327,22 @@ class SafetyCommunicationController extends Controller
 
         // Statistics
         $stats = [
-            'total_sent' => SafetyCommunication::forCompany($companyId)->sent()->count(),
-            'this_month' => SafetyCommunication::forCompany($companyId)
+            'total_sent' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->sent()->count(),
+            'this_month' => SafetyCommunication::whereIn('company_id', $companyGroupIds)
                 ->whereMonth('created_at', now()->month)
                 ->count(),
-            'emergency_sent' => SafetyCommunication::forCompany($companyId)
+            'emergency_sent' => SafetyCommunication::whereIn('company_id', $companyGroupIds)
                 ->sent()
                 ->where('priority_level', 'emergency')
                 ->count(),
-            'avg_acknowledgment_rate' => SafetyCommunication::forCompany($companyId)
+            'avg_acknowledgment_rate' => SafetyCommunication::whereIn('company_id', $companyGroupIds)
                 ->sent()
                 ->whereNotNull('acknowledgment_rate')
                 ->avg('acknowledgment_rate') ?? 0,
         ];
 
         // Communication types breakdown
-        $typeBreakdown = SafetyCommunication::forCompany($companyId)
+        $typeBreakdown = SafetyCommunication::whereIn('company_id', $companyGroupIds)
             ->sent()
             ->selectRaw('communication_type, count(*) as count')
             ->groupBy('communication_type')
@@ -323,31 +356,46 @@ class SafetyCommunicationController extends Controller
         ));
     }
 
-    private function calculateRecipientCount(SafetyCommunication $communication): int
+    /**
+     * Get recipients for a communication
+     */
+    private function getRecipients(SafetyCommunication $communication)
     {
-        $query = User::where('company_id', $communication->company_id);
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $query = User::whereIn('company_id', $companyGroupIds);
 
         switch ($communication->target_audience) {
             case 'all_employees':
-                return $query->count();
+                return $query->get();
             
             case 'specific_departments':
-                return $query->whereIn('department_id', $communication->target_departments ?? [])->count();
+                return $query->whereIn('department_id', $communication->target_departments ?? [])->get();
             
             case 'specific_roles':
-                return $query->whereIn('role', $communication->target_roles ?? [])->count();
+                return $query->whereHas('role', function($q) use ($communication) {
+                    $q->whereIn('name', $communication->target_roles ?? []);
+                })->get();
             
             case 'specific_locations':
-                return $query->whereIn('work_location', $communication->target_locations ?? [])->count();
+                return $query->whereIn('work_location', $communication->target_locations ?? [])->get();
             
             case 'management_only':
-                return $query->whereIn('role', ['manager', 'supervisor', 'director'])->count();
+                return $query->whereHas('role', function($q) {
+                    $q->whereIn('name', ['manager', 'supervisor', 'director', 'admin', 'hse_manager']);
+                })->get();
             
             case 'supervisors_only':
-                return $query->where('role', 'supervisor')->count();
+                return $query->whereHas('role', function($q) {
+                    $q->where('name', 'supervisor');
+                })->get();
             
             default:
-                return 0;
+                return collect();
         }
+    }
+
+    private function calculateRecipientCount(SafetyCommunication $communication): int
+    {
+        return $this->getRecipients($communication)->count();
     }
 }
