@@ -114,6 +114,9 @@ Route::middleware('auth')->group(function () {
     
     // Email Sharing
     Route::post('/email/share', [\App\Http\Controllers\EmailShareController::class, 'share'])->name('email.share');
+    
+    // Employee Search API for autocomplete
+    Route::get('/api/employees/search', [\App\Http\Controllers\EmployeeController::class, 'search'])->name('api.employees.search');
 });
 
 Route::get('/', [LandingPageController::class, 'index'])->name('landing');
@@ -148,6 +151,8 @@ Route::prefix('toolbox-talks')->name('toolbox-talks.')->group(function () {
     Route::post('/{toolboxTalk}/complete', [ToolboxTalkController::class, 'completeTalk'])->name('complete');
     Route::post('/{toolboxTalk}/mark-attendance', [ToolboxTalkController::class, 'markAttendance'])->name('mark-attendance');
     Route::post('/{toolboxTalk}/sync-biometric', [ToolboxTalkController::class, 'syncBiometricAttendance'])->name('sync-biometric');
+    Route::post('/{toolboxTalk}/generate-next', [ToolboxTalkController::class, 'generateNextOccurrence'])->name('generate-next');
+    Route::post('/{toolboxTalk}/reschedule', [ToolboxTalkController::class, 'reschedule'])->name('reschedule');
     Route::get('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'actionItems'])->name('action-items');
     Route::post('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'saveActionItems'])->name('save-action-items');
     Route::get('/{toolboxTalk}/attendance', [ToolboxTalkController::class, 'attendanceManagement'])->name('attendance-management');
@@ -158,12 +163,35 @@ Route::prefix('toolbox-talks')->name('toolbox-talks.')->group(function () {
     Route::get('/export/reporting-excel', [ToolboxTalkController::class, 'exportReportingExcel'])->name('export-reporting-excel');
 });
 
+// Toolbox Talk Reports Routes
+Route::prefix('toolbox-talks/reports')->name('toolbox-talks.reports.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\ToolboxTalkReportController::class, 'index'])->name('index');
+    Route::get('/department-attendance', [\App\Http\Controllers\ToolboxTalkReportController::class, 'departmentAttendance'])->name('department-attendance');
+    Route::get('/employee-attendance', [\App\Http\Controllers\ToolboxTalkReportController::class, 'employeeAttendance'])->name('employee-attendance');
+    Route::get('/period', [\App\Http\Controllers\ToolboxTalkReportController::class, 'periodReport'])->name('period');
+    Route::get('/companies', [\App\Http\Controllers\ToolboxTalkReportController::class, 'companiesReport'])->name('companies');
+});
+
+// Toolbox Talk Templates Routes
+Route::prefix('toolbox-talks/templates')->name('toolbox-talks.templates.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'store'])->name('store');
+    Route::get('/{template}', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'show'])->name('show');
+    Route::get('/{template}/json', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'json'])->name('json');
+    Route::get('/{template}/edit', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'edit'])->name('edit');
+    Route::put('/{template}', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'update'])->name('update');
+    Route::delete('/{template}', [\App\Http\Controllers\ToolboxTalkTemplateController::class, 'destroy'])->name('destroy');
+});
+
 // Toolbox Talk Topics Routes
 Route::prefix('toolbox-topics')->name('toolbox-topics.')->group(function () {
     Route::get('/', [ToolboxTalkTopicController::class, 'index'])->name('index');
     Route::get('/library', [ToolboxTalkTopicController::class, 'library'])->name('library');
     Route::get('/create', [ToolboxTalkTopicController::class, 'create'])->name('create');
     Route::post('/', [ToolboxTalkTopicController::class, 'store'])->name('store');
+    Route::post('/bulk-import', [ToolboxTalkTopicController::class, 'bulkImport'])->name('bulk-import');
+    Route::get('/bulk-import/template', [ToolboxTalkTopicController::class, 'downloadImportTemplate'])->name('bulk-import-template');
     Route::get('/{topic}', [ToolboxTalkTopicController::class, 'show'])->name('show');
     Route::get('/{topic}/edit', [ToolboxTalkTopicController::class, 'edit'])->name('edit');
     Route::put('/{topic}', [ToolboxTalkTopicController::class, 'update'])->name('update');
@@ -195,6 +223,7 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     Route::get('/dashboard', [IncidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/trend-analysis', [IncidentController::class, 'trendAnalysis'])->name('trend-analysis');
     Route::get('/create', [IncidentController::class, 'create'])->name('create');
+    Route::post('/{incident}/assign-company', [IncidentController::class, 'assignCompany'])->name('assign-company');
     Route::post('/', [IncidentController::class, 'store'])->name('store');
     Route::get('/{incident}', [IncidentController::class, 'show'])->name('show');
     Route::get('/{incident}/edit', [IncidentController::class, 'edit'])->name('edit');
@@ -370,6 +399,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Specialized routes
         Route::post('/{employee}/activate', [EmployeeController::class, 'activate'])->name('activate');
         Route::post('/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('deactivate');
+        Route::get('/{employee}/create-user', [EmployeeController::class, 'createUser'])->name('create-user');
+        Route::post('/{employee}/create-user', [EmployeeController::class, 'storeUser'])->name('store-user');
         Route::get('/export', [EmployeeController::class, 'export'])->name('export');
     });
     

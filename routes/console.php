@@ -33,3 +33,38 @@ Schedule::call(function () {
     // Update expired issuances (all companies)
     $service->updateExpiredIssuances();
 })->daily()->at('08:30')->name('ppe.alerts-and-updates');
+
+// Biometric Attendance Processing - Automatic (Every 5 minutes)
+Schedule::call(function () {
+    $zkService = app(\App\Services\ZKTecoService::class);
+    
+    // Get all active toolbox talks happening now or recently
+    $talks = \App\Models\ToolboxTalk::where('biometric_required', true)
+        ->whereDate('scheduled_date', '<=', now())
+        ->where(function($query) {
+            // Talks that started and haven't ended yet, or ended within last hour
+            $query->where(function($q) {
+                $q->where('start_time', '<=', now())
+                  ->where(function($sq) {
+                      $sq->where('end_time', '>=', now())
+                        ->orWhere('end_time', '>=', now()->subHour());
+                  });
+            });
+        })
+        ->get();
+    
+    foreach ($talks as $talk) {
+        try {
+            $results = $zkService->processToolboxTalkAttendance($talk);
+            \Illuminate\Support\Facades\Log::info("Auto-processed attendance for talk {$talk->reference_number}: {$results['new_attendances']} new attendances");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error processing attendance for talk {$talk->reference_number}: " . $e->getMessage());
+        }
+    }
+})->everyFiveMinutes()->name('biometric.auto-process-attendance');
+
+// Auto-end talks and mark overdue (Every hour)
+Schedule::command('toolbox-talks:process-status')->hourly()->name('toolbox-talks.process-status');
+
+// Send day-before notifications (Daily at 9 AM)
+Schedule::command('toolbox-talks:send-day-before-notifications')->dailyAt('09:00')->name('toolbox-talks.day-before-notifications');

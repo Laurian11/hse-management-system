@@ -21,6 +21,7 @@ use App\Models\TrainingCertificate;
 use App\Models\TrainingNeedsAnalysis;
 use App\Models\PPEItem;
 use App\Models\PPEIssuance;
+use App\Services\CompanyGroupService;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -34,95 +35,113 @@ class DashboardController extends Controller
         $user = Auth::user();
         $companyId = $user->company_id;
 
+        // Get company group IDs (parent + all sisters) for data aggregation
+        // For super admin without company_id, get all companies
         if (!$companyId) {
-            return redirect()->route('login')->with('error', 'User is not assigned to any company.');
+            // Load role relationship
+            $user->load('role');
+            // Check if user is super admin
+            $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
+            if (!$isSuperAdmin) {
+                return redirect()->route('login')->with('error', 'User is not assigned to any company.');
+            }
+            // Super admin can proceed - will see data from all companies
+            $companyGroupIds = \App\Models\Company::where('is_active', true)->pluck('id')->toArray();
+            $isParentCompany = false;
+        } else {
+            $companyGroupIds = CompanyGroupService::getCompanyGroupIds($companyId);
+            $isParentCompany = CompanyGroupService::isParentCompany($companyId);
         }
 
-        // Calculate days without incident
-        $lastIncident = Incident::where('company_id', $companyId)
+        // Calculate days without incident (across company group if parent)
+        $lastIncident = Incident::whereIn('company_id', $companyGroupIds)
             ->orderBy('incident_date', 'desc')
             ->first();
         $daysWithoutIncident = $lastIncident 
             ? Carbon::parse($lastIncident->incident_date)->diffInDays(now())
             : now()->diffInDays(Company::find($companyId)->created_at ?? now());
 
-        // Calculate safety score
-        $totalIncidents = Incident::where('company_id', $companyId)->count();
-        $criticalIncidents = Incident::where('company_id', $companyId)->where('severity', 'critical')->count();
-        $highIncidents = Incident::where('company_id', $companyId)->where('severity', 'high')->count();
+        // Calculate safety score (across company group if parent)
+        $totalIncidents = Incident::whereIn('company_id', $companyGroupIds)->count();
+        $criticalIncidents = Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'critical')->count();
+        $highIncidents = Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'high')->count();
         $safetyScore = max(0, min(100, 100 - ($criticalIncidents * 10) - ($highIncidents * 5) - (($totalIncidents - $criticalIncidents - $highIncidents) * 2)));
         $safetyScore = round($safetyScore);
 
-        // Overall Statistics
+        // Overall Statistics (aggregated across company group if parent)
         $stats = [
             // Incidents
-            'total_incidents' => Incident::where('company_id', $companyId)->count(),
-            'open_incidents' => Incident::where('company_id', $companyId)->whereIn('status', ['reported', 'open'])->count(),
+            'total_incidents' => Incident::whereIn('company_id', $companyGroupIds)->count(),
+            'open_incidents' => Incident::whereIn('company_id', $companyGroupIds)->whereIn('status', ['reported', 'open'])->count(),
             'days_without_incident' => $daysWithoutIncident,
             'safety_score' => $safetyScore,
             
             // Toolbox Talks
-            'total_toolbox_talks' => ToolboxTalk::where('company_id', $companyId)->count(),
-            'completed_talks' => ToolboxTalk::where('company_id', $companyId)->where('status', 'completed')->count(),
-            'total_attendances' => ToolboxTalkAttendance::whereHas('toolboxTalk', function($q) use ($companyId) {
-                $q->where('company_id', $companyId);
+            'total_toolbox_talks' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->count(),
+            'completed_talks' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
+            'total_attendances' => ToolboxTalkAttendance::whereHas('toolboxTalk', function($q) use ($companyGroupIds) {
+                $q->whereIn('company_id', $companyGroupIds);
             })->count(),
-            'total_feedback' => ToolboxTalkFeedback::whereHas('toolboxTalk', function($q) use ($companyId) {
-                $q->where('company_id', $companyId);
+            'total_feedback' => ToolboxTalkFeedback::whereHas('toolboxTalk', function($q) use ($companyGroupIds) {
+                $q->whereIn('company_id', $companyGroupIds);
             })->count(),
             
-            // Risk Assessment
-            'total_hazards' => Hazard::where('company_id', $companyId)->count(),
-            'total_risk_assessments' => RiskAssessment::where('company_id', $companyId)->count(),
-            'high_risk_assessments' => RiskAssessment::where('company_id', $companyId)->whereIn('risk_level', ['high', 'critical', 'extreme'])->count(),
-            'total_jsas' => JSA::where('company_id', $companyId)->count(),
-            'approved_jsas' => JSA::where('company_id', $companyId)->where('status', 'approved')->count(),
+            // Risk Assessment (aggregated across company group if parent)
+            'total_hazards' => Hazard::whereIn('company_id', $companyGroupIds)->count(),
+            'total_risk_assessments' => RiskAssessment::whereIn('company_id', $companyGroupIds)->count(),
+            'high_risk_assessments' => RiskAssessment::whereIn('company_id', $companyGroupIds)->whereIn('risk_level', ['high', 'critical', 'extreme'])->count(),
+            'total_jsas' => JSA::whereIn('company_id', $companyGroupIds)->count(),
+            'approved_jsas' => JSA::whereIn('company_id', $companyGroupIds)->where('status', 'approved')->count(),
             
-            // CAPA
-            'total_capas' => CAPA::where('company_id', $companyId)->count(),
-            'open_capas' => CAPA::where('company_id', $companyId)->whereIn('status', ['open', 'in_progress'])->count(),
-            'overdue_capas' => CAPA::where('company_id', $companyId)
+            // CAPA (aggregated across company group if parent)
+            'total_capas' => CAPA::whereIn('company_id', $companyGroupIds)->count(),
+            'open_capas' => CAPA::whereIn('company_id', $companyGroupIds)->whereIn('status', ['open', 'in_progress'])->count(),
+            'overdue_capas' => CAPA::whereIn('company_id', $companyGroupIds)
                 ->whereIn('status', ['open', 'in_progress'])
                 ->where('due_date', '<', now())
                 ->count(),
             
-            // Training
-            'total_training_needs' => TrainingNeedsAnalysis::where('company_id', $companyId)->count(),
-            'pending_training_needs' => TrainingNeedsAnalysis::where('company_id', $companyId)->whereIn('status', ['identified', 'validated'])->count(),
-            'total_training_sessions' => TrainingSession::where('company_id', $companyId)->count(),
-            'upcoming_sessions' => TrainingSession::where('company_id', $companyId)
+            // Training (aggregated across company group if parent)
+            'total_training_needs' => TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)->count(),
+            'pending_training_needs' => TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)->whereIn('status', ['identified', 'validated'])->count(),
+            'total_training_sessions' => TrainingSession::whereIn('company_id', $companyGroupIds)->count(),
+            'upcoming_sessions' => TrainingSession::whereIn('company_id', $companyGroupIds)
                 ->whereIn('status', ['scheduled', 'in_progress'])
                 ->where('scheduled_start', '>=', now())
                 ->count(),
-            'total_certificates' => TrainingCertificate::where('company_id', $companyId)->count(),
-            'expiring_certificates' => TrainingCertificate::where('company_id', $companyId)
+            'total_certificates' => TrainingCertificate::whereIn('company_id', $companyGroupIds)->count(),
+            'expiring_certificates' => TrainingCertificate::whereIn('company_id', $companyGroupIds)
                 ->where('status', 'active')
                 ->where('has_expiry', true)
                 ->whereBetween('expiry_date', [now(), now()->addDays(60)])
                 ->count(),
             
-            // PPE
-            'total_ppe_items' => PPEItem::where('company_id', $companyId)->count(),
-            'low_stock_ppe' => PPEItem::where('company_id', $companyId)
+            // PPE (aggregated across company group if parent)
+            'total_ppe_items' => PPEItem::whereIn('company_id', $companyGroupIds)->count(),
+            'low_stock_ppe' => PPEItem::whereIn('company_id', $companyGroupIds)
                 ->whereColumn('available_quantity', '<', 'minimum_stock_level')
                 ->count(),
-            'active_ppe_issuances' => PPEIssuance::where('company_id', $companyId)->where('status', 'active')->count(),
-            'expiring_ppe' => PPEIssuance::where('company_id', $companyId)
+            'active_ppe_issuances' => PPEIssuance::whereIn('company_id', $companyGroupIds)->where('status', 'active')->count(),
+            'expiring_ppe' => PPEIssuance::whereIn('company_id', $companyGroupIds)
                 ->where('status', 'active')
                 ->whereNotNull('replacement_due_date')
                 ->where('replacement_due_date', '<=', now()->addDays(7))
                 ->count(),
             
-            // Communications & Users
-            'total_communications' => SafetyCommunication::where('company_id', $companyId)->count(),
-            'active_users' => User::where('company_id', $companyId)->where('is_active', true)->count(),
+            // Communications & Users (aggregated across company group if parent)
+            'total_communications' => SafetyCommunication::whereIn('company_id', $companyGroupIds)->count(),
+            'active_users' => User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->count(),
+            
+            // Company group info
+            'is_parent_company' => $isParentCompany,
+            'company_group_count' => count($companyGroupIds),
         ];
 
         // Monthly Incident Trends (Last 6 Months)
         $incidentTrends = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthIncidents = Incident::where('company_id', $companyId)
+            $monthIncidents = Incident::whereIn('company_id', $companyGroupIds)
                 ->whereYear('incident_date', $month->year)
                 ->whereMonth('incident_date', $month->month)
                 ->get();
@@ -137,26 +156,26 @@ class DashboardController extends Controller
 
         // Incident Severity Distribution
         $severityDistribution = [
-            'critical' => Incident::where('company_id', $companyId)->where('severity', 'critical')->count(),
-            'high' => Incident::where('company_id', $companyId)->where('severity', 'high')->count(),
-            'medium' => Incident::where('company_id', $companyId)->where('severity', 'medium')->count(),
-            'low' => Incident::where('company_id', $companyId)->where('severity', 'low')->count(),
+            'critical' => Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'critical')->count(),
+            'high' => Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'high')->count(),
+            'medium' => Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'medium')->count(),
+            'low' => Incident::whereIn('company_id', $companyGroupIds)->where('severity', 'low')->count(),
         ];
 
         // Incident Status Distribution
         $incidentStatusDistribution = [
-            'reported' => Incident::where('company_id', $companyId)->where('status', 'reported')->count(),
-            'open' => Incident::where('company_id', $companyId)->where('status', 'open')->count(),
-            'investigating' => Incident::where('company_id', $companyId)->where('status', 'investigating')->count(),
-            'resolved' => Incident::where('company_id', $companyId)->where('status', 'resolved')->count(),
-            'closed' => Incident::where('company_id', $companyId)->where('status', 'closed')->count(),
+            'reported' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'reported')->count(),
+            'open' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'open')->count(),
+            'investigating' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'investigating')->count(),
+            'resolved' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'resolved')->count(),
+            'closed' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'closed')->count(),
         ];
 
         // Toolbox Talk Trends (Last 6 Months)
         $talkTrends = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthTalks = ToolboxTalk::where('company_id', $companyId)
+            $monthTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereYear('scheduled_date', $month->year)
                 ->whereMonth('scheduled_date', $month->month)
                 ->get();
@@ -171,9 +190,9 @@ class DashboardController extends Controller
 
         // Toolbox Talk Status Distribution
         $talkStatusDistribution = [
-            'scheduled' => ToolboxTalk::where('company_id', $companyId)->where('status', 'scheduled')->count(),
-            'in_progress' => ToolboxTalk::where('company_id', $companyId)->where('status', 'in_progress')->count(),
-            'completed' => ToolboxTalk::where('company_id', $companyId)->where('status', 'completed')->count(),
+            'scheduled' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'scheduled')->count(),
+            'in_progress' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'in_progress')->count(),
+            'completed' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
         ];
 
         // Weekly Activity (Last 8 Weeks)
@@ -182,11 +201,11 @@ class DashboardController extends Controller
             $weekStart = now()->subWeeks($i)->startOfWeek();
             $weekEnd = now()->subWeeks($i)->endOfWeek();
             
-            $weekIncidents = Incident::where('company_id', $companyId)
+            $weekIncidents = Incident::whereIn('company_id', $companyGroupIds)
                 ->whereBetween('incident_date', [$weekStart, $weekEnd])
                 ->count();
             
-            $weekTalks = ToolboxTalk::where('company_id', $companyId)
+            $weekTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereBetween('scheduled_date', [$weekStart, $weekEnd])
                 ->count();
             
@@ -198,13 +217,13 @@ class DashboardController extends Controller
         }
 
         // Department Performance
-        $departments = Department::where('company_id', $companyId)->get();
-        $departmentStats = $departments->map(function($dept) use ($companyId) {
-            $incidents = Incident::where('company_id', $companyId)
+        $departments = Department::whereIn('company_id', $companyGroupIds)->get();
+        $departmentStats = $departments->map(function($dept) use ($companyGroupIds) {
+            $incidents = Incident::whereIn('company_id', $companyGroupIds)
                 ->where('department_id', $dept->id)
                 ->get();
             
-            $talks = ToolboxTalk::where('company_id', $companyId)
+            $talks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->where('department_id', $dept->id)
                 ->completed()
                 ->get();
@@ -222,18 +241,18 @@ class DashboardController extends Controller
 
         // Risk Level Distribution
         $riskLevelDistribution = [
-            'extreme' => RiskAssessment::where('company_id', $companyId)->where('risk_level', 'extreme')->count(),
-            'critical' => RiskAssessment::where('company_id', $companyId)->where('risk_level', 'critical')->count(),
-            'high' => RiskAssessment::where('company_id', $companyId)->where('risk_level', 'high')->count(),
-            'medium' => RiskAssessment::where('company_id', $companyId)->where('risk_level', 'medium')->count(),
-            'low' => RiskAssessment::where('company_id', $companyId)->where('risk_level', 'low')->count(),
+            'extreme' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('risk_level', 'extreme')->count(),
+            'critical' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('risk_level', 'critical')->count(),
+            'high' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('risk_level', 'high')->count(),
+            'medium' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('risk_level', 'medium')->count(),
+            'low' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('risk_level', 'low')->count(),
         ];
 
         // Training Trends (Last 6 Months)
         $trainingTrends = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthSessions = TrainingSession::where('company_id', $companyId)
+            $monthSessions = TrainingSession::whereIn('company_id', $companyGroupIds)
                 ->whereYear('scheduled_start', $month->year)
                 ->whereMonth('scheduled_start', $month->month)
                 ->get();
@@ -246,32 +265,32 @@ class DashboardController extends Controller
         }
 
         // PPE Category Distribution
-        $ppeCategoryDistribution = PPEItem::where('company_id', $companyId)
+        $ppeCategoryDistribution = PPEItem::whereIn('company_id', $companyGroupIds)
             ->selectRaw('category, COUNT(*) as count')
             ->groupBy('category')
             ->pluck('count', 'category')
             ->toArray();
 
         // Recent Activity
-        $recentIncidents = Incident::where('company_id', $companyId)
+        $recentIncidents = Incident::whereIn('company_id', $companyGroupIds)
             ->with(['reporter', 'department'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $recentTalks = ToolboxTalk::where('company_id', $companyId)
+        $recentTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->with(['department', 'supervisor'])
             ->orderBy('scheduled_date', 'desc')
             ->limit(5)
             ->get();
 
-        $recentRiskAssessments = RiskAssessment::where('company_id', $companyId)
+        $recentRiskAssessments = RiskAssessment::whereIn('company_id', $companyGroupIds)
             ->with(['department', 'creator'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $recentCAPAs = CAPA::where('company_id', $companyId)
+        $recentCAPAs = CAPA::whereIn('company_id', $companyGroupIds)
             ->with(['department', 'assignedTo', 'incident'])
             ->orderBy('created_at', 'desc')
             ->limit(5)

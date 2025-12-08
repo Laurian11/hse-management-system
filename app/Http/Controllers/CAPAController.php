@@ -5,24 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\Incident;
 use App\Models\CAPA;
 use App\Notifications\CAPAAssignedNotification;
+use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class CAPAController extends Controller
 {
+    use UsesCompanyGroup;
+
     /**
      * Show the form for creating a new CAPA
      */
     public function create(Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($incident->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 
-        $companyId = Auth::user()->company_id;
-        $users = \App\Models\User::where('company_id', $companyId)->get();
-        $departments = \App\Models\Department::where('company_id', $companyId)->get();
+        $users = \App\Models\User::whereIn('company_id', $companyGroupIds)->get();
+        $departments = \App\Models\Department::whereIn('company_id', $companyGroupIds)->get();
         $rootCauses = $incident->rootCauseAnalysis ? [$incident->rootCauseAnalysis] : [];
 
         return view('incidents.capas.create', compact('incident', 'users', 'departments', 'rootCauses'));
@@ -33,7 +38,10 @@ class CAPAController extends Controller
      */
     public function store(Request $request, Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($incident->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 
@@ -81,7 +89,9 @@ class CAPAController extends Controller
      */
     public function show(Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id || 
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds) || 
             $capa->incident_id !== $incident->id) {
             abort(403, 'Unauthorized');
         }
@@ -96,14 +106,16 @@ class CAPAController extends Controller
      */
     public function edit(Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id || 
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds) || 
             $capa->incident_id !== $incident->id) {
             abort(403, 'Unauthorized');
         }
 
-        $companyId = Auth::user()->company_id;
-        $users = \App\Models\User::where('company_id', $companyId)->get();
-        $departments = \App\Models\Department::where('company_id', $companyId)->get();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $users = \App\Models\User::whereIn('company_id', $companyGroupIds)->get();
+        $departments = \App\Models\Department::whereIn('company_id', $companyGroupIds)->get();
 
         return view('incidents.capas.edit', compact('incident', 'capa', 'users', 'departments'));
     }
@@ -113,7 +125,9 @@ class CAPAController extends Controller
      */
     public function update(Request $request, Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id || 
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds) || 
             $capa->incident_id !== $incident->id) {
             abort(403, 'Unauthorized');
         }
@@ -140,7 +154,9 @@ class CAPAController extends Controller
      */
     public function start(Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id) {
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 
@@ -154,7 +170,9 @@ class CAPAController extends Controller
      */
     public function complete(Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id) {
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 
@@ -168,7 +186,9 @@ class CAPAController extends Controller
      */
     public function verify(Request $request, Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id) {
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 
@@ -189,7 +209,9 @@ class CAPAController extends Controller
      */
     public function close(Request $request, Incident $incident, CAPA $capa)
     {
-        if ($capa->company_id !== Auth::user()->company_id) {
+        $companyGroupIds = $this->getCompanyGroupIds();
+        
+        if (!in_array($capa->company_id, $companyGroupIds)) {
             abort(403, 'Unauthorized');
         }
 

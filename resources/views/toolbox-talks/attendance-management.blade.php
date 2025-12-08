@@ -71,14 +71,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-primary-black mb-1">Employee</label>
-                        <select name="employee_id" id="employee_id" class="w-full border border-border-gray rounded px-3 py-2">
-                            <option value="">Select Employee</option>
-                            @foreach($employees ?? [] as $employee)
-                                <option value="{{ $employee->id }}">
-                                    {{ $employee->name }} ({{ $employee->employee_id_number }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="employee_search" 
+                                   name="employee_search"
+                                   class="w-full border border-border-gray rounded px-3 py-2 pr-10"
+                                   placeholder="Search employee by name, ID, or email..."
+                                   autocomplete="off">
+                            <input type="hidden" name="employee_id" id="employee_id" value="">
+                            <div id="employee_autocomplete" class="absolute z-50 w-full mt-1 bg-white border border-border-gray rounded shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-primary-black mb-1">Status</label>
@@ -104,13 +106,18 @@
                         <label class="block text-sm font-medium text-primary-black mb-1">
                             Employee Names (comma-separated)
                         </label>
-                        <textarea name="employee_names" id="employee_names" rows="4" 
-                                  class="w-full border border-border-gray rounded px-3 py-2"
-                                  placeholder="Enter employee names separated by commas, e.g., John Doe, Jane Smith, Bob Johnson&#10;Or search by employee ID number, email, or partial name"></textarea>
+                        <div class="relative">
+                            <textarea name="employee_names" id="employee_names" rows="4" 
+                                      class="w-full border border-border-gray rounded px-3 py-2"
+                                      placeholder="Start typing employee name, ID, or email... Press comma to add multiple employees"
+                                      autocomplete="off"></textarea>
+                            <div id="multiple_autocomplete" class="absolute z-50 w-full mt-1 bg-white border border-border-gray rounded shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                        </div>
                         <p class="mt-1 text-xs text-gray-500">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Enter names, employee IDs, or emails separated by commas. The system will search and match employees automatically.
+                            Start typing to see suggestions. Press Enter or click to select. Separate multiple employees with commas.
                         </p>
+                        <div id="selected_employees" class="mt-2 flex flex-wrap gap-2"></div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-primary-black mb-1">Status</label>
@@ -130,9 +137,11 @@
                 </div>
             </div>
 
-            <button type="submit" class="mt-4 btn-primary">
-                <i class="fas fa-check mr-2"></i>Mark Attendance
-            </button>
+            <div class="mt-4 flex justify-end">
+                <button type="submit" class="bg-[#0066CC] text-white px-6 py-2 rounded hover:bg-[#0052A3] font-medium">
+                    <i class="fas fa-check mr-2"></i>Mark Attendance
+                </button>
+            </div>
         </form>
     </div>
 
@@ -163,15 +172,168 @@
             }
         }
 
+        // Autocomplete for single employee mode
+        let employeeSearchTimeout;
+        let selectedEmployee = null;
+        const employeeSearchInput = document.getElementById('employee_search');
+        const employeeIdInput = document.getElementById('employee_id');
+        const employeeAutocomplete = document.getElementById('employee_autocomplete');
+
+        employeeSearchInput.addEventListener('input', function() {
+            clearTimeout(employeeSearchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                employeeAutocomplete.classList.add('hidden');
+                employeeIdInput.value = '';
+                selectedEmployee = null;
+                return;
+            }
+
+            employeeSearchTimeout = setTimeout(() => {
+                fetch(`{{ route('api.employees.search') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            employeeAutocomplete.classList.add('hidden');
+                            return;
+                        }
+
+                        employeeAutocomplete.innerHTML = data.map(emp => {
+                            const display = emp.display.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            const name = emp.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            return `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0" 
+                                 onclick="selectEmployee(${emp.id}, '${display}')">
+                                <div class="font-medium">${name}</div>
+                                <div class="text-xs text-gray-500">${emp.employee_id_number || emp.email}</div>
+                            </div>`;
+                        }).join('');
+                        employeeAutocomplete.classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        employeeAutocomplete.classList.add('hidden');
+                    });
+            }, 300);
+        });
+
+        function selectEmployee(id, display) {
+            employeeIdInput.value = id;
+            employeeSearchInput.value = display;
+            selectedEmployee = { id, display };
+            employeeAutocomplete.classList.add('hidden');
+        }
+
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!employeeSearchInput.contains(e.target) && !employeeAutocomplete.contains(e.target)) {
+                employeeAutocomplete.classList.add('hidden');
+            }
+        });
+
+        // Autocomplete for multiple employees mode
+        let multipleSearchTimeout;
+        let currentQuery = '';
+        let selectedEmployees = [];
+        const employeeNamesInput = document.getElementById('employee_names');
+        const multipleAutocomplete = document.getElementById('multiple_autocomplete');
+        const selectedEmployeesDiv = document.getElementById('selected_employees');
+
+        employeeNamesInput.addEventListener('input', function() {
+            const value = this.value;
+            const lastCommaIndex = value.lastIndexOf(',');
+            currentQuery = lastCommaIndex >= 0 ? value.substring(lastCommaIndex + 1).trim() : value.trim();
+            
+            clearTimeout(multipleSearchTimeout);
+            
+            if (currentQuery.length < 2) {
+                multipleAutocomplete.classList.add('hidden');
+                return;
+            }
+
+            multipleSearchTimeout = setTimeout(() => {
+                fetch(`{{ route('api.employees.search') }}?q=${encodeURIComponent(currentQuery)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            multipleAutocomplete.classList.add('hidden');
+                            return;
+                        }
+
+                        multipleAutocomplete.innerHTML = data.map(emp => {
+                            const name = emp.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            return `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0" 
+                                 onclick="selectMultipleEmployee('${name}')">
+                                <div class="font-medium">${emp.name}</div>
+                                <div class="text-xs text-gray-500">${emp.employee_id_number || emp.email}</div>
+                            </div>`;
+                        }).join('');
+                        multipleAutocomplete.classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        multipleAutocomplete.classList.add('hidden');
+                    });
+            }, 300);
+        });
+
+        function selectMultipleEmployee(name) {
+            if (selectedEmployees.includes(name)) {
+                return; // Already selected
+            }
+            
+            selectedEmployees.push(name);
+            const value = employeeNamesInput.value;
+            const lastCommaIndex = value.lastIndexOf(',');
+            const beforeComma = lastCommaIndex >= 0 ? value.substring(0, lastCommaIndex + 1) : '';
+            employeeNamesInput.value = beforeComma + name + ', ';
+            
+            // Add to selected display
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800';
+            badge.innerHTML = `${name} <button type="button" onclick="removeEmployee('${name.replace(/'/g, "\\'")}', this)" class="ml-2 text-blue-600 hover:text-blue-800">×</button>`;
+            selectedEmployeesDiv.appendChild(badge);
+            
+            multipleAutocomplete.classList.add('hidden');
+            employeeNamesInput.focus();
+        }
+
+        function removeEmployee(name, button) {
+            selectedEmployees = selectedEmployees.filter(n => n !== name);
+            button.parentElement.remove();
+            
+            // Remove from textarea
+            const value = employeeNamesInput.value;
+            const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            employeeNamesInput.value = value.replace(new RegExp(escapedName + ',\\s*', 'g'), '').replace(new RegExp(',\\s*' + escapedName, 'g'), '');
+        }
+
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!employeeNamesInput.contains(e.target) && !multipleAutocomplete.contains(e.target)) {
+                multipleAutocomplete.classList.add('hidden');
+            }
+        });
+
         // Handle form submission
         document.getElementById('attendance-form').addEventListener('submit', function(e) {
             const singleMode = !document.getElementById('single-mode').classList.contains('hidden');
             
             if (singleMode) {
-                // Single mode - use employee_id
+                // Single mode - validate employee_id
+                if (!employeeIdInput.value) {
+                    e.preventDefault();
+                    alert('Please select an employee');
+                    return false;
+                }
                 document.getElementById('employee_names').disabled = true;
             } else {
                 // Multiple mode - use employee_names
+                if (!employeeNamesInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Please enter at least one employee name');
+                    return false;
+                }
                 document.getElementById('employee_id').disabled = true;
                 // Copy status and absence_reason to main fields
                 const form = this;

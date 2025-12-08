@@ -23,6 +23,11 @@
                             </button>
                         </form>
                     @endif
+                    @if($toolboxTalk->status === 'overdue')
+                        <button onclick="showRescheduleModal()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-calendar-alt mr-2"></i>Reschedule
+                        </button>
+                    @endif
                     @if($toolboxTalk->status === 'in_progress')
                         <button onclick="showCompleteModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                             <i class="fas fa-check mr-2"></i>Complete Talk
@@ -71,6 +76,17 @@
                             <div>
                                 <h3 class="text-sm font-medium text-green-800">Completed Talk</h3>
                                 <p class="text-sm text-green-700">This talk was completed on {{ $toolboxTalk->end_time?->format('F j, Y \a\t g:i A') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    @break
+                @case('overdue')
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-orange-600 mr-3"></i>
+                            <div>
+                                <h3 class="text-sm font-medium text-orange-800">Overdue Talk</h3>
+                                <p class="text-sm text-orange-700">This talk was scheduled for {{ $toolboxTalk->scheduled_date->format('F j, Y \a\t g:i A') }} but was not started or has no attendance. Please reschedule.</p>
                             </div>
                         </div>
                     </div>
@@ -163,11 +179,21 @@
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-semibold text-gray-900">Attendance</h2>
-                        @if($toolboxTalk->status === 'in_progress')
-                            <button onclick="showAttendanceModal()" class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-user-plus mr-1"></i>Record Attendance
-                            </button>
-                        @endif
+                        <div class="flex gap-2">
+                            @if($toolboxTalk->biometric_required && ($toolboxTalk->status === 'in_progress' || $toolboxTalk->status === 'completed'))
+                                <form action="{{ route('toolbox-talks.sync-biometric', $toolboxTalk) }}" method="POST" class="inline" onsubmit="return confirm('Process biometric attendance from device?');">
+                                    @csrf
+                                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors" title="Sync biometric attendance from device">
+                                        <i class="fas fa-fingerprint mr-1"></i>Sync Biometric
+                                    </button>
+                                </form>
+                            @endif
+                            @if($toolboxTalk->status === 'in_progress')
+                                <button onclick="showAttendanceModal()" class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-user-plus mr-1"></i>Record Attendance
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     
                     @if($toolboxTalk->status === 'completed')
@@ -353,9 +379,22 @@
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-700">Recurring</span>
                             @if($toolboxTalk->is_recurring)
-                                <span class="text-sm text-gray-900">{{ ucfirst($toolboxTalk->recurrence_pattern) }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-900">{{ ucfirst($toolboxTalk->recurrence_pattern) }}</span>
+                                    @if($toolboxTalk->next_occurrence)
+                                        <span class="text-xs text-gray-500">(Next: {{ $toolboxTalk->next_occurrence->format('M d, Y') }})</span>
+                                    @endif
+                                    @if($toolboxTalk->status === 'completed' && $toolboxTalk->next_occurrence && $toolboxTalk->next_occurrence->isFuture())
+                                        <form action="{{ route('toolbox-talks.generate-next', $toolboxTalk) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="ml-2 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                Generate Next
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             @else
-                                <i class="fas fa-times text-gray-400"></i>
+                                <span class="text-sm text-gray-500">No</span>
                             @endif
                         </div>
                         <div class="flex items-center justify-between">
@@ -504,6 +543,14 @@
     function hideFeedbackModal() {
         document.getElementById('feedbackModal').classList.add('hidden');
     }
+
+    function showRescheduleModal() {
+        document.getElementById('rescheduleModal').classList.remove('hidden');
+    }
+
+    function hideRescheduleModal() {
+        document.getElementById('rescheduleModal').classList.add('hidden');
+    }
     
     // Close modals when clicking outside
     window.onclick = function(event) {
@@ -512,4 +559,38 @@
         }
     }
 </script>
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Reschedule Talk</h3>
+            <form action="{{ route('toolbox-talks.reschedule', $toolboxTalk) }}" method="POST">
+                @csrf
+                <div class="mb-4">
+                    <label for="reschedule_date" class="block text-sm font-medium text-gray-700 mb-1">New Date *</label>
+                    <input type="date" id="reschedule_date" name="scheduled_date" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           min="{{ date('Y-m-d') }}"
+                           value="{{ $toolboxTalk->scheduled_date->format('Y-m-d') }}">
+                </div>
+                <div class="mb-4">
+                    <label for="reschedule_time" class="block text-sm font-medium text-gray-700 mb-1">New Start Time *</label>
+                    <input type="time" id="reschedule_time" name="start_time" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           value="{{ $toolboxTalk->start_time ? $toolboxTalk->start_time->format('H:i') : '09:00' }}">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="hideRescheduleModal()" 
+                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-calendar-check mr-2"></i>Reschedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endpush

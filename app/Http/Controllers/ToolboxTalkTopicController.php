@@ -171,9 +171,14 @@ class ToolboxTalkTopicController extends Controller
 
     public function edit(ToolboxTalkTopic $topic)
     {
-        $departments = Department::where('company_id', Auth::user()->company_id)->get();
+        $companyId = Auth::user()->company_id;
+        $departments = Department::where('company_id', $companyId)->get();
+        $employees = User::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
         
-        return view('toolbox-topics.edit', compact('topic', 'departments'));
+        return view('toolbox-topics.edit', compact('topic', 'departments', 'employees'));
     }
 
     public function update(Request $request, ToolboxTalkTopic $topic)
@@ -314,6 +319,94 @@ class ToolboxTalkTopicController extends Controller
         return redirect()
             ->route('toolbox-topics.edit', $newTopic)
             ->with('success', 'Topic duplicated successfully!');
+    }
+
+    /**
+     * Bulk import topics from Excel
+     */
+    public function bulkImport(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $data = \Maatwebsite\Excel\Facades\Excel::toArray([], $file);
+            
+            if (empty($data) || empty($data[0])) {
+                return back()->with('error', 'File is empty or invalid format.');
+            }
+
+            $rows = $data[0];
+            $header = array_shift($rows); // Remove header row
+            
+            $imported = 0;
+            $errors = [];
+
+            foreach ($rows as $index => $row) {
+                try {
+                    // Map columns (adjust based on your Excel format)
+                    $topicData = [
+                        'title' => $row[0] ?? null,
+                        'description' => $row[1] ?? null,
+                        'category' => $row[2] ?? 'safety',
+                        'subcategory' => $row[3] ?? null,
+                        'difficulty_level' => $row[4] ?? 'basic',
+                        'estimated_duration_minutes' => (int)($row[5] ?? 15),
+                        'key_talking_points' => $row[6] ?? null,
+                        'regulatory_references' => $row[7] ?? null,
+                        'seasonal_relevance' => $row[8] ?? 'all_year',
+                        'is_mandatory' => isset($row[9]) && strtolower($row[9]) === 'yes',
+                        'created_by' => Auth::id(),
+                    ];
+
+                    if (empty($topicData['title'])) {
+                        $errors[] = "Row " . ($index + 2) . ": Title is required";
+                        continue;
+                    }
+
+                    ToolboxTalkTopic::create($topicData);
+                    $imported++;
+                } catch (\Exception $e) {
+                    $errors[] = "Row " . ($index + 2) . ": " . $e->getMessage();
+                }
+            }
+
+            $message = "Imported {$imported} topic(s) successfully.";
+            if (!empty($errors)) {
+                $message .= " Errors: " . count($errors);
+            }
+
+            return back()->with('success', $message)->with('errors', $errors);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download Excel template for topic import
+     */
+    public function downloadImportTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="toolbox-topics-import-template.xlsx"',
+        ];
+
+        $data = [
+            ['Title', 'Description', 'Category', 'Subcategory', 'Difficulty Level', 'Duration (minutes)', 'Key Points', 'Regulatory References', 'Seasonal Relevance', 'Mandatory (Yes/No)'],
+            ['Fire Safety Procedures', 'Basic fire safety and evacuation procedures', 'safety', 'fire_safety', 'basic', '15', 'Fire prevention, Evacuation routes, Fire extinguisher use', 'OSHA 1910.157', 'all_year', 'Yes'],
+            ['First Aid Basics', 'Basic first aid training', 'health', 'first_aid', 'basic', '20', 'CPR, Wound care, Emergency response', 'OSHA 1910.151', 'all_year', 'Yes'],
+        ];
+
+        return response()->streamDownload(function() use ($data) {
+            $file = fopen('php://output', 'w');
+            foreach ($data as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        }, 'toolbox-topics-import-template.csv', $headers);
     }
 
     /**

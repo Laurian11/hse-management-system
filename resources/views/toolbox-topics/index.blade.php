@@ -13,6 +13,10 @@
                     <h1 class="text-2xl font-bold text-gray-900">Toolbox Topics</h1>
                 </div>
                 <div class="flex space-x-3">
+                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" 
+                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-upload mr-2"></i>Bulk Import
+                    </button>
                     <a href="{{ route('toolbox-topics.library') }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <i class="fas fa-book-open mr-2"></i>Library View
                     </a>
@@ -201,6 +205,39 @@
                 {{ $topics->links() }}
             </div>
         @endif
+    </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div id="importModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Bulk Import Topics</h3>
+            <form action="{{ route('toolbox-topics.bulk-import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="mb-4">
+                    <label for="import_file" class="block text-sm font-medium text-gray-700 mb-1">Excel/CSV File *</label>
+                    <input type="file" id="import_file" name="file" required accept=".xlsx,.xls,.csv"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Supported formats: .xlsx, .xls, .csv</p>
+                </div>
+                <div class="mb-4">
+                    <a href="{{ route('toolbox-topics.bulk-import-template') }}" 
+                       class="text-sm text-blue-600 hover:text-blue-700">
+                        <i class="fas fa-download mr-1"></i>Download Template
+                    </a>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" 
+                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-upload mr-2"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

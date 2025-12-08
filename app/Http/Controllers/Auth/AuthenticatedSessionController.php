@@ -11,6 +11,11 @@ class AuthenticatedSessionController extends Controller
 {
     public function create()
     {
+        // If user is already authenticated, redirect to dashboard
+        if (Auth::check()) {
+            return redirect()->intended('/dashboard');
+        }
+        
         return view('auth.login');
     }
 
@@ -22,6 +27,17 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            // Check if this is an AJAX request
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('auth.failed'),
+                    'errors' => [
+                        'email' => [__('auth.failed')]
+                    ]
+                ], 422);
+            }
+            
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
@@ -32,11 +48,16 @@ class AuthenticatedSessionController extends Controller
         // Log the login activity
         \App\Models\ActivityLog::log('login', 'auth', 'User', Auth::id(), 'User logged in');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful!',
-            'redirect' => '/dashboard'
-        ]);
+        // Check if this is an AJAX request
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Login successful!',
+                'redirect' => '/dashboard'
+            ]);
+        }
+
+        return redirect()->intended('/dashboard');
     }
 
     public function destroy(Request $request)

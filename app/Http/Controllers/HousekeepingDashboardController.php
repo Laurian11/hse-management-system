@@ -6,43 +6,47 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\HousekeepingInspection;
 use App\Models\FiveSAudit;
+use App\Traits\UsesCompanyGroup;
 use Carbon\Carbon;
 
 class HousekeepingDashboardController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function dashboard()
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
 
         $stats = [
-            'total_inspections' => HousekeepingInspection::forCompany($companyId)->count(),
-            'completed_inspections' => HousekeepingInspection::forCompany($companyId)->where('status', 'completed')->count(),
-            'requiring_follow_up' => HousekeepingInspection::forCompany($companyId)->requiringFollowUp()->count(),
-            'total_5s_audits' => FiveSAudit::forCompany($companyId)->count(),
-            'completed_5s_audits' => FiveSAudit::forCompany($companyId)->where('status', 'completed')->count(),
-            'excellent_ratings' => FiveSAudit::forCompany($companyId)->where('overall_rating', 'excellent')->count(),
-            'needs_improvement' => FiveSAudit::forCompany($companyId)->where('overall_rating', 'needs_improvement')->count(),
+            'total_inspections' => HousekeepingInspection::whereIn('company_id', $companyGroupIds)->count(),
+            'completed_inspections' => HousekeepingInspection::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
+            'requiring_follow_up' => HousekeepingInspection::whereIn('company_id', $companyGroupIds)->requiringFollowUp()->count(),
+            'total_5s_audits' => FiveSAudit::whereIn('company_id', $companyGroupIds)->count(),
+            'completed_5s_audits' => FiveSAudit::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
+            'excellent_ratings' => FiveSAudit::whereIn('company_id', $companyGroupIds)->where('overall_rating', 'excellent')->count(),
+            'needs_improvement' => FiveSAudit::whereIn('company_id', $companyGroupIds)->where('overall_rating', 'needs_improvement')->count(),
         ];
 
-        $recentInspections = HousekeepingInspection::forCompany($companyId)
+        $recentInspections = HousekeepingInspection::whereIn('company_id', $companyGroupIds)
             ->with(['inspectedBy', 'department', 'followUpAssignee'])
             ->latest('inspection_date')
             ->limit(10)
             ->get();
 
-        $recentAudits = FiveSAudit::forCompany($companyId)
+        $recentAudits = FiveSAudit::whereIn('company_id', $companyGroupIds)
             ->with(['auditedBy', 'department', 'teamLeader'])
             ->latest('audit_date')
             ->limit(10)
             ->get();
 
-        $inspectionStatusDistribution = HousekeepingInspection::forCompany($companyId)
+        $inspectionStatusDistribution = HousekeepingInspection::whereIn('company_id', $companyGroupIds)
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $ratingDistribution = FiveSAudit::forCompany($companyId)
+        $ratingDistribution = FiveSAudit::whereIn('company_id', $companyGroupIds)
             ->selectRaw('overall_rating, COUNT(*) as count')
             ->groupBy('overall_rating')
             ->pluck('count', 'overall_rating')

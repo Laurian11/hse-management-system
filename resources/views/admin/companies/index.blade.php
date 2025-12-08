@@ -62,6 +62,9 @@
                             Company
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Relationship
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             License Type
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -92,10 +95,39 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $company->name }}</div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="text-sm font-medium text-gray-900">{{ $company->name }}</div>
+                                            @if($company->isParentCompany())
+                                                <span class="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full" title="Parent Company">
+                                                    <i class="fas fa-crown"></i> Parent
+                                                </span>
+                                            @elseif($company->isSisterCompany())
+                                                <span class="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full" title="Sister Company">
+                                                    <i class="fas fa-link"></i> Sister
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-sm text-gray-500">{{ $company->email }}</div>
                                     </div>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($company->parentCompany)
+                                    <div class="text-sm text-gray-900">
+                                        <i class="fas fa-arrow-up text-gray-400"></i>
+                                        <a href="{{ route('admin.companies.show', $company->parentCompany) }}" class="text-blue-600 hover:text-blue-800">
+                                            {{ $company->parentCompany->name }}
+                                        </a>
+                                    </div>
+                                @elseif($company->sisterCompanies()->count() > 0)
+                                    <div class="text-sm text-gray-900">
+                                        <i class="fas fa-arrow-down text-gray-400"></i>
+                                        {{ $company->sisterCompanies()->count() }} 
+                                        {{ $company->sisterCompanies()->count() === 1 ? 'sister' : 'sisters' }}
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-400">—</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">

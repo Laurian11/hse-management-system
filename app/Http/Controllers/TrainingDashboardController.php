@@ -11,42 +11,46 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Traits\UsesCompanyGroup;
 
 class TrainingDashboardController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function dashboard()
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
         // Statistics
         $stats = [
-            'total_training_needs' => TrainingNeedsAnalysis::where('company_id', $companyId)->count(),
-            'validated_tnas' => TrainingNeedsAnalysis::where('company_id', $companyId)->where('status', 'validated')->count(),
-            'total_plans' => TrainingPlan::where('company_id', $companyId)->count(),
-            'approved_plans' => TrainingPlan::where('company_id', $companyId)->where('status', 'approved')->count(),
-            'total_sessions' => TrainingSession::where('company_id', $companyId)->count(),
-            'completed_sessions' => TrainingSession::where('company_id', $companyId)->where('status', 'completed')->count(),
-            'upcoming_sessions' => TrainingSession::where('company_id', $companyId)->where('status', 'scheduled')->where('scheduled_start', '>', now())->count(),
-            'total_certificates' => TrainingCertificate::where('company_id', $companyId)->count(),
-            'active_certificates' => TrainingCertificate::where('company_id', $companyId)->where('status', 'active')->count(),
-            'expiring_soon' => TrainingCertificate::where('company_id', $companyId)
+            'total_training_needs' => TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)->count(),
+            'validated_tnas' => TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)->where('status', 'validated')->count(),
+            'total_plans' => TrainingPlan::whereIn('company_id', $companyGroupIds)->count(),
+            'approved_plans' => TrainingPlan::whereIn('company_id', $companyGroupIds)->where('status', 'approved')->count(),
+            'total_sessions' => TrainingSession::whereIn('company_id', $companyGroupIds)->count(),
+            'completed_sessions' => TrainingSession::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
+            'upcoming_sessions' => TrainingSession::whereIn('company_id', $companyGroupIds)->where('status', 'scheduled')->where('scheduled_start', '>', now())->count(),
+            'total_certificates' => TrainingCertificate::whereIn('company_id', $companyGroupIds)->count(),
+            'active_certificates' => TrainingCertificate::whereIn('company_id', $companyGroupIds)->where('status', 'active')->count(),
+            'expiring_soon' => TrainingCertificate::whereIn('company_id', $companyGroupIds)
                 ->where('status', 'active')
                 ->whereBetween('expiry_date', [now(), now()->addDays(60)])
                 ->count(),
-            'total_trained_employees' => TrainingRecord::where('company_id', $companyId)
+            'total_trained_employees' => TrainingRecord::whereIn('company_id', $companyGroupIds)
                 ->distinct('user_id')
                 ->count('user_id'),
         ];
 
         // Recent Training Needs
-        $recentTNAs = TrainingNeedsAnalysis::where('company_id', $companyId)
+        $recentTNAs = TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)
             ->with(['creator', 'trainingPlans'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         // Upcoming Sessions
-        $upcomingSessions = TrainingSession::where('company_id', $companyId)
+        $upcomingSessions = TrainingSession::whereIn('company_id', $companyGroupIds)
             ->where('status', 'scheduled')
             ->where('scheduled_start', '>', now())
             ->with(['trainingPlan.trainingNeed', 'instructor'])
@@ -55,28 +59,28 @@ class TrainingDashboardController extends Controller
             ->get();
 
         // Training by Priority
-        $trainingByPriority = TrainingNeedsAnalysis::where('company_id', $companyId)
+        $trainingByPriority = TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)
             ->select('priority', DB::raw('count(*) as count'))
             ->groupBy('priority')
             ->get()
             ->pluck('count', 'priority');
 
         // Training by Status
-        $trainingByStatus = TrainingNeedsAnalysis::where('company_id', $companyId)
+        $trainingByStatus = TrainingNeedsAnalysis::whereIn('company_id', $companyGroupIds)
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get()
             ->pluck('count', 'status');
 
         // Training by Type
-        $trainingByType = TrainingSession::where('company_id', $companyId)
+        $trainingByType = TrainingSession::whereIn('company_id', $companyGroupIds)
             ->select('session_type', DB::raw('count(*) as count'))
             ->groupBy('session_type')
             ->get()
             ->pluck('count', 'session_type');
 
         // Monthly Training Activity (last 6 months) - Database agnostic approach
-        $sessions = TrainingSession::where('company_id', $companyId)
+        $sessions = TrainingSession::whereIn('company_id', $companyGroupIds)
             ->where('created_at', '>=', now()->subMonths(6))
             ->get();
         
@@ -91,14 +95,14 @@ class TrainingDashboardController extends Controller
         })->values()->sortBy('month');
 
         // Top Trained Employees
-        $topTrainedEmployees = User::where('company_id', $companyId)
+        $topTrainedEmployees = User::whereIn('company_id', $companyGroupIds)
             ->withCount('trainingRecords')
             ->orderBy('training_records_count', 'desc')
             ->limit(5)
             ->get();
 
         // Certificates Expiring Soon
-        $expiringCertificates = TrainingCertificate::where('company_id', $companyId)
+        $expiringCertificates = TrainingCertificate::whereIn('company_id', $companyGroupIds)
             ->where('status', 'active')
             ->whereBetween('expiry_date', [now(), now()->addDays(60)])
             ->with(['user', 'trainingRecord.trainingSession'])

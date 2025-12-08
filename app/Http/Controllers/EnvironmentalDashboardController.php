@@ -10,45 +10,49 @@ use App\Models\EmissionMonitoringRecord;
 use App\Models\SpillIncident;
 use App\Models\ResourceUsageRecord;
 use App\Models\ISO14001ComplianceRecord;
+use App\Traits\UsesCompanyGroup;
 use Carbon\Carbon;
 
 class EnvironmentalDashboardController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function dashboard()
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
 
         $stats = [
-            'total_waste_records' => WasteManagementRecord::forCompany($companyId)->count(),
-            'total_tracking_records' => WasteTrackingRecord::forCompany($companyId)->count(),
-            'total_emission_records' => EmissionMonitoringRecord::forCompany($companyId)->count(),
-            'total_spills' => SpillIncident::forCompany($companyId)->count(),
-            'open_spills' => SpillIncident::forCompany($companyId)->whereIn('status', ['reported', 'contained', 'cleaned_up', 'investigating'])->count(),
-            'compliant_emissions' => EmissionMonitoringRecord::forCompany($companyId)->compliant()->count(),
-            'non_compliant_emissions' => EmissionMonitoringRecord::forCompany($companyId)->nonCompliant()->count(),
-            'iso_compliant' => ISO14001ComplianceRecord::forCompany($companyId)->compliant()->count(),
-            'iso_non_compliant' => ISO14001ComplianceRecord::forCompany($companyId)->nonCompliant()->count(),
+            'total_waste_records' => WasteManagementRecord::whereIn('company_id', $companyGroupIds)->count(),
+            'total_tracking_records' => WasteTrackingRecord::whereIn('company_id', $companyGroupIds)->count(),
+            'total_emission_records' => EmissionMonitoringRecord::whereIn('company_id', $companyGroupIds)->count(),
+            'total_spills' => SpillIncident::whereIn('company_id', $companyGroupIds)->count(),
+            'open_spills' => SpillIncident::whereIn('company_id', $companyGroupIds)->whereIn('status', ['reported', 'contained', 'cleaned_up', 'investigating'])->count(),
+            'compliant_emissions' => EmissionMonitoringRecord::whereIn('company_id', $companyGroupIds)->compliant()->count(),
+            'non_compliant_emissions' => EmissionMonitoringRecord::whereIn('company_id', $companyGroupIds)->nonCompliant()->count(),
+            'iso_compliant' => ISO14001ComplianceRecord::whereIn('company_id', $companyGroupIds)->compliant()->count(),
+            'iso_non_compliant' => ISO14001ComplianceRecord::whereIn('company_id', $companyGroupIds)->nonCompliant()->count(),
         ];
 
-        $recentSpills = SpillIncident::forCompany($companyId)
+        $recentSpills = SpillIncident::whereIn('company_id', $companyGroupIds)
             ->with(['reportedBy', 'department'])
             ->latest('incident_date')
             ->limit(10)
             ->get();
 
-        $recentEmissions = EmissionMonitoringRecord::forCompany($companyId)
+        $recentEmissions = EmissionMonitoringRecord::whereIn('company_id', $companyGroupIds)
             ->with(['monitoredBy'])
             ->latest('monitoring_date')
             ->limit(10)
             ->get();
 
-        $wasteTypeDistribution = WasteManagementRecord::forCompany($companyId)
+        $wasteTypeDistribution = WasteManagementRecord::whereIn('company_id', $companyGroupIds)
             ->selectRaw('waste_type, COUNT(*) as count')
             ->groupBy('waste_type')
             ->pluck('count', 'waste_type')
             ->toArray();
 
-        $emissionComplianceDistribution = EmissionMonitoringRecord::forCompany($companyId)
+        $emissionComplianceDistribution = EmissionMonitoringRecord::whereIn('company_id', $companyGroupIds)
             ->selectRaw('compliance_status, COUNT(*) as count')
             ->groupBy('compliance_status')
             ->pluck('count', 'compliance_status')

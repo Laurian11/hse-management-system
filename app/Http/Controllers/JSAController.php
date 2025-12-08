@@ -6,16 +6,20 @@ use App\Models\JSA;
 use App\Models\Department;
 use App\Models\User;
 use App\Models\RiskAssessment;
+use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class JSAController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function index(Request $request)
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
-        $query = JSA::forCompany($companyId)
+        $query = JSA::whereIn('company_id', $companyGroupIds)
             ->with(['creator', 'supervisor', 'department']);
         
         // Filters
@@ -41,14 +45,14 @@ class JSAController extends Controller
         }
         
         $jsas = $query->latest()->paginate(15);
-        $departments = Department::where('company_id', $companyId)->active()->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
         
         // Statistics
         $stats = [
-            'total' => JSA::forCompany($companyId)->count(),
-            'approved' => JSA::forCompany($companyId)->approved()->count(),
-            'high_risk' => JSA::forCompany($companyId)->byRiskLevel('high')->count(),
-            'critical_risk' => JSA::forCompany($companyId)->byRiskLevel('critical')->count(),
+            'total' => JSA::whereIn('company_id', $companyGroupIds)->count(),
+            'approved' => JSA::whereIn('company_id', $companyGroupIds)->approved()->count(),
+            'high_risk' => JSA::whereIn('company_id', $companyGroupIds)->byRiskLevel('high')->count(),
+            'critical_risk' => JSA::whereIn('company_id', $companyGroupIds)->byRiskLevel('critical')->count(),
         ];
         
         return view('risk-assessment.jsas.index', compact('jsas', 'departments', 'stats'));
@@ -56,16 +60,17 @@ class JSAController extends Controller
 
     public function create(Request $request)
     {
-        $companyId = Auth::user()->company_id;
-        $departments = Department::where('company_id', $companyId)->active()->get();
-        $supervisors = User::where('company_id', $companyId)->where('is_active', true)->get();
-        $users = User::where('company_id', $companyId)->where('is_active', true)->get();
-        $riskAssessments = RiskAssessment::forCompany($companyId)->active()->get();
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $supervisors = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
+        $users = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
+        $riskAssessments = RiskAssessment::whereIn('company_id', $companyGroupIds)->active()->get();
         
         // Pre-select risk assessment if provided
         $selectedRiskAssessment = null;
         if ($request->has('risk_assessment_id')) {
-            $selectedRiskAssessment = RiskAssessment::forCompany($companyId)->findOrFail($request->risk_assessment_id);
+            $selectedRiskAssessment = RiskAssessment::whereIn('company_id', $companyGroupIds)->findOrFail($request->risk_assessment_id);
         }
         
         return view('risk-assessment.jsas.create', compact('departments', 'supervisors', 'users', 'riskAssessments', 'selectedRiskAssessment'));

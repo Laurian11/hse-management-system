@@ -34,7 +34,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <h3 class="text-sm font-medium text-gray-500 mb-1">Company Name</h3>
-                        <p class="text-lg font-medium text-gray-900">{{ $company->name }}</p>
+                        <div class="flex items-center space-x-2">
+                            <p class="text-lg font-medium text-gray-900">{{ $company->name }}</p>
+                            @if($company->isParentCompany())
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                    <i class="fas fa-crown"></i> Parent Company
+                                </span>
+                            @elseif($company->isSisterCompany())
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                    <i class="fas fa-link"></i> Sister Company
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     <div>
                         <h3 class="text-sm font-medium text-gray-500 mb-1">Status</h3>
@@ -48,6 +59,28 @@
                             </span>
                         @endif
                     </div>
+                    @if($company->parentCompany)
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1">Parent Company</h3>
+                            <a href="{{ route('admin.companies.show', $company->parentCompany) }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-arrow-up mr-1"></i>{{ $company->parentCompany->name }}
+                            </a>
+                        </div>
+                    @endif
+                    @if($company->sisterCompanies()->count() > 0)
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1">Sister Companies</h3>
+                            <div class="space-y-1">
+                                @foreach($company->sisterCompanies as $sister)
+                                    <div>
+                                        <a href="{{ route('admin.companies.show', $sister) }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                                            <i class="fas fa-arrow-down mr-1"></i>{{ $sister->name }}
+                                        </a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                     @if($company->description)
                         <div class="md:col-span-2">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Description</h3>

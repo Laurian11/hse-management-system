@@ -13,7 +13,7 @@ class CompanyController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Company::with(['users', 'departments']);
+        $query = Company::with(['users', 'departments', 'parentCompany', 'sisterCompanies']);
 
         // Filters
         if ($request->filled('search')) {
@@ -41,11 +41,26 @@ class CompanyController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
+        // Filter by company type
+        if ($request->filled('company_type')) {
+            if ($request->company_type === 'parent') {
+                $query->parentCompanies();
+            } elseif ($request->company_type === 'sister') {
+                $query->sisterCompanies();
+            }
+        }
+
+        // Filter by parent company
+        if ($request->filled('parent_company_id')) {
+            $query->byParentCompany($request->parent_company_id);
+        }
+
         $companies = $query->latest()->paginate(15);
         $licenseTypes = Company::getLicenseTypes();
         $industryTypes = Company::getIndustryTypes();
+        $parentCompanies = Company::parentCompanies()->active()->get();
 
-        return view('admin.companies.index', compact('companies', 'licenseTypes', 'industryTypes'));
+        return view('admin.companies.index', compact('companies', 'licenseTypes', 'industryTypes', 'parentCompanies'));
     }
 
     public function create()
@@ -54,8 +69,9 @@ class CompanyController extends Controller
         $industryTypes = Company::getIndustryTypes();
         $countries = Company::getCountries();
         $features = Company::getAvailableFeatures();
+        $parentCompanies = Company::parentCompanies()->active()->get();
 
-        return view('admin.companies.create', compact('licenseTypes', 'industryTypes', 'countries', 'features'));
+        return view('admin.companies.create', compact('licenseTypes', 'industryTypes', 'countries', 'features', 'parentCompanies'));
     }
 
     public function store(Request $request)
@@ -63,6 +79,7 @@ class CompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'parent_company_id' => 'nullable|exists:companies,id',
             'license_type' => 'required|in:basic,professional,enterprise',
             'license_expiry' => 'required|date|after:today',
             'max_users' => 'required|integer|min:1|max:10000',
@@ -76,6 +93,11 @@ class CompanyController extends Controller
             'country' => 'required|string|max:100',
             'industry_type' => 'required|in:construction,manufacturing,oil_gas,mining,transportation,healthcare,retail,hospitality,technology,education,government,agriculture,energy,utilities,telecommunications,finance,insurance,real_estate,other',
         ]);
+
+        // Prevent circular reference: a company cannot be its own parent
+        if ($request->filled('parent_company_id') && $request->parent_company_id == $request->id) {
+            $validator->errors()->add('parent_company_id', 'A company cannot be its own parent.');
+        }
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -96,7 +118,12 @@ class CompanyController extends Controller
 
     public function show(Company $company)
     {
-        $company->load(['users', 'departments', 'users.role']);
+        $company->load(['users', 'departments', 'users.role', 'parentCompany', 'sisterCompanies']);
+        
+        // Get statistics for company group if it's a parent or sister
+        $groupIds = $company->getCompanyGroupIds();
+        $isParent = $company->isParentCompany();
+        $isSister = $company->isSisterCompany();
         
         $statistics = [
             'total_users' => $company->users()->count(),
@@ -105,6 +132,11 @@ class CompanyController extends Controller
             'active_departments' => $company->departments()->where('is_active', true)->count(),
             'license_usage_percentage' => $company->getLicenseUsagePercentage(),
             'days_until_expiry' => $company->getDaysUntilLicenseExpiry(),
+            'is_parent' => $isParent,
+            'is_sister' => $isSister,
+            'sister_count' => $company->sisterCompanies()->count(),
+            'group_total_users' => \App\Models\User::whereIn('company_id', $groupIds)->count(),
+            'group_total_departments' => \App\Models\Department::whereIn('company_id', $groupIds)->count(),
         ];
 
         return view('admin.companies.show', compact('company', 'statistics'));
@@ -112,14 +144,17 @@ class CompanyController extends Controller
 
     public function edit(Company $company)
     {
-        $company->load(['users', 'departments']);
+        $company->load(['users', 'departments', 'parentCompany', 'sisterCompanies']);
         
         $licenseTypes = Company::getLicenseTypes();
         $industryTypes = Company::getIndustryTypes();
         $countries = Company::getCountries();
         $features = Company::getAvailableFeatures();
+        // Exclude current company and its sisters from parent selection
+        $excludeIds = array_merge([$company->id], $company->sisterCompanies()->pluck('id')->toArray());
+        $parentCompanies = Company::parentCompanies()->active()->whereNotIn('id', $excludeIds)->get();
 
-        return view('admin.companies.edit', compact('company', 'licenseTypes', 'industryTypes', 'countries', 'features'));
+        return view('admin.companies.edit', compact('company', 'licenseTypes', 'industryTypes', 'countries', 'features', 'parentCompanies'));
     }
 
     public function update(Request $request, Company $company)
@@ -127,6 +162,7 @@ class CompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'parent_company_id' => 'nullable|exists:companies,id',
             'license_type' => 'required|in:basic,professional,enterprise',
             'license_expiry' => 'required|date',
             'max_users' => 'required|integer|min:1|max:10000',
@@ -148,6 +184,16 @@ class CompanyController extends Controller
             'safety_standards' => 'nullable|array',
             'compliance_certifications' => 'nullable|array',
         ]);
+
+        // Prevent circular reference
+        if ($request->filled('parent_company_id') && $request->parent_company_id == $company->id) {
+            $validator->errors()->add('parent_company_id', 'A company cannot be its own parent.');
+        }
+
+        // Prevent a parent company from becoming a sister company
+        if ($request->filled('parent_company_id') && $company->sisterCompanies()->exists()) {
+            $validator->errors()->add('parent_company_id', 'A parent company cannot be assigned a parent company.');
+        }
 
         if ($validator->fails()) {
             return redirect()->back()

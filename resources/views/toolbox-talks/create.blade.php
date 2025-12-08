@@ -77,6 +77,26 @@
                 </div>
             </div>
 
+            <!-- Template Selection -->
+            @if($templates->count() > 0)
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Use Template (Optional)</h2>
+                <div class="mb-4">
+                    <select id="template_select" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onchange="loadTemplate(this.value)">
+                        <option value="">Select a template to pre-fill form</option>
+                        @foreach($templates as $template)
+                            <option value="{{ $template->id }}">{{ $template->name }}</option>
+                        @endforeach
+                    </select>
+                    <a href="{{ route('toolbox-talks.templates.index') }}" class="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block">
+                        <i class="fas fa-cog mr-1"></i>Manage Templates
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Topic Selection -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Topic Selection</h2>

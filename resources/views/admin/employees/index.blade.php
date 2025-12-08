@@ -20,6 +20,56 @@
 </div>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Statistics Cards -->
+    @if(isset($stats))
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Employees</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['total']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active</p>
+                    <p class="text-2xl font-bold text-green-600">{{ number_format($stats['active']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">With System Access</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ number_format($stats['with_user_access']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-shield text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Without Access</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ number_format($stats['without_user_access']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-slash text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <form method="GET" action="{{ route('admin.employees.index') }}" class="flex flex-wrap gap-4">
@@ -27,16 +77,6 @@
                 <input type="text" name="search" placeholder="Search by name, email, ID, or job title..." 
                        value="{{ request('search') }}" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div class="min-w-[150px]">
-                <select name="role_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Roles</option>
-                    @foreach($roles as $role)
-                        <option value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'selected' : '' }}>
-                            {{ $role->display_name ?? $role->name }}
-                        </option>
-                    @endforeach
-                </select>
             </div>
             <div class="min-w-[150px]">
                 <select name="department_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -52,15 +92,25 @@
                 <select name="employment_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="">All Types</option>
                     <option value="full_time" {{ request('employment_type') == 'full_time' ? 'selected' : '' }}>Full Time</option>
+                    <option value="part_time" {{ request('employment_type') == 'part_time' ? 'selected' : '' }}>Part Time</option>
                     <option value="contractor" {{ request('employment_type') == 'contractor' ? 'selected' : '' }}>Contractor</option>
                     <option value="visitor" {{ request('employment_type') == 'visitor' ? 'selected' : '' }}>Visitor</option>
                 </select>
             </div>
             <div class="min-w-[150px]">
-                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select name="employment_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="">All Status</option>
-                    <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active</option>
-                    <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
+                    <option value="active" {{ request('employment_status') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="on_leave" {{ request('employment_status') == 'on_leave' ? 'selected' : '' }}>On Leave</option>
+                    <option value="suspended" {{ request('employment_status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                    <option value="terminated" {{ request('employment_status') == 'terminated' ? 'selected' : '' }}>Terminated</option>
+                </select>
+            </div>
+            <div class="min-w-[150px]">
+                <select name="has_user_access" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Access</option>
+                    <option value="1" {{ request('has_user_access') == '1' ? 'selected' : '' }}>With Access</option>
+                    <option value="0" {{ request('has_user_access') == '0' ? 'selected' : '' }}>Without Access</option>
                 </select>
             </div>
             <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
@@ -91,7 +141,7 @@
                             Department
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Role
+                            System Access
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Employment Type
@@ -115,13 +165,13 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $employee->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $employee->email }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $employee->full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $employee->email ?? 'No email' }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $employee->employee_id_number ?? 'N/A' }}</div>
+                                <div class="text-sm text-gray-900">{{ $employee->employee_id_number }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ $employee->job_title ?? 'N/A' }}</div>
@@ -130,9 +180,15 @@
                                 <div class="text-sm text-gray-900">{{ $employee->department->name ?? 'N/A' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {{ $employee->role->display_name ?? $employee->role->name ?? 'No Role' }}
-                                </span>
+                                @if($employee->hasUserAccess())
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        <i class="fas fa-user-shield mr-1"></i>{{ $employee->user->role->display_name ?? $employee->user->role->name ?? 'User' }}
+                                    </span>
+                                @else
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        <i class="fas fa-user-slash mr-1"></i>No Access
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
@@ -140,13 +196,21 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($employee->is_active)
+                                @if($employee->is_active && $employee->employment_status === 'active')
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                         Active
                                     </span>
+                                @elseif($employee->employment_status === 'on_leave')
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        On Leave
+                                    </span>
+                                @elseif($employee->employment_status === 'suspended')
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                        Suspended
+                                    </span>
                                 @else
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                        Inactive
+                                        {{ ucfirst($employee->employment_status ?? 'Inactive') }}
                                     </span>
                                 @endif
                             </td>
@@ -158,6 +222,11 @@
                                     <a href="{{ route('admin.employees.edit', $employee->id) }}" class="text-indigo-600 hover:text-indigo-900" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    @if(!$employee->hasUserAccess())
+                                        <a href="{{ route('admin.employees.create-user', $employee->id) }}" class="text-green-600 hover:text-green-900" title="Create User Account">
+                                            <i class="fas fa-user-plus"></i>
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -187,4 +256,3 @@
     </div>
 </div>
 @endsection
-

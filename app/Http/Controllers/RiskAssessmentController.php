@@ -8,17 +8,21 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\Incident;
 use App\Notifications\RiskAssessmentApprovalRequiredNotification;
+use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class RiskAssessmentController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function index(Request $request)
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
-        $query = RiskAssessment::forCompany($companyId)
+        $query = RiskAssessment::whereIn('company_id', $companyGroupIds)
             ->with(['hazard', 'creator', 'assignedTo', 'department']);
         
         // Filters
@@ -80,14 +84,14 @@ class RiskAssessmentController extends Controller
         // Append query parameters to pagination links
         $riskAssessments->appends($request->query());
         
-        $departments = Department::where('company_id', $companyId)->active()->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
         
         // Statistics
         $stats = [
-            'total' => RiskAssessment::forCompany($companyId)->count(),
-            'high_risk' => RiskAssessment::forCompany($companyId)->highRisk()->count(),
-            'due_for_review' => RiskAssessment::forCompany($companyId)->dueForReview()->count(),
-            'approved' => RiskAssessment::forCompany($companyId)->where('status', 'approved')->count(),
+            'total' => RiskAssessment::whereIn('company_id', $companyGroupIds)->count(),
+            'high_risk' => RiskAssessment::whereIn('company_id', $companyGroupIds)->highRisk()->count(),
+            'due_for_review' => RiskAssessment::whereIn('company_id', $companyGroupIds)->dueForReview()->count(),
+            'approved' => RiskAssessment::whereIn('company_id', $companyGroupIds)->where('status', 'approved')->count(),
         ];
         
         return view('risk-assessment.risk-assessments.index', compact('riskAssessments', 'departments', 'stats'));
@@ -95,27 +99,28 @@ class RiskAssessmentController extends Controller
 
     public function create(Request $request)
     {
-        $companyId = Auth::user()->company_id;
-        $hazards = Hazard::forCompany($companyId)->active()->get();
-        $departments = Department::where('company_id', $companyId)->active()->get();
-        $users = User::where('company_id', $companyId)->where('is_active', true)->get();
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $hazards = Hazard::whereIn('company_id', $companyGroupIds)->active()->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $users = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
         
         // Pre-select hazard if provided
         $selectedHazard = null;
         if ($request->has('hazard_id')) {
-            $selectedHazard = Hazard::forCompany($companyId)->findOrFail($request->hazard_id);
+            $selectedHazard = Hazard::whereIn('company_id', $companyGroupIds)->findOrFail($request->hazard_id);
         }
         
         // Pre-select incident if provided (for closed-loop)
         $selectedIncident = null;
         if ($request->has('incident_id')) {
-            $selectedIncident = Incident::where('company_id', $companyId)->findOrFail($request->incident_id);
+            $selectedIncident = Incident::whereIn('company_id', $companyGroupIds)->findOrFail($request->incident_id);
         }
         
         // Copy from existing assessment
         $copyFrom = null;
         if ($request->has('copy_from')) {
-            $copyFrom = RiskAssessment::where('company_id', $companyId)
+            $copyFrom = RiskAssessment::whereIn('company_id', $companyGroupIds)
                 ->findOrFail($request->get('copy_from'));
         }
         

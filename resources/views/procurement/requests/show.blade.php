@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div>
-                <a href="{{ route('procurement.requests.edit', $procurementRequest) }}" class="bg-[#0066CC] text-white px-4 py-2 border border-[#0066CC] hover:bg-[#0052A3]">
+                <a href="{{ route('procurement.requests.edit', $procurementRequest->id) }}" class="bg-[#0066CC] text-white px-4 py-2 border border-[#0066CC] hover:bg-[#0052A3]">
                     <i class="fas fa-edit mr-2"></i>Edit
                 </a>
             </div>

@@ -107,6 +107,11 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class);
     }
 
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
     public function directSupervisor()
     {
         return $this->belongsTo(User::class, 'direct_supervisor_id');

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
@@ -14,6 +15,7 @@ class Company extends Model
     protected $fillable = [
         'name',
         'description',
+        'parent_company_id',
         'settings',
         'timezone',
         'currency',
@@ -53,6 +55,16 @@ class Company extends Model
     ];
 
     // Relationships
+    public function parentCompany(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'parent_company_id');
+    }
+
+    public function sisterCompanies(): HasMany
+    {
+        return $this->hasMany(Company::class, 'parent_company_id');
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
@@ -61,6 +73,66 @@ class Company extends Model
     public function departments(): HasMany
     {
         return $this->hasMany(Department::class);
+    }
+
+    // Get all companies in the group (parent + all sisters)
+    public function getCompanyGroupIds(): array
+    {
+        $ids = [$this->id];
+        
+        // If this is a parent company, include all sister companies
+        if ($this->isParentCompany()) {
+            $ids = array_merge($ids, $this->sisterCompanies()->pluck('id')->toArray());
+        }
+        // If this is a sister company, include parent and all sisters
+        elseif ($this->parent_company_id) {
+            $parent = $this->parentCompany;
+            if ($parent) {
+                $ids[] = $parent->id;
+                $ids = array_merge($ids, $parent->sisterCompanies()->where('id', '!=', $this->id)->pluck('id')->toArray());
+            }
+        }
+        
+        return array_unique($ids);
+    }
+
+    // Check if company is a parent company
+    public function isParentCompany(): bool
+    {
+        return $this->sisterCompanies()->exists();
+    }
+
+    // Check if company is a sister company
+    public function isSisterCompany(): bool
+    {
+        return $this->parent_company_id !== null;
+    }
+
+    // Get root parent company (handles nested structures)
+    public function getRootParentCompany(): ?Company
+    {
+        $current = $this;
+        while ($current->parent_company_id) {
+            $current = $current->parentCompany;
+            if (!$current) {
+                break;
+            }
+        }
+        return $current === $this ? null : $current;
+    }
+
+    // Get all descendant companies (sisters and their sisters recursively)
+    public function getAllDescendantCompanies(): \Illuminate\Support\Collection
+    {
+        $descendants = collect();
+        $sisters = $this->sisterCompanies;
+        
+        foreach ($sisters as $sister) {
+            $descendants->push($sister);
+            $descendants = $descendants->merge($sister->getAllDescendantCompanies());
+        }
+        
+        return $descendants;
     }
 
     // Scopes
@@ -82,6 +154,38 @@ class Company extends Model
     public function scopeByCountry($query, $country)
     {
         return $query->where('country', $country);
+    }
+
+    public function scopeParentCompanies($query)
+    {
+        return $query->whereNull('parent_company_id');
+    }
+
+    public function scopeSisterCompanies($query, $parentCompanyId = null)
+    {
+        if ($parentCompanyId) {
+            return $query->where('parent_company_id', $parentCompanyId);
+        }
+        return $query->whereNotNull('parent_company_id');
+    }
+
+    public function scopeByParentCompany($query, $parentCompanyId)
+    {
+        return $query->where(function($q) use ($parentCompanyId) {
+            $q->where('id', $parentCompanyId)
+              ->orWhere('parent_company_id', $parentCompanyId);
+        });
+    }
+
+    public function scopeInCompanyGroup($query, $companyId)
+    {
+        $company = Company::find($companyId);
+        if (!$company) {
+            return $query->whereRaw('1 = 0'); // Return empty result
+        }
+        
+        $groupIds = $company->getCompanyGroupIds();
+        return $query->whereIn('id', $groupIds);
     }
 
     public function scopeLicenseExpiringSoon($query, $days = 30)

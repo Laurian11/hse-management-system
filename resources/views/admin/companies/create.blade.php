@@ -26,6 +26,23 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
+                        <label for="parent_company_id" class="block text-sm font-medium text-gray-700">Parent Company</label>
+                        <select id="parent_company_id" name="parent_company_id"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">None (This is a parent company)</option>
+                            @foreach($parentCompanies as $parent)
+                                <option value="{{ $parent->id }}" {{ old('parent_company_id') == $parent->id ? 'selected' : '' }}>
+                                    {{ $parent->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Leave empty to create a parent company, or select a parent to create a sister company</p>
+                        @error('parent_company_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Company Name *</label>
                         <input type="text" id="name" name="name" required
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"

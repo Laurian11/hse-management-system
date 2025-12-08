@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ToolboxTalk;
 use App\Models\ToolboxTalkTopic;
 use App\Models\ToolboxTalkTemplate;
+use App\Models\ToolboxTalkAttendance;
 use App\Models\Company;
 use App\Models\Department;
 use App\Models\User;
@@ -23,7 +24,52 @@ class ToolboxTalkController extends Controller
 
     public function schedule(Request $request)
     {
-        return $this->index($request);
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+        
+        $user = Auth::user();
+        
+        // Handle super admin (no company_id)
+        if (!$user->company_id) {
+            $user->load('role');
+            $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
+            if (!$isSuperAdmin) {
+                return redirect()->route('dashboard')->with('error', 'User is not assigned to any company.');
+            }
+            $companyGroupIds = \App\Models\Company::where('is_active', true)->pluck('id')->toArray();
+        } else {
+            $companyId = $user->company_id;
+            $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
+        }
+        
+        $query = ToolboxTalk::whereIn('company_id', $companyGroupIds)
+            ->with(['department', 'supervisor', 'topic', 'attendances']);
+        
+        // Filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('department')) {
+            $query->where('department_id', $request->department);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('scheduled_date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('scheduled_date', '<=', $request->date_to);
+        }
+        
+        $toolboxTalks = $query->orderBy('scheduled_date', 'desc')->paginate(15);
+        
+        // Get departments for filter
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        
+        return view('toolbox-talks.schedule', compact('toolboxTalks', 'departments'));
     }
 
     public function index(Request $request)
@@ -41,8 +87,9 @@ class ToolboxTalkController extends Controller
         }
         
         $companyId = $user->company_id;
+        $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
         
-        $query = ToolboxTalk::forCompany($companyId)
+        $query = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->with(['department', 'supervisor', 'topic', 'attendances']);
         
         // Quick filters
@@ -88,11 +135,11 @@ class ToolboxTalkController extends Controller
         
         // Statistics
         $stats = [
-            'total' => ToolboxTalk::forCompany($companyId)->count(),
-            'scheduled' => ToolboxTalk::forCompany($companyId)->scheduled()->count(),
-            'completed' => ToolboxTalk::forCompany($companyId)->completed()->count(),
-            'upcoming' => ToolboxTalk::forCompany($companyId)->upcoming()->count(),
-            'avg_attendance' => ToolboxTalk::forCompany($companyId)
+            'total' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->count(),
+            'scheduled' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->scheduled()->count(),
+            'completed' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->completed()->count(),
+            'upcoming' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->upcoming()->count(),
+            'avg_attendance' => ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->completed()
                 ->avg('attendance_rate') ?? 0,
         ];
@@ -137,32 +184,59 @@ class ToolboxTalkController extends Controller
             'recurrence_pattern' => 'required_if:is_recurring,1|in:daily,weekly,monthly',
         ]);
 
+        // Check if using a template
+        $template = null;
+        if ($request->has('template_id')) {
+            $template = ToolboxTalkTemplate::forCompany(Auth::user()->company_id)
+                ->find($request->template_id);
+        }
+
+        // Generate unique reference number before creating
+        $prefix = 'TT';
+        $year = date('Y');
+        $month = date('m');
+        $sequence = ToolboxTalk::whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->count() + 1;
+        $referenceNumber = "{$prefix}-{$year}{$month}-{$sequence}";
+
+        // Calculate next occurrence for recurring talks
+        $nextOccurrence = null;
+        if ($request->boolean('is_recurring') && $request->recurrence_pattern) {
+            $nextOccurrence = $this->calculateNextOccurrence(
+                $request->scheduled_date,
+                $request->recurrence_pattern
+            );
+        }
+
         $toolboxTalk = ToolboxTalk::create([
-            'reference_number' => 'TT-' . date('Ym') . '-TEMP',
+            'reference_number' => $referenceNumber,
             'company_id' => Auth::user()->company_id,
-            'title' => $request->title,
-            'description' => $request->description,
+            'title' => $request->title ?: ($template->title ?? ''),
+            'description' => $request->description ?: ($template->description_content ?? ''),
             'department_id' => $request->department_id,
             'supervisor_id' => $request->supervisor_id,
-            'topic_id' => $request->topic_id,
+            'topic_id' => $request->topic_id ?: ($template->topic_id ?? null),
             'status' => 'scheduled',
             'scheduled_date' => $request->scheduled_date,
             'start_time' => $request->scheduled_date . ' ' . $request->start_time,
-            'duration_minutes' => $request->duration_minutes,
+            'duration_minutes' => $request->duration_minutes ?: ($template->duration_minutes ?? 15),
             'location' => $request->location,
-            'talk_type' => $request->talk_type,
+            'talk_type' => $request->talk_type ?: ($template->talk_type ?? 'safety'),
             'biometric_required' => $request->boolean('biometric_required', true),
             'is_recurring' => $request->boolean('is_recurring', false),
             'recurrence_pattern' => $request->recurrence_pattern,
+            'next_occurrence' => $nextOccurrence,
         ]);
-
-        // Generate proper reference number
-        $toolboxTalk->reference_number = $toolboxTalk->generateReferenceNumber();
-        $toolboxTalk->save();
 
         // Increment topic usage count
         if ($toolboxTalk->topic_id) {
             $toolboxTalk->topic->incrementUsageCount();
+        }
+
+        // Increment template usage count
+        if ($template) {
+            $template->incrementUsage();
         }
 
         return redirect()
@@ -252,9 +326,11 @@ class ToolboxTalkController extends Controller
             'location' => 'required|string|max:255',
             'talk_type' => 'required|in:safety,health,environment,incident_review,custom',
             'biometric_required' => 'boolean',
+            'is_recurring' => 'boolean',
+            'recurrence_pattern' => 'required_if:is_recurring,1|in:daily,weekly,monthly',
         ]);
 
-        $toolboxTalk->update([
+        $updateData = [
             'title' => $request->title,
             'description' => $request->description,
             'department_id' => $request->department_id,
@@ -266,7 +342,21 @@ class ToolboxTalkController extends Controller
             'location' => $request->location,
             'talk_type' => $request->talk_type,
             'biometric_required' => $request->boolean('biometric_required', true),
-        ]);
+            'is_recurring' => $request->boolean('is_recurring', false),
+            'recurrence_pattern' => $request->recurrence_pattern,
+        ];
+
+        // Calculate next occurrence for recurring talks
+        if ($updateData['is_recurring'] && $updateData['recurrence_pattern']) {
+            $updateData['next_occurrence'] = $this->calculateNextOccurrence(
+                $request->scheduled_date,
+                $updateData['recurrence_pattern']
+            );
+        } else {
+            $updateData['next_occurrence'] = null;
+        }
+
+        $toolboxTalk->update($updateData);
 
         return redirect()
             ->route('toolbox-talks.show', $toolboxTalk)
@@ -353,22 +443,29 @@ class ToolboxTalkController extends Controller
         
         $user = Auth::user();
         
-        // Check if user object exists and has company_id
-        if (!$user || !$user->company_id) {
-            return redirect()->route('dashboard')->with('error', 'User is not assigned to any company.');
+        // Handle super admin (no company_id)
+        if (!$user->company_id) {
+            $user->load('role');
+            $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
+            if (!$isSuperAdmin) {
+                return redirect()->route('dashboard')->with('error', 'User is not assigned to any company.');
+            }
+            // Super admin sees all companies
+            $companyGroupIds = \App\Models\Company::where('is_active', true)->pluck('id')->toArray();
+        } else {
+            $companyId = $user->company_id;
+            $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
         }
         
-        $companyId = $user->company_id;
-        
         // Recent talks
-        $recentTalks = ToolboxTalk::forCompany($companyId)
+        $recentTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->with(['department', 'supervisor'])
             ->orderBy('scheduled_date', 'desc')
             ->limit(5)
             ->get();
 
         // Upcoming talks
-        $upcomingTalks = ToolboxTalk::forCompany($companyId)
+        $upcomingTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->scheduled()
             ->upcoming()
             ->with(['department', 'supervisor'])
@@ -378,26 +475,28 @@ class ToolboxTalkController extends Controller
 
         // Statistics
         $stats = [
-            'total_talks' => ToolboxTalk::forCompany($companyId)->count(),
-            'this_month' => ToolboxTalk::forCompany($companyId)
+            'total_talks' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->count(),
+            'this_month' => ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereMonth('scheduled_date', now()->month)
+                ->whereYear('scheduled_date', now()->year)
                 ->count(),
-            'completed_this_month' => ToolboxTalk::forCompany($companyId)
+            'completed_this_month' => ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereMonth('scheduled_date', now()->month)
+                ->whereYear('scheduled_date', now()->year)
                 ->completed()
                 ->count(),
-            'avg_attendance_rate' => ToolboxTalk::forCompany($companyId)
+            'avg_attendance_rate' => ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->completed()
                 ->avg('attendance_rate') ?? 0,
-            'avg_feedback_score' => ToolboxTalk::forCompany($companyId)
+            'avg_feedback_score' => ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereNotNull('average_feedback_score')
                 ->avg('average_feedback_score') ?? 0,
         ];
 
         // Department performance
-        $departmentPerformance = Department::where('company_id', $companyId)
-            ->with(['toolboxTalks' => function($query) {
-                $query->completed();
+        $departmentPerformance = Department::whereIn('company_id', $companyGroupIds)
+            ->with(['toolboxTalks' => function($query) use ($companyGroupIds) {
+                $query->whereIn('company_id', $companyGroupIds)->completed();
             }])
             ->get()
             ->map(function($department) {
@@ -408,13 +507,16 @@ class ToolboxTalkController extends Controller
                     'avg_attendance' => $talks->avg('attendance_rate') ?? 0,
                     'avg_feedback' => $talks->avg('average_feedback_score') ?? 0,
                 ];
+            })
+            ->filter(function($dept) {
+                return $dept['talks_count'] > 0;
             });
 
         // Monthly trends (last 6 months)
         $monthlyTrends = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthTalks = ToolboxTalk::forCompany($companyId)
+            $monthTalks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
                 ->whereYear('scheduled_date', $month->year)
                 ->whereMonth('scheduled_date', $month->month)
                 ->get();
@@ -429,13 +531,13 @@ class ToolboxTalkController extends Controller
 
         // Status distribution
         $statusDistribution = [
-            'scheduled' => ToolboxTalk::forCompany($companyId)->where('status', 'scheduled')->count(),
-            'in_progress' => ToolboxTalk::forCompany($companyId)->where('status', 'in_progress')->count(),
-            'completed' => ToolboxTalk::forCompany($companyId)->where('status', 'completed')->count(),
+            'scheduled' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'scheduled')->count(),
+            'in_progress' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'in_progress')->count(),
+            'completed' => ToolboxTalk::whereIn('company_id', $companyGroupIds)->where('status', 'completed')->count(),
         ];
 
         // Talk type distribution
-        $typeDistribution = ToolboxTalk::forCompany($companyId)
+        $typeDistribution = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->selectRaw('talk_type, count(*) as count')
             ->groupBy('talk_type')
             ->pluck('count', 'talk_type')
@@ -447,8 +549,8 @@ class ToolboxTalkController extends Controller
             $weekStart = now()->subWeeks($i)->startOfWeek();
             $weekEnd = now()->subWeeks($i)->endOfWeek();
             
-            $weekAttendances = \App\Models\ToolboxTalkAttendance::whereHas('toolboxTalk', function($q) use ($companyId, $weekStart, $weekEnd) {
-                $q->where('company_id', $companyId)
+            $weekAttendances = \App\Models\ToolboxTalkAttendance::whereHas('toolboxTalk', function($q) use ($companyGroupIds, $weekStart, $weekEnd) {
+                $q->whereIn('company_id', $companyGroupIds)
                   ->whereBetween('scheduled_date', [$weekStart, $weekEnd]);
             })->get();
             
@@ -460,7 +562,7 @@ class ToolboxTalkController extends Controller
         }
 
         // Top performing topics
-        $topicIds = ToolboxTalk::forCompany($companyId)
+        $topicIds = ToolboxTalk::whereIn('company_id', $companyGroupIds)
             ->completed()
             ->whereNotNull('topic_id')
             ->pluck('topic_id')
@@ -468,8 +570,8 @@ class ToolboxTalkController extends Controller
             
         $topTopics = \App\Models\ToolboxTalkTopic::whereIn('id', $topicIds)
             ->get()
-            ->map(function($topic) use ($companyId) {
-                $talks = ToolboxTalk::forCompany($companyId)
+            ->map(function($topic) use ($companyGroupIds) {
+                $talks = ToolboxTalk::whereIn('company_id', $companyGroupIds)
                     ->where('topic_id', $topic->id)
                     ->completed()
                     ->get();
@@ -933,11 +1035,22 @@ class ToolboxTalkController extends Controller
         array_unshift($exportData, ['Date: ' . $toolboxTalk->scheduled_date->format('Y-m-d')]);
         array_unshift($exportData, []); // Empty row
         
-        return Excel::create("attendance-report-{$toolboxTalk->reference_number}", function($excel) use ($exportData) {
-            $excel->sheet('Attendance', function($sheet) use ($exportData) {
-                $sheet->fromArray($exportData, null, 'A1', false, false);
-            });
-        })->export('xlsx');
+        // Use CSV export for compatibility
+        $filename = "attendance-report-{$toolboxTalk->reference_number}.csv";
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($exportData) {
+            $file = fopen('php://output', 'w');
+            foreach ($exportData as $row) {
+                fputcsv($file, is_array($row) ? $row : [$row]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -966,11 +1079,30 @@ class ToolboxTalkController extends Controller
             ];
         });
 
-        return Excel::create('toolbox-talks-report', function($excel) use ($data) {
-            $excel->sheet('Toolbox Talks', function($sheet) use ($data) {
-                $sheet->fromArray($data->toArray(), null, 'A1', false, false);
-            });
-        })->export('xlsx');
+        // Use CSV export for compatibility
+        $filename = 'toolbox-talks-report-' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+            
+            // Headers
+            if ($data->isNotEmpty()) {
+                fputcsv($file, array_keys($data->first()));
+            }
+            
+            // Data
+            foreach ($data as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -1081,20 +1213,41 @@ class ToolboxTalkController extends Controller
                 
                 foreach ($rows as $rowIndex => $row) {
                     try {
+                        // Skip empty rows
+                        if (empty($row[0])) {
+                            continue;
+                        }
+                        
+                        // Parse date and time
+                        $scheduledDate = !empty($row[2]) ? Carbon::parse($row[2]) : now();
+                        $startTime = !empty($row[3]) ? $scheduledDate->copy()->setTimeFromTimeString($row[3]) : $scheduledDate->copy()->setTime(9, 0);
+                        
+                        // Parse biometric required
+                        $biometricRequired = true;
+                        if (isset($row[9])) {
+                            $biometricRequired = strtolower(trim($row[9])) === 'yes' || strtolower(trim($row[9])) === '1' || strtolower(trim($row[9])) === 'true';
+                        }
+                        
+                        // Generate reference number first to avoid unique constraint issues
+                        $tempRef = 'TT-' . date('Ym') . '-TEMP-' . uniqid();
+                        
                         $talk = ToolboxTalk::create([
-                            'reference_number' => 'TT-' . date('Ym') . '-TEMP',
+                            'reference_number' => $tempRef,
                             'company_id' => $companyId,
-                            'title' => $row[0] ?? 'Imported Talk',
-                            'description' => $row[1] ?? null,
-                            'scheduled_date' => $row[2] ?? now(),
-                            'start_time' => ($row[2] ?? now()) . ' ' . ($row[3] ?? '09:00'),
-                            'duration_minutes' => (int)($row[4] ?? 15),
-                            'location' => $row[5] ?? 'Main Hall',
-                            'talk_type' => $row[6] ?? 'safety',
+                            'title' => trim($row[0]),
+                            'description' => !empty($row[1]) ? trim($row[1]) : null,
+                            'scheduled_date' => $scheduledDate,
+                            'start_time' => $startTime,
+                            'duration_minutes' => !empty($row[4]) ? (int)$row[4] : 15,
+                            'location' => !empty($row[5]) ? trim($row[5]) : null,
+                            'talk_type' => !empty($row[6]) && in_array($row[6], ['safety', 'health', 'environment', 'incident_review', 'custom']) 
+                                ? trim($row[6]) 
+                                : 'safety',
                             'department_id' => !empty($row[7]) ? (int)$row[7] : null,
                             'supervisor_id' => !empty($row[8]) ? (int)$row[8] : null,
+                            'topic_id' => !empty($row[10]) ? (int)$row[10] : null,
                             'status' => 'scheduled',
-                            'biometric_required' => isset($row[9]) ? (bool)$row[9] : true,
+                            'biometric_required' => $biometricRequired,
                         ]);
                         
                         // Generate proper reference number
@@ -1115,20 +1268,42 @@ class ToolboxTalkController extends Controller
                 $rowIndex = 1;
                 while (($row = fgetcsv($handle)) !== false) {
                     try {
+                        // Skip empty rows
+                        if (empty($row[0])) {
+                            $rowIndex++;
+                            continue;
+                        }
+                        
+                        // Parse date and time
+                        $scheduledDate = !empty($row[2]) ? Carbon::parse($row[2]) : now();
+                        $startTime = !empty($row[3]) ? $scheduledDate->copy()->setTimeFromTimeString($row[3]) : $scheduledDate->copy()->setTime(9, 0);
+                        
+                        // Parse biometric required
+                        $biometricRequired = true;
+                        if (isset($row[9])) {
+                            $biometricRequired = strtolower(trim($row[9])) === 'yes' || strtolower(trim($row[9])) === '1' || strtolower(trim($row[9])) === 'true';
+                        }
+                        
+                        // Generate reference number first to avoid unique constraint issues
+                        $tempRef = 'TT-' . date('Ym') . '-TEMP-' . uniqid();
+                        
                         $talk = ToolboxTalk::create([
-                            'reference_number' => 'TT-' . date('Ym') . '-TEMP',
+                            'reference_number' => $tempRef,
                             'company_id' => $companyId,
-                            'title' => $row[0] ?? 'Imported Talk',
-                            'description' => $row[1] ?? null,
-                            'scheduled_date' => $row[2] ?? now(),
-                            'start_time' => ($row[2] ?? now()) . ' ' . ($row[3] ?? '09:00'),
-                            'duration_minutes' => (int)($row[4] ?? 15),
-                            'location' => $row[5] ?? 'Main Hall',
-                            'talk_type' => $row[6] ?? 'safety',
+                            'title' => trim($row[0]),
+                            'description' => !empty($row[1]) ? trim($row[1]) : null,
+                            'scheduled_date' => $scheduledDate,
+                            'start_time' => $startTime,
+                            'duration_minutes' => !empty($row[4]) ? (int)$row[4] : 15,
+                            'location' => !empty($row[5]) ? trim($row[5]) : null,
+                            'talk_type' => !empty($row[6]) && in_array($row[6], ['safety', 'health', 'environment', 'incident_review', 'custom']) 
+                                ? trim($row[6]) 
+                                : 'safety',
                             'department_id' => !empty($row[7]) ? (int)$row[7] : null,
                             'supervisor_id' => !empty($row[8]) ? (int)$row[8] : null,
+                            'topic_id' => !empty($row[10]) ? (int)$row[10] : null,
                             'status' => 'scheduled',
-                            'biometric_required' => isset($row[9]) ? (bool)$row[9] : true,
+                            'biometric_required' => $biometricRequired,
                         ]);
                         
                         // Generate proper reference number
@@ -1169,7 +1344,49 @@ class ToolboxTalkController extends Controller
         $callback = function() {
             $file = fopen('php://output', 'w');
             
-            // Headers
+            // Headers - Updated with better column names
+            fputcsv($file, [
+                'Title',
+                'Description', 
+                'Scheduled Date (YYYY-MM-DD)',
+                'Start Time (HH:MM)',
+                'Duration (minutes)',
+                'Location',
+                'Talk Type (safety/health/environment/incident_review/custom)',
+                'Department ID',
+                'Supervisor ID',
+                'Biometric Required (Yes/No)',
+                'Topic ID (optional)'
+            ]);
+            
+            // Sample data rows
+            fputcsv($file, [
+                'Fire Safety Procedures',
+                'Basic fire safety and evacuation procedures',
+                date('Y-m-d', strtotime('+7 days')),
+                '09:00',
+                '15',
+                'Main Hall',
+                'safety',
+                '',
+                '',
+                'Yes',
+                ''
+            ]);
+            
+            fputcsv($file, [
+                'First Aid Basics',
+                'Basic first aid training',
+                date('Y-m-d', strtotime('+14 days')),
+                '10:00',
+                '20',
+                'Training Room',
+                'health',
+                '',
+                '',
+                'Yes',
+                ''
+            ]);
             fputcsv($file, [
                 'title',
                 'description',
@@ -1311,14 +1528,41 @@ class ToolboxTalkController extends Controller
      */
     public function syncBiometricAttendance(ToolboxTalk $toolboxTalk)
     {
-        if ($toolboxTalk->company_id !== Auth::user()->company_id) {
+        $user = Auth::user();
+        
+        // Check authorization - allow super admin or company match
+        if ($user->company_id && $toolboxTalk->company_id !== $user->company_id) {
             abort(403, 'Unauthorized');
         }
 
-        $zktecoService = new \App\Services\ZKTecoService();
-        $results = $zktecoService->processToolboxTalkAttendance($toolboxTalk);
+        if (!$toolboxTalk->biometric_required) {
+            return back()->with('error', 'Biometric attendance is not required for this talk.');
+        }
 
-        return back()->with('success', "Biometric sync completed: {$results['new_attendances']} new attendances recorded.");
+        try {
+            $zktecoService = new \App\Services\ZKTecoService();
+            
+            // Test device connection first
+            $connectionTest = $zktecoService->testConnection();
+            if (!$connectionTest['connected']) {
+                return back()->with('error', 'Cannot connect to biometric device. Please check device connection.');
+            }
+
+            $results = $zktecoService->processToolboxTalkAttendance($toolboxTalk);
+
+            $message = "Biometric sync completed successfully! ";
+            $message .= "Processed: {$results['processed']} log(s), ";
+            $message .= "New attendances: {$results['new_attendances']}";
+
+            if (!empty($results['errors'])) {
+                $message .= ". Errors: " . count($results['errors']);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error syncing biometric attendance: " . $e->getMessage());
+            return back()->with('error', 'Error processing attendance: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -1373,5 +1617,103 @@ class ToolboxTalkController extends Controller
         }
 
         return back()->with('success', 'Action items saved successfully!');
+    }
+
+    /**
+     * Generate next occurrence for recurring talk
+     */
+    public function generateNextOccurrence(ToolboxTalk $toolboxTalk)
+    {
+        if (!$toolboxTalk->is_recurring) {
+            return back()->with('error', 'This talk is not set as recurring.');
+        }
+
+        if (!$toolboxTalk->next_occurrence) {
+            return back()->with('error', 'No next occurrence date set.');
+        }
+
+        // Create new talk based on parent
+        $newTalk = $toolboxTalk->replicate();
+        $newTalk->reference_number = 'TT-' . date('Ym') . '-TEMP';
+        $newTalk->status = 'scheduled';
+        $newTalk->scheduled_date = $toolboxTalk->next_occurrence;
+        $newTalk->start_time = $toolboxTalk->next_occurrence->format('Y-m-d') . ' ' . $toolboxTalk->start_time->format('H:i:s');
+        $newTalk->total_attendees = 0;
+        $newTalk->present_attendees = 0;
+        $newTalk->attendance_rate = 0;
+        $newTalk->average_feedback_score = null;
+        
+        // Calculate next occurrence
+        $newTalk->next_occurrence = $this->calculateNextOccurrence(
+            $toolboxTalk->next_occurrence,
+            $toolboxTalk->recurrence_pattern
+        );
+        
+        $newTalk->save();
+        
+        // Generate proper reference number
+        $newTalk->reference_number = $newTalk->generateReferenceNumber();
+        $newTalk->save();
+
+        return redirect()
+            ->route('toolbox-talks.show', $newTalk)
+            ->with('success', 'Next occurrence generated successfully!');
+    }
+
+    /**
+     * Calculate next occurrence date based on pattern
+     */
+    private function calculateNextOccurrence($currentDate, $pattern)
+    {
+        $date = \Carbon\Carbon::parse($currentDate);
+        
+        switch ($pattern) {
+            case 'daily':
+                return $date->addDay();
+            case 'weekly':
+                return $date->addWeek();
+            case 'monthly':
+                return $date->addMonth();
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Reschedule overdue talk
+     */
+    public function reschedule(Request $request, ToolboxTalk $toolboxTalk)
+    {
+        if ($toolboxTalk->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($toolboxTalk->status !== 'overdue') {
+            return back()->with('error', 'Only overdue talks can be rescheduled.');
+        }
+
+        $request->validate([
+            'scheduled_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+        ]);
+
+        $toolboxTalk->update([
+            'status' => 'scheduled',
+            'scheduled_date' => $request->scheduled_date,
+            'start_time' => $request->scheduled_date . ' ' . $request->start_time,
+        ]);
+
+        // Recalculate next occurrence if recurring
+        if ($toolboxTalk->is_recurring && $toolboxTalk->recurrence_pattern) {
+            $toolboxTalk->next_occurrence = $this->calculateNextOccurrence(
+                $request->scheduled_date,
+                $toolboxTalk->recurrence_pattern
+            );
+            $toolboxTalk->save();
+        }
+
+        return redirect()
+            ->route('toolbox-talks.show', $toolboxTalk)
+            ->with('success', 'Talk rescheduled successfully!');
     }
 }

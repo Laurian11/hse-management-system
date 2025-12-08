@@ -238,6 +238,16 @@ class ZKTecoService
                     continue; // Already processed
                 }
 
+                // Determine attendance status based on check-in time
+                $checkInTime = \Carbon\Carbon::parse($log['timestamp']);
+                $talkStartTime = $toolboxTalk->start_time;
+                $gracePeriodMinutes = 5; // 5 minute grace period
+                
+                $attendanceStatus = 'present';
+                if ($checkInTime->gt($talkStartTime->copy()->addMinutes($gracePeriodMinutes))) {
+                    $attendanceStatus = 'late';
+                }
+
                 // Create attendance record
                 $attendance = ToolboxTalkAttendance::create([
                     'toolbox_talk_id' => $toolboxTalk->id,
@@ -245,14 +255,14 @@ class ZKTecoService
                     'employee_name' => $user->name,
                     'employee_id_number' => $user->employee_id_number,
                     'department' => $user->department?->name,
-                    'attendance_status' => 'present',
+                    'attendance_status' => $attendanceStatus,
                     'check_in_time' => $log['timestamp'],
                     'check_in_method' => 'biometric',
                     'biometric_template_id' => $log['template_id'] ?? null,
                     'device_id' => $this->deviceIp,
                     'check_in_latitude' => $toolboxTalk->latitude,
                     'check_in_longitude' => $toolboxTalk->longitude,
-                    'is_supervisor' => $user->role === 'supervisor',
+                    'is_supervisor' => $user->role && $user->role->name === 'supervisor',
                     'is_presenter' => $toolboxTalk->supervisor_id === $user->id,
                 ]);
 

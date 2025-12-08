@@ -148,4 +148,9 @@ class ToolboxTalk extends Model
         return $query->where('scheduled_date', '<', now())
                      ->orderBy('scheduled_date', 'desc');
     }
+
+    public function scopeOverdue($query)
+    {
+        return $query->where('status', 'overdue');
+    }
 }

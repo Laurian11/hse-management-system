@@ -13,10 +13,24 @@ class IncidentController extends Controller
 {
     public function index(Request $request)
     {
-        $companyId = Auth::user()->company_id;
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
         
-        $query = Incident::where('company_id', $companyId)
-            ->with(['reporter', 'assignedTo', 'department', 'investigation', 'rootCauseAnalysis']);
+        // Super admins can see all incidents including unassigned ones
+        if ($isSuperAdmin) {
+            $companyGroupIds = null; // Don't filter by company for super admin
+            $query = Incident::with(['reporter', 'assignedTo', 'department', 'company', 'investigation', 'rootCauseAnalysis']);
+            
+            // Filter for unassigned incidents if requested
+            if ($request->has('unassigned') && $request->boolean('unassigned')) {
+                $query->whereNull('company_id');
+            }
+        } else {
+            $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
+            $query = Incident::whereIn('company_id', $companyGroupIds)
+                ->with(['reporter', 'assignedTo', 'department', 'investigation', 'rootCauseAnalysis']);
+        }
         
         // Apply filters
         if ($request->has('filter')) {
@@ -83,21 +97,54 @@ class IncidentController extends Controller
         // Append query parameters to pagination links
         $incidents->appends($request->query());
         
-        return view('incidents.index', compact('incidents'));
+        // Get unassigned count for super admins
+        $unassignedCount = $isSuperAdmin ? Incident::whereNull('company_id')->count() : 0;
+        $companies = $isSuperAdmin ? \App\Models\Company::where('is_active', true)->get() : collect();
+        
+        return view('incidents.index', compact('incidents', 'unassignedCount', 'companies', 'isSuperAdmin'));
+    }
+    
+    /**
+     * Assign an incident to a company (Super Admin only)
+     */
+    public function assignCompany(Request $request, Incident $incident)
+    {
+        $user = Auth::user();
+        
+        // Only super admins can assign incidents
+        if (!$user->role || $user->role->name !== 'super_admin') {
+            abort(403, 'Only super administrators can assign incidents to companies.');
+        }
+        
+        $request->validate([
+            'company_id' => 'required|exists:companies,id',
+        ]);
+        
+        $company = \App\Models\Company::findOrFail($request->company_id);
+        
+        $incident->update([
+            'company_id' => $company->id,
+        ]);
+        
+        \App\Models\ActivityLog::log('update', 'incidents', 'Incident', $incident->id, 
+            "Incident {$incident->reference_number} assigned to company: {$company->name}");
+        
+        return redirect()->back()->with('success', "Incident {$incident->reference_number} has been assigned to {$company->name}.");
     }
 
     public function dashboard()
     {
         $companyId = Auth::user()->company_id;
+        $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
         
         $stats = [
-            'total' => Incident::where('company_id', $companyId)->count(),
-            'open' => Incident::where('company_id', $companyId)->where('status', 'open')->count(),
-            'investigating' => Incident::where('company_id', $companyId)->where('status', 'investigating')->count(),
-            'closed' => Incident::where('company_id', $companyId)->where('status', 'closed')->count(),
+            'total' => Incident::whereIn('company_id', $companyGroupIds)->count(),
+            'open' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'open')->count(),
+            'investigating' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'investigating')->count(),
+            'closed' => Incident::whereIn('company_id', $companyGroupIds)->where('status', 'closed')->count(),
         ];
         
-        $recentIncidents = Incident::where('company_id', $companyId)
+        $recentIncidents = Incident::whereIn('company_id', $companyGroupIds)
             ->with(['reporter', 'assignedTo'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -109,9 +156,10 @@ class IncidentController extends Controller
     public function create(Request $request)
     {
         $companyId = Auth::user()->company_id;
+        $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
         
-        $departments = \App\Models\Department::where('company_id', $companyId)->get();
-        $users = \App\Models\User::where('company_id', $companyId)->get();
+        $departments = \App\Models\Department::whereIn('company_id', $companyGroupIds)->get();
+        $users = \App\Models\User::whereIn('company_id', $companyGroupIds)->get();
         
         $copyFrom = null;
         if ($request->has('copy_from')) {

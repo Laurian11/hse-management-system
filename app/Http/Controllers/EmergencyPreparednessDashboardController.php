@@ -9,43 +9,47 @@ use App\Models\EmergencyContact;
 use App\Models\EmergencyEquipment;
 use App\Models\EvacuationPlan;
 use App\Models\EmergencyResponseTeam;
+use App\Traits\UsesCompanyGroup;
 use Carbon\Carbon;
 
 class EmergencyPreparednessDashboardController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function dashboard()
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
 
         $stats = [
-            'total_fire_drills' => FireDrill::forCompany($companyId)->count(),
-            'drills_this_year' => FireDrill::forCompany($companyId)
+            'total_fire_drills' => FireDrill::whereIn('company_id', $companyGroupIds)->count(),
+            'drills_this_year' => FireDrill::whereIn('company_id', $companyGroupIds)
                 ->whereYear('drill_date', Carbon::now()->year)
                 ->count(),
-            'pending_follow_up' => FireDrill::forCompany($companyId)->requiresFollowUp()->count(),
-            'active_contacts' => EmergencyContact::forCompany($companyId)->active()->count(),
-            'total_equipment' => EmergencyEquipment::forCompany($companyId)->count(),
-            'equipment_due_inspection' => EmergencyEquipment::forCompany($companyId)->dueForInspection()->count(),
-            'expired_equipment' => EmergencyEquipment::forCompany($companyId)->expired()->count(),
-            'active_plans' => EvacuationPlan::forCompany($companyId)->active()->count(),
-            'plans_due_review' => EvacuationPlan::forCompany($companyId)->dueForReview()->count(),
-            'active_teams' => EmergencyResponseTeam::forCompany($companyId)->active()->count(),
+            'pending_follow_up' => FireDrill::whereIn('company_id', $companyGroupIds)->requiresFollowUp()->count(),
+            'active_contacts' => EmergencyContact::whereIn('company_id', $companyGroupIds)->active()->count(),
+            'total_equipment' => EmergencyEquipment::whereIn('company_id', $companyGroupIds)->count(),
+            'equipment_due_inspection' => EmergencyEquipment::whereIn('company_id', $companyGroupIds)->dueForInspection()->count(),
+            'expired_equipment' => EmergencyEquipment::whereIn('company_id', $companyGroupIds)->expired()->count(),
+            'active_plans' => EvacuationPlan::whereIn('company_id', $companyGroupIds)->active()->count(),
+            'plans_due_review' => EvacuationPlan::whereIn('company_id', $companyGroupIds)->dueForReview()->count(),
+            'active_teams' => EmergencyResponseTeam::whereIn('company_id', $companyGroupIds)->active()->count(),
         ];
 
-        $recentFireDrills = FireDrill::forCompany($companyId)
+        $recentFireDrills = FireDrill::whereIn('company_id', $companyGroupIds)
             ->with(['conductedBy'])
             ->latest()
             ->limit(10)
             ->get();
 
-        $recentEquipmentInspections = EmergencyEquipment::forCompany($companyId)
+        $recentEquipmentInspections = EmergencyEquipment::whereIn('company_id', $companyGroupIds)
             ->whereNotNull('last_inspection_date')
             ->with(['inspectedBy'])
             ->latest('last_inspection_date')
             ->limit(10)
             ->get();
 
-        $drillResults = FireDrill::forCompany($companyId)
+        $drillResults = FireDrill::whereIn('company_id', $companyGroupIds)
             ->selectRaw('overall_result, COUNT(*) as count')
             ->whereNotNull('overall_result')
             ->groupBy('overall_result')

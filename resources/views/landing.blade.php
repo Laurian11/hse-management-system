@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.landing')
 
 @section('title', 'HSE Management System')
 
@@ -93,7 +93,7 @@
                 </button>
             </div>
             
-            <form id="loginForm" class="space-y-4" method="POST" action="/login">
+            <form id="loginForm" class="space-y-4" method="POST" action="{{ route('login') }}">
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-primary-black mb-2">Username/Email</label>
@@ -154,8 +154,20 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-primary-black mb-2">Email Address *</label>
-                        <input type="email" name="reporter_email" required class="w-full px-4 py-3 border border-border-gray focus:border-primary-black focus:outline-none" placeholder="your.email@example.com">
+                        <input type="email" name="reporter_email" id="reporter_email" required class="w-full px-4 py-3 border border-border-gray focus:border-primary-black focus:outline-none" placeholder="your.email@example.com" onblur="detectCompanyFromEmail()">
+                        <p class="text-xs text-medium-gray mt-1">We'll try to auto-detect your company from your email</p>
                     </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-primary-black mb-2">Company (Optional)</label>
+                    <select name="company_id" id="company_id" class="w-full px-4 py-3 border border-border-gray focus:border-primary-black focus:outline-none">
+                        <option value="">Select your company (or leave blank for auto-detection)</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}" data-email-domain="{{ $company->email ? explode('@', $company->email)[1] ?? '' : '' }}">{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-medium-gray mt-1">If you're reporting for a specific company, please select it above</p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -302,40 +314,41 @@
             }
         }
 
-        // Form submissions
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Login form submission handler
+            const loginForm = document.getElementById('loginForm');
+            if (!loginForm) {
+                console.error('Login form not found');
+                return;
+            }
             
-            const formData = new FormData(this);
-            
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    HSEUtils.showSuccess('Login successful! Redirecting to dashboard...');
-                    setTimeout(() => {
-                        closeLoginModal();
-                        window.location.href = data.redirect || '/dashboard';
-                    }, 1500);
-                } else {
-                    HSEUtils.showError(data.message || 'Login failed. Please check your credentials.');
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                HSEUtils.showError('Login error. Please try again.');
+            loginForm.addEventListener('submit', function(e) {
+                // Show loading state
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+                
+                // Allow form to submit normally - no preventDefault
+                // This ensures it works even if JavaScript fails
             });
-        });
-
-        document.getElementById('incidentForm').addEventListener('submit', function(e) {
+            
+            // Incident form submission handler
+            const incidentForm = document.getElementById('incidentForm');
+            if (!incidentForm) {
+                console.error('Incident form not found');
+                return;
+            }
+            
+            incidentForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
             
             const formData = new FormData();
             
@@ -343,41 +356,97 @@
             const formElements = this.querySelectorAll('input, select, textarea');
             formElements.forEach(element => {
                 if (element.type === 'file') {
-                    // Add each uploaded image
-                    uploadedImages.forEach((file, index) => {
-                        formData.append(`images[${index}]`, file);
-                    });
-                } else if (element.name) {
+                    // Skip file input, we'll add images separately
+                } else if (element.type === 'radio') {
+                    // Only add checked radio buttons
+                    if (element.checked) {
+                        formData.append(element.name, element.value);
+                    }
+                } else if (element.name && element.value) {
                     formData.append(element.name, element.value);
                 }
             });
             
+            // Add uploaded images
+            uploadedImages.forEach((file, index) => {
+                formData.append('images[]', file);
+            });
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                showErrorMessage('CSRF token not found. Please refresh the page.');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                return;
+            }
+
             fetch('/report-incident', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: formData
+                body: formData,
+                credentials: 'same-origin'
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Server error');
+                    }).catch(() => {
+                        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    HSEUtils.showSuccess(data.message);
-                    closeIncidentModal();
-                    document.getElementById('incidentForm').reset();
-                    imagePreview.innerHTML = '';
-                    uploadedImages = [];
+                    showSuccessMessage(data.message || 'Incident reported successfully!');
+                    setTimeout(() => {
+                        closeIncidentModal();
+                        document.getElementById('incidentForm').reset();
+                        imagePreview.innerHTML = '';
+                        uploadedImages = [];
+                        // Reset datetime to current
+                        const incidentDateInput = document.querySelector('input[name="incident_date"]');
+                        if (incidentDateInput) {
+                            const now = new Date();
+                            incidentDateInput.value = now.toISOString().slice(0, 16);
+                        }
+                    }, 2000);
                 } else {
-                    HSEUtils.showError('Error reporting incident. Please try again.');
+                    let errorMessage = data.message || 'Error reporting incident. Please try again.';
+                    if (data.errors) {
+                        const errorList = Object.values(data.errors).flat().join('\n');
+                        errorMessage = errorList || errorMessage;
+                    }
+                    showErrorMessage(errorMessage);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                HSEUtils.showError('Error reporting incident. Please try again.');
+                let errorMessage = 'Error reporting incident. Please try again.';
+                
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (error.name === 'TypeError' && error.message && error.message.includes('fetch')) {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                } else if (error.name === 'NetworkError' || (error.message && error.message.includes('Failed to fetch'))) {
+                    errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+                }
+                
+                showErrorMessage(errorMessage);
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            });
             });
         });
 
-        // Close modals when clicking outside
+        // Close modals when clicking outside (can be outside DOMContentLoaded)
         document.getElementById('loginModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeLoginModal();
@@ -399,6 +468,41 @@
                 incidentDateInput.value = datetime;
             }
         });
+
+        // Auto-detect company from email domain
+        function detectCompanyFromEmail() {
+            const emailInput = document.getElementById('reporter_email');
+            const companySelect = document.getElementById('company_id');
+            
+            if (!emailInput || !companySelect || !emailInput.value) return;
+            
+            const email = emailInput.value.trim();
+            if (!email.includes('@')) return;
+            
+            const domain = email.split('@')[1].toLowerCase();
+            
+            // Check if any company option has matching email domain
+            const options = companySelect.querySelectorAll('option');
+            for (let option of options) {
+                const optionDomain = option.getAttribute('data-email-domain');
+                if (optionDomain && optionDomain.toLowerCase() === domain) {
+                    companySelect.value = option.value;
+                    showAutoDetectedMessage('Company auto-detected: ' + option.textContent);
+                    return;
+                }
+            }
+        }
+
+        function showAutoDetectedMessage(message) {
+            // Show a subtle notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-24 right-6 bg-primary-black text-primary-white px-4 py-2 text-sm z-modal';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
 
         // Image upload functionality
         const imageInput = document.getElementById('imageInput');
@@ -467,54 +571,46 @@
             uploadedImages.splice(index, 1);
             
             // Recreate previews
-            const tempFiles = [...uploadedImages];
-            imageInput.value = ''; // Clear input
-            handleFiles(tempFiles);
+            imagePreview.innerHTML = '';
+            uploadedImages.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'relative group';
+                    previewDiv.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${idx + 1}" class="w-full h-24 object-cover rounded border border-border-gray">
+                        <button type="button" onclick="removeImage(${idx})" class="absolute top-1 right-1 bg-red-500 text-primary-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                        <div class="absolute bottom-0 left-0 right-0 bg-primary-black bg-opacity-50 text-primary-white text-xs p-1 rounded-b">
+                            ${file.name}
+                        </div>
+                    `;
+                    imagePreview.appendChild(previewDiv);
+                };
+                reader.readAsDataURL(file);
+            });
         }
 
-        // Update form submission to handle images
-        document.getElementById('incidentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData();
-            
-            // Add form fields
-            const formElements = this.querySelectorAll('input, select, textarea');
-            formElements.forEach(element => {
-                if (element.type === 'file') {
-                    // Add each uploaded image
-                    uploadedImages.forEach((file, index) => {
-                        formData.append(`images[${index}]`, file);
-                    });
-                } else if (element.name) {
-                    formData.append(element.name, element.value);
+        // Success/Error message functions
+        function showSuccessMessage(message) {
+            const successDiv = document.getElementById('successMessage');
+            if (successDiv) {
+                const textElement = successDiv.querySelector('#successText');
+                if (textElement) {
+                    textElement.textContent = message;
                 }
-            });
-            
-            fetch('/report-incident', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showSuccessMessage(data.message);
-                    closeIncidentModal();
-                    document.getElementById('incidentForm').reset();
-                    imagePreview.innerHTML = '';
-                    uploadedImages = [];
-                } else {
-                    alert('Error reporting incident. Please try again.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error reporting incident. Please try again.');
-            });
-        });
+                successDiv.classList.remove('hidden');
+                setTimeout(() => {
+                    successDiv.classList.add('hidden');
+                }, 5000);
+            } else {
+                alert('Success: ' + message);
+            }
+        }
+
+        function showErrorMessage(message) {
+            alert('Error: ' + message);
+        }
     </script>
-</body>
-</html>
+@endsection

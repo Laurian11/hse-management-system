@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Hazard;
 use App\Models\Incident;
 use App\Models\Department;
+use App\Traits\UsesCompanyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HazardController extends Controller
 {
+    use UsesCompanyGroup;
+
     public function index(Request $request)
     {
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
         
-        $query = Hazard::forCompany($companyId)
+        $query = Hazard::whereIn('company_id', $companyGroupIds)
             ->with(['creator', 'department', 'relatedIncident']);
         
         // Filters
@@ -44,14 +48,14 @@ class HazardController extends Controller
         }
         
         $hazards = $query->latest()->paginate(15);
-        $departments = Department::where('company_id', $companyId)->active()->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
         
         // Statistics
         $stats = [
-            'total' => Hazard::forCompany($companyId)->count(),
-            'identified' => Hazard::forCompany($companyId)->identified()->count(),
-            'assessed' => Hazard::forCompany($companyId)->assessed()->count(),
-            'controlled' => Hazard::forCompany($companyId)->controlled()->count(),
+            'total' => Hazard::whereIn('company_id', $companyGroupIds)->count(),
+            'identified' => Hazard::whereIn('company_id', $companyGroupIds)->identified()->count(),
+            'assessed' => Hazard::whereIn('company_id', $companyGroupIds)->assessed()->count(),
+            'controlled' => Hazard::whereIn('company_id', $companyGroupIds)->controlled()->count(),
         ];
         
         return view('risk-assessment.hazards.index', compact('hazards', 'departments', 'stats'));
@@ -59,13 +63,14 @@ class HazardController extends Controller
 
     public function create(Request $request)
     {
-        $companyId = Auth::user()->company_id;
-        $departments = Department::where('company_id', $companyId)->active()->get();
+        $companyId = $this->getCompanyId();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
         $incidents = null;
         
         // If creating from incident, pre-populate
         if ($request->has('incident_id')) {
-            $incident = Incident::where('company_id', $companyId)
+            $incident = Incident::whereIn('company_id', $companyGroupIds)
                 ->findOrFail($request->incident_id);
             $incidents = collect([$incident]);
         }

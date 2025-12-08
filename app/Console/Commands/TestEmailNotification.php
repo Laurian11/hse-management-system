@@ -7,31 +7,69 @@ use App\Models\ToolboxTalkTopic;
 use App\Models\User;
 use App\Notifications\TalkReminderNotification;
 use App\Notifications\TopicCreatedNotification;
+use App\Notifications\TestNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
 class TestEmailNotification extends Command
 {
-    protected $signature = 'test:email {type=topic} {--email=}';
-    protected $description = 'Test email notifications (topic|talk)';
+    protected $signature = 'test:email {type=test} {--email=} {--message=}';
+    protected $description = 'Test email notifications (test|topic|talk)';
 
     public function handle()
     {
         $type = $this->argument('type');
         $email = $this->option('email');
+        $message = $this->option('message');
 
         $this->info("Testing {$type} email notification...");
 
-        if ($type === 'topic') {
+        if ($type === 'test') {
+            $this->testBasicNotification($email, $message);
+        } elseif ($type === 'topic') {
             $this->testTopicNotification($email);
         } elseif ($type === 'talk') {
             $this->testTalkNotification($email);
         } else {
-            $this->error("Invalid type. Use 'topic' or 'talk'");
+            $this->error("Invalid type. Use 'test', 'topic', or 'talk'");
             return Command::FAILURE;
         }
 
         return Command::SUCCESS;
+    }
+
+    private function testBasicNotification(?string $email, ?string $message): void
+    {
+        $user = null;
+        if ($email) {
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                $this->error("User with email {$email} not found.");
+                return;
+            }
+        } else {
+            $user = User::first();
+        }
+
+        if (!$user) {
+            $this->error('No users found in the system.');
+            return;
+        }
+
+        $testMessage = $message ?? 'This is a test notification from the HSE Management System.';
+
+        $this->info("Sending test notification to: {$user->name} ({$user->email})");
+        $this->info("Message: {$testMessage}");
+
+        try {
+            $user->notify(new TestNotification($testMessage));
+            $this->info('✅ Email notification sent successfully!');
+            $this->info("Check your email inbox or logs (if using 'log' mailer)");
+            $this->info("Log file location: storage/logs/laravel.log");
+        } catch (\Exception $e) {
+            $this->error('❌ Failed to send email: ' . $e->getMessage());
+            $this->error('Stack trace: ' . $e->getTraceAsString());
+        }
     }
 
     private function testTopicNotification(?string $email): void
