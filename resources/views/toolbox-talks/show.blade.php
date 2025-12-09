@@ -34,9 +34,11 @@
                         </button>
                     @endif
                     @if($toolboxTalk->status !== 'completed')
+                        @can('toolbox_talks.edit')
                         <a href="{{ route('toolbox-talks.edit', $toolboxTalk) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             <i class="fas fa-edit mr-2"></i>Edit
                         </a>
+                        @endcan
                     @endif
                 </div>
             </div>

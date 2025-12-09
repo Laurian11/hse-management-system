@@ -45,23 +45,31 @@ $breadcrumbs = [
                     </div>
                 </div>
                 <div class="flex space-x-3">
+                    @can('incidents.print')
                     <a href="{{ route('incidents.export-pdf', $incident) }}" class="px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
                         <i class="fas fa-file-pdf mr-2"></i>Export PDF
                     </a>
                     <x-print-button />
+                    @endcan
+                    @can('incidents.create')
                     <a href="{{ route('incidents.create', ['copy_from' => $incident->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this incident">
                         <i class="fas fa-copy mr-2"></i>Copy
                     </a>
+                    @endcan
+                    @can('incidents.edit')
                     @if($incident->status !== 'closed' && $incident->status !== 'resolved')
                         <a href="{{ route('incidents.edit', $incident) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             <i class="fas fa-edit mr-2"></i>Edit
                         </a>
                     @endif
+                    @endcan
+                    @can('incidents.create')
                     @if(!$incident->investigation && $incident->status !== 'closed')
                         <a href="{{ route('incidents.investigations.create', $incident) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-search mr-2"></i>Start Investigation
                         </a>
                     @endif
+                    @endcan
                 </div>
             </div>
         </div>

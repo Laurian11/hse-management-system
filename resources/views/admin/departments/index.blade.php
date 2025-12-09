@@ -7,9 +7,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
             <h1 class="text-2xl font-bold text-gray-900">Departments</h1>
+            @can('departments.create')
             <a href="{{ route('admin.departments.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 <i class="fas fa-plus mr-2"></i>Add Department
             </a>
+            @endcan
         </div>
     </div>
 </div>
@@ -113,12 +115,16 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">
+                                    @can('departments.view')
                                     <a href="{{ route('admin.departments.show', $department->id) }}" class="text-blue-600 hover:text-blue-900">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    @endcan
+                                    @can('departments.edit')
                                     <a href="{{ route('admin.departments.edit', $department->id) }}" class="text-indigo-600 hover:text-indigo-900">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

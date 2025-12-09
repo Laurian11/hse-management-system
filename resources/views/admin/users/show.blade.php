@@ -13,6 +13,9 @@
                 <h1 class="text-2xl font-bold text-gray-900">User Details</h1>
             </div>
             <div class="flex space-x-3">
+                <a href="{{ route('admin.users.permissions', $user->id) }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-key mr-2"></i>Permissions
+                </a>
                 <a href="{{ route('admin.users.edit', $user->id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                     <i class="fas fa-edit mr-2"></i>Edit
                 </a>

@@ -78,6 +78,31 @@ class AppServiceProvider extends ServiceProvider
             return 'class="text-medium-gray"';
         });
         
+        // Permission check directives
+        Blade::directive('can', function ($expression) {
+            return "<?php if(auth()->check() && auth()->user()->hasPermission({$expression})): ?>";
+        });
+        
+        Blade::directive('endcan', function () {
+            return "<?php endif; ?>";
+        });
+        
+        Blade::directive('canAny', function ($expression) {
+            return "<?php if(auth()->check() && auth()->user()->hasAnyPermission(is_array({$expression}) ? {$expression} : [{$expression}])): ?>";
+        });
+        
+        Blade::directive('endcanAny', function () {
+            return "<?php endif; ?>";
+        });
+        
+        Blade::directive('canAll', function ($expression) {
+            return "<?php if(auth()->check() && auth()->user()->hasAllPermissions(is_array({$expression}) ? {$expression} : [{$expression}])): ?>";
+        });
+        
+        Blade::directive('endcanAll', function () {
+            return "<?php endif; ?>";
+        });
+        
         // Register Model Observers for Training Module Integration
         ControlMeasure::observe(ControlMeasureObserver::class);
         RootCauseAnalysis::observe(RootCauseAnalysisObserver::class);

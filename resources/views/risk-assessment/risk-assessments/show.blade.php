@@ -12,19 +12,27 @@
                     <p class="text-sm text-gray-500 mt-1">{{ $riskAssessment->reference_number }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
+                    @can('risk_assessments.print')
                     <a href="{{ route('risk-assessment.risk-assessments.export-pdf', $riskAssessment) }}" class="px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
                         <i class="fas fa-file-pdf mr-2"></i>Export PDF
                     </a>
                     <x-print-button />
+                    @endcan
+                    @can('risk_assessments.create')
                     <a href="{{ route('risk-assessment.risk-assessments.create', ['copy_from' => $riskAssessment->id]) }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" title="Copy this risk assessment">
                         <i class="fas fa-copy mr-2"></i>Copy
                     </a>
+                    @endcan
+                    @can('risk_assessments.edit')
                     <a href="{{ route('risk-assessment.risk-assessments.edit', $riskAssessment) }}" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
                         <i class="fas fa-edit mr-2"></i>Edit
                     </a>
+                    @endcan
+                    @can('risk_assessments.write')
                     <a href="{{ route('risk-assessment.control-measures.create', ['risk_assessment_id' => $riskAssessment->id]) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                         <i class="fas fa-shield-alt mr-2"></i>Add Control
                     </a>
+                    @endcan
                 </div>
             </div>
         </div>

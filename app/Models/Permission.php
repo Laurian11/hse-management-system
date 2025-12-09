@@ -72,8 +72,10 @@ class Permission extends Model
         $labels = [
             'view' => 'View',
             'create' => 'Create',
+            'write' => 'Write',
             'edit' => 'Edit',
             'delete' => 'Delete',
+            'print' => 'Print',
             'approve' => 'Approve',
             'reject' => 'Reject',
             'assign' => 'Assign',
@@ -121,8 +123,10 @@ class Permission extends Model
         $colors = [
             'view' => 'bg-blue-100 text-blue-800',
             'create' => 'bg-green-100 text-green-800',
+            'write' => 'bg-emerald-100 text-emerald-800',
             'edit' => 'bg-yellow-100 text-yellow-800',
             'delete' => 'bg-red-100 text-red-800',
+            'print' => 'bg-cyan-100 text-cyan-800',
             'approve' => 'bg-purple-100 text-purple-800',
             'manage' => 'bg-indigo-100 text-indigo-800',
         ];
@@ -157,8 +161,10 @@ class Permission extends Model
         return [
             'view' => 'View',
             'create' => 'Create',
+            'write' => 'Write',
             'edit' => 'Edit',
             'delete' => 'Delete',
+            'print' => 'Print',
             'approve' => 'Approve',
             'reject' => 'Reject',
             'assign' => 'Assign',

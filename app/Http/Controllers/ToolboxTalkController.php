@@ -149,6 +149,7 @@ class ToolboxTalkController extends Controller
 
     public function create(Request $request)
     {
+        $this->authorize('toolbox_talks.create');
         $companyId = Auth::user()->company_id;
         
         $topics = ToolboxTalkTopic::active()->get();
@@ -168,6 +169,7 @@ class ToolboxTalkController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('toolbox_talks.create');
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -285,6 +287,7 @@ class ToolboxTalkController extends Controller
 
     public function edit(ToolboxTalk $toolboxTalk)
     {
+        $this->authorize('toolbox_talks.edit');
         // Check if user can edit this toolbox talk (same company)
         if ($toolboxTalk->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
@@ -305,6 +308,7 @@ class ToolboxTalkController extends Controller
 
     public function update(Request $request, ToolboxTalk $toolboxTalk)
     {
+        $this->authorize('toolbox_talks.edit');
         // Check if user can update this toolbox talk (same company)
         if ($toolboxTalk->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
@@ -365,6 +369,7 @@ class ToolboxTalkController extends Controller
 
     public function destroy(ToolboxTalk $toolboxTalk)
     {
+        $this->authorize('toolbox_talks.delete');
         // Check if user can delete this toolbox talk (same company)
         if ($toolboxTalk->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
@@ -991,6 +996,7 @@ class ToolboxTalkController extends Controller
      */
     public function exportAttendancePDF(ToolboxTalk $toolboxTalk)
     {
+        $this->authorize('toolbox_talks.print');
         if ($toolboxTalk->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
         }
@@ -1010,6 +1016,7 @@ class ToolboxTalkController extends Controller
      */
     public function exportAttendanceExcel(ToolboxTalk $toolboxTalk)
     {
+        $this->authorize('toolbox_talks.export');
         if ($toolboxTalk->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
         }
@@ -1058,6 +1065,7 @@ class ToolboxTalkController extends Controller
      */
     public function exportReportingExcel(Request $request)
     {
+        $this->authorize('toolbox_talks.export');
         $user = Auth::user();
         $companyId = $user->company_id;
 

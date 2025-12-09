@@ -71,3 +71,9 @@ Schedule::command('toolbox-talks:send-day-before-notifications')->dailyAt('09:00
 
 // Risk Assessment Review Notifications (Daily at 8:00 AM)
 Schedule::command('risk-assessment:send-review-notifications')->dailyAt('08:00')->name('risk-assessment.review-notifications');
+
+// Daily Attendance Sync - Sync from all devices every 5 minutes
+Schedule::command('attendance:sync-daily')->everyFiveMinutes()->name('attendance.sync-daily');
+
+// Daily Attendance Sync - Full sync at end of day (11:55 PM)
+Schedule::command('attendance:sync-daily')->dailyAt('23:55')->name('attendance.sync-daily-end-of-day');

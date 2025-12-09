@@ -209,6 +209,65 @@ class User extends Authenticatable
         return in_array($permission, $this->permissions ?? []);
     }
 
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function hasAllPermissions(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (!$this->hasPermission($permission)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function givePermission($permission): self
+    {
+        $permissions = $this->permissions ?? [];
+        if (!in_array($permission, $permissions)) {
+            $permissions[] = $permission;
+            $this->update(['permissions' => $permissions]);
+        }
+        return $this;
+    }
+
+    public function revokePermission($permission): self
+    {
+        $permissions = $this->permissions ?? [];
+        $permissions = array_values(array_diff($permissions, [$permission]));
+        $this->update(['permissions' => $permissions]);
+        return $this;
+    }
+
+    public function syncPermissions(array $permissions): self
+    {
+        $this->update(['permissions' => array_values($permissions)]);
+        return $this;
+    }
+
+    public function getAllPermissions(): array
+    {
+        $permissions = [];
+        
+        // Get role permissions
+        if ($this->role) {
+            $permissions = array_merge($permissions, $this->role->getPermissionNames());
+        }
+        
+        // Get user-specific permissions
+        $permissions = array_merge($permissions, $this->permissions ?? []);
+        
+        return array_unique($permissions);
+    }
+
     public function isLocked()
     {
         return $this->locked_until && $this->locked_until->isFuture();

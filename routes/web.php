@@ -92,6 +92,11 @@ use App\Http\Controllers\WasteSustainabilityRecordController;
 use App\Http\Controllers\CarbonFootprintRecordController;
 use App\Http\Controllers\NotificationRuleController;
 use App\Http\Controllers\EscalationMatrixController;
+use App\Http\Controllers\BiometricDeviceController;
+use App\Http\Controllers\DailyAttendanceController;
+use App\Http\Controllers\ManpowerReportController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ProfileController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -126,41 +131,41 @@ Route::get('/company/{id}/dashboard', [LandingPageController::class, 'companyDas
 // Toolbox Talk Routes
 Route::prefix('toolbox-talks')->name('toolbox-talks.')->group(function () {
     // Static routes (must come before parameterized routes)
-    Route::get('/', [ToolboxTalkController::class, 'index'])->name('index');
-    Route::get('/schedule', [ToolboxTalkController::class, 'schedule'])->name('schedule');
-    Route::get('/dashboard', [ToolboxTalkController::class, 'dashboard'])->name('dashboard');
-    Route::get('/create', [ToolboxTalkController::class, 'create'])->name('create');
-    Route::get('/attendance', [ToolboxTalkController::class, 'attendance'])->name('attendance');
-    Route::get('/feedback', [ToolboxTalkController::class, 'feedback'])->name('feedback');
-    Route::post('/{toolboxTalk}/feedback', [ToolboxTalkController::class, 'submitFeedback'])->name('submit-feedback');
-    Route::get('/{toolboxTalk}/feedback', [ToolboxTalkController::class, 'viewFeedback'])->name('view-feedback');
-    Route::get('/reporting', [ToolboxTalkController::class, 'reporting'])->name('reporting');
-    Route::get('/calendar', [ToolboxTalkController::class, 'calendar'])->name('calendar');
-    Route::post('/', [ToolboxTalkController::class, 'store'])->name('store');
-    Route::post('/bulk-import', [ToolboxTalkController::class, 'bulkImport'])->name('bulk-import');
-    Route::get('/bulk-import/template', [ToolboxTalkController::class, 'downloadTemplate'])->name('bulk-import-template');
+    Route::get('/', [ToolboxTalkController::class, 'index'])->middleware('permission:toolbox_talks.view')->name('index');
+    Route::get('/schedule', [ToolboxTalkController::class, 'schedule'])->middleware('permission:toolbox_talks.view')->name('schedule');
+    Route::get('/dashboard', [ToolboxTalkController::class, 'dashboard'])->middleware('permission:toolbox_talks.view')->name('dashboard');
+    Route::get('/create', [ToolboxTalkController::class, 'create'])->middleware('permission:toolbox_talks.create')->name('create');
+    Route::get('/attendance', [ToolboxTalkController::class, 'attendance'])->middleware('permission:toolbox_talks.view')->name('attendance');
+    Route::get('/feedback', [ToolboxTalkController::class, 'feedback'])->middleware('permission:toolbox_talks.view')->name('feedback');
+    Route::post('/{toolboxTalk}/feedback', [ToolboxTalkController::class, 'submitFeedback'])->middleware('permission:toolbox_talks.write')->name('submit-feedback');
+    Route::get('/{toolboxTalk}/feedback', [ToolboxTalkController::class, 'viewFeedback'])->middleware('permission:toolbox_talks.view')->name('view-feedback');
+    Route::get('/reporting', [ToolboxTalkController::class, 'reporting'])->middleware('permission:toolbox_talks.view')->name('reporting');
+    Route::get('/calendar', [ToolboxTalkController::class, 'calendar'])->middleware('permission:toolbox_talks.view')->name('calendar');
+    Route::post('/', [ToolboxTalkController::class, 'store'])->middleware('permission:toolbox_talks.create')->name('store');
+    Route::post('/bulk-import', [ToolboxTalkController::class, 'bulkImport'])->middleware('permission:toolbox_talks.create')->name('bulk-import');
+    Route::get('/bulk-import/template', [ToolboxTalkController::class, 'downloadTemplate'])->middleware('permission:toolbox_talks.create')->name('bulk-import-template');
     
     // Parameterized routes (must come after static routes)
-    Route::get('/{toolboxTalk}', [ToolboxTalkController::class, 'show'])->name('show');
-    Route::get('/{toolboxTalk}/edit', [ToolboxTalkController::class, 'edit'])->name('edit');
-    Route::put('/{toolboxTalk}', [ToolboxTalkController::class, 'update'])->name('update');
-    Route::delete('/{toolboxTalk}', [ToolboxTalkController::class, 'destroy'])->name('destroy');
+    Route::get('/{toolboxTalk}', [ToolboxTalkController::class, 'show'])->middleware('permission:toolbox_talks.view')->name('show');
+    Route::get('/{toolboxTalk}/edit', [ToolboxTalkController::class, 'edit'])->middleware('permission:toolbox_talks.edit')->name('edit');
+    Route::put('/{toolboxTalk}', [ToolboxTalkController::class, 'update'])->middleware('permission:toolbox_talks.edit')->name('update');
+    Route::delete('/{toolboxTalk}', [ToolboxTalkController::class, 'destroy'])->middleware('permission:toolbox_talks.delete')->name('destroy');
     
     // Specialized routes for specific talks
-    Route::post('/{toolboxTalk}/start', [ToolboxTalkController::class, 'startTalk'])->name('start');
-    Route::post('/{toolboxTalk}/complete', [ToolboxTalkController::class, 'completeTalk'])->name('complete');
-    Route::post('/{toolboxTalk}/mark-attendance', [ToolboxTalkController::class, 'markAttendance'])->name('mark-attendance');
-    Route::post('/{toolboxTalk}/sync-biometric', [ToolboxTalkController::class, 'syncBiometricAttendance'])->name('sync-biometric');
-    Route::post('/{toolboxTalk}/generate-next', [ToolboxTalkController::class, 'generateNextOccurrence'])->name('generate-next');
-    Route::post('/{toolboxTalk}/reschedule', [ToolboxTalkController::class, 'reschedule'])->name('reschedule');
-    Route::get('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'actionItems'])->name('action-items');
-    Route::post('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'saveActionItems'])->name('save-action-items');
-    Route::get('/{toolboxTalk}/attendance', [ToolboxTalkController::class, 'attendanceManagement'])->name('attendance-management');
+    Route::post('/{toolboxTalk}/start', [ToolboxTalkController::class, 'startTalk'])->middleware('permission:toolbox_talks.write')->name('start');
+    Route::post('/{toolboxTalk}/complete', [ToolboxTalkController::class, 'completeTalk'])->middleware('permission:toolbox_talks.write')->name('complete');
+    Route::post('/{toolboxTalk}/mark-attendance', [ToolboxTalkController::class, 'markAttendance'])->middleware('permission:toolbox_talks.write')->name('mark-attendance');
+    Route::post('/{toolboxTalk}/sync-biometric', [ToolboxTalkController::class, 'syncBiometricAttendance'])->middleware('permission:toolbox_talks.write')->name('sync-biometric');
+    Route::post('/{toolboxTalk}/generate-next', [ToolboxTalkController::class, 'generateNextOccurrence'])->middleware('permission:toolbox_talks.write')->name('generate-next');
+    Route::post('/{toolboxTalk}/reschedule', [ToolboxTalkController::class, 'reschedule'])->middleware('permission:toolbox_talks.edit')->name('reschedule');
+    Route::get('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'actionItems'])->middleware('permission:toolbox_talks.view')->name('action-items');
+    Route::post('/{toolboxTalk}/action-items', [ToolboxTalkController::class, 'saveActionItems'])->middleware('permission:toolbox_talks.write')->name('save-action-items');
+    Route::get('/{toolboxTalk}/attendance', [ToolboxTalkController::class, 'attendanceManagement'])->middleware('permission:toolbox_talks.view')->name('attendance-management');
     
     // Export routes
-    Route::get('/{toolboxTalk}/export/attendance-pdf', [ToolboxTalkController::class, 'exportAttendancePDF'])->name('export-attendance-pdf');
-    Route::get('/{toolboxTalk}/export/attendance-excel', [ToolboxTalkController::class, 'exportAttendanceExcel'])->name('export-attendance-excel');
-    Route::get('/export/reporting-excel', [ToolboxTalkController::class, 'exportReportingExcel'])->name('export-reporting-excel');
+    Route::get('/{toolboxTalk}/export/attendance-pdf', [ToolboxTalkController::class, 'exportAttendancePDF'])->middleware('permission:toolbox_talks.print')->name('export-attendance-pdf');
+    Route::get('/{toolboxTalk}/export/attendance-excel', [ToolboxTalkController::class, 'exportAttendanceExcel'])->middleware('permission:toolbox_talks.export')->name('export-attendance-excel');
+    Route::get('/export/reporting-excel', [ToolboxTalkController::class, 'exportReportingExcel'])->middleware('permission:toolbox_talks.export')->name('export-reporting-excel');
 });
 
 // Toolbox Talk Reports Routes
@@ -239,8 +244,8 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     Route::get('/', [IncidentController::class, 'index'])->name('index');
     Route::get('/dashboard', [IncidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/trend-analysis', [IncidentController::class, 'trendAnalysis'])->name('trend-analysis');
-    Route::get('/create', [IncidentController::class, 'create'])->name('create');
-    Route::post('/', [IncidentController::class, 'store'])->name('store');
+    Route::get('/create', [IncidentController::class, 'create'])->middleware('permission:incidents.create')->name('create');
+    Route::post('/', [IncidentController::class, 'store'])->middleware('permission:incidents.create')->name('store');
     
     // Reports routes - MUST come before {incident} routes
     Route::get('/reports', [\App\Http\Controllers\IncidentReportController::class, 'index'])->name('reports.index');
@@ -250,8 +255,8 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     Route::get('/reports/companies', [\App\Http\Controllers\IncidentReportController::class, 'companiesReport'])->name('reports.companies');
     
     // Export routes
-    Route::post('/export', [IncidentController::class, 'export'])->name('export');
-    Route::get('/export/all', [IncidentController::class, 'exportAll'])->name('export-all');
+    Route::post('/export', [IncidentController::class, 'export'])->middleware('permission:incidents.export')->name('export');
+    Route::get('/export/all', [IncidentController::class, 'exportAll'])->middleware('permission:incidents.export')->name('export-all');
     
     // Bulk actions
     Route::post('/bulk-delete', [IncidentController::class, 'bulkDelete'])->name('bulk-delete');
@@ -259,11 +264,11 @@ Route::prefix('incidents')->name('incidents.')->group(function () {
     
     // Incident-specific routes - MUST come after reports routes
     Route::post('/{incident}/assign-company', [IncidentController::class, 'assignCompany'])->name('assign-company');
-    Route::get('/{incident}/export/pdf', [IncidentController::class, 'exportPDF'])->name('export-pdf');
+    Route::get('/{incident}/export/pdf', [IncidentController::class, 'exportPDF'])->middleware('permission:incidents.print')->name('export-pdf');
     Route::get('/{incident}', [IncidentController::class, 'show'])->name('show');
-    Route::get('/{incident}/edit', [IncidentController::class, 'edit'])->name('edit');
-    Route::put('/{incident}', [IncidentController::class, 'update'])->name('update');
-    Route::delete('/{incident}', [IncidentController::class, 'destroy'])->name('destroy');
+    Route::get('/{incident}/edit', [IncidentController::class, 'edit'])->middleware('permission:incidents.edit')->name('edit');
+    Route::put('/{incident}', [IncidentController::class, 'update'])->middleware('permission:incidents.edit')->name('update');
+    Route::delete('/{incident}', [IncidentController::class, 'destroy'])->middleware('permission:incidents.delete')->name('destroy');
     
     // Specialized routes
     Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
@@ -334,42 +339,48 @@ Route::prefix('incidents/reports')->name('incidents.reports.')->middleware(['aut
 // Risk Assessment & Hazard Management Routes
 Route::prefix('risk-assessment')->name('risk-assessment.')->group(function () {
     // Dashboard
-    Route::get('/dashboard', [RiskAssessmentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [RiskAssessmentDashboardController::class, 'index'])->middleware('permission:risk_assessments.view')->name('dashboard');
     
     // Reports routes - MUST come before resource routes
-    Route::get('/reports', [\App\Http\Controllers\RiskAssessmentReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/department', [\App\Http\Controllers\RiskAssessmentReportController::class, 'departmentReport'])->name('reports.department');
-    Route::get('/reports/employee', [\App\Http\Controllers\RiskAssessmentReportController::class, 'employeeReport'])->name('reports.employee');
-    Route::get('/reports/period', [\App\Http\Controllers\RiskAssessmentReportController::class, 'periodReport'])->name('reports.period');
-    Route::get('/reports/companies', [\App\Http\Controllers\RiskAssessmentReportController::class, 'companiesReport'])->name('reports.companies');
+    Route::get('/reports', [\App\Http\Controllers\RiskAssessmentReportController::class, 'index'])->middleware('permission:risk_assessments.view')->name('reports.index');
+    Route::get('/reports/department', [\App\Http\Controllers\RiskAssessmentReportController::class, 'departmentReport'])->middleware('permission:risk_assessments.view')->name('reports.department');
+    Route::get('/reports/employee', [\App\Http\Controllers\RiskAssessmentReportController::class, 'employeeReport'])->middleware('permission:risk_assessments.view')->name('reports.employee');
+    Route::get('/reports/period', [\App\Http\Controllers\RiskAssessmentReportController::class, 'periodReport'])->middleware('permission:risk_assessments.view')->name('reports.period');
+    Route::get('/reports/companies', [\App\Http\Controllers\RiskAssessmentReportController::class, 'companiesReport'])->middleware('permission:risk_assessments.view')->name('reports.companies');
     
     // Hazards (HAZID)
     Route::resource('hazards', HazardController::class);
     
     // Risk Assessments (Risk Register)
-    Route::resource('risk-assessments', RiskAssessmentController::class);
+    Route::get('/risk-assessments', [RiskAssessmentController::class, 'index'])->middleware('permission:risk_assessments.view')->name('risk-assessments.index');
+    Route::get('/risk-assessments/create', [RiskAssessmentController::class, 'create'])->middleware('permission:risk_assessments.create')->name('risk-assessments.create');
+    Route::post('/risk-assessments', [RiskAssessmentController::class, 'store'])->middleware('permission:risk_assessments.create')->name('risk-assessments.store');
+    Route::get('/risk-assessments/{riskAssessment}', [RiskAssessmentController::class, 'show'])->middleware('permission:risk_assessments.view')->name('risk-assessments.show');
+    Route::get('/risk-assessments/{riskAssessment}/edit', [RiskAssessmentController::class, 'edit'])->middleware('permission:risk_assessments.edit')->name('risk-assessments.edit');
+    Route::put('/risk-assessments/{riskAssessment}', [RiskAssessmentController::class, 'update'])->middleware('permission:risk_assessments.edit')->name('risk-assessments.update');
+    Route::delete('/risk-assessments/{riskAssessment}', [RiskAssessmentController::class, 'destroy'])->middleware('permission:risk_assessments.delete')->name('risk-assessments.destroy');
     
     // Export routes
-    Route::get('/risk-assessments/export/all', [RiskAssessmentController::class, 'exportAll'])->name('risk-assessments.export-all');
-    Route::get('/risk-assessments/{riskAssessment}/export/pdf', [RiskAssessmentController::class, 'exportPDF'])->name('risk-assessments.export-pdf');
+    Route::get('/risk-assessments/export/all', [RiskAssessmentController::class, 'exportAll'])->middleware('permission:risk_assessments.export')->name('risk-assessments.export-all');
+    Route::get('/risk-assessments/{riskAssessment}/export/pdf', [RiskAssessmentController::class, 'exportPDF'])->middleware('permission:risk_assessments.print')->name('risk-assessments.export-pdf');
     
     // Bulk actions
-    Route::post('/risk-assessments/bulk-delete', [RiskAssessmentController::class, 'bulkDelete'])->name('risk-assessments.bulk-delete');
-    Route::post('/risk-assessments/bulk-update', [RiskAssessmentController::class, 'bulkUpdate'])->name('risk-assessments.bulk-update');
-    Route::post('/risk-assessments/bulk-export', [RiskAssessmentController::class, 'bulkExport'])->name('risk-assessments.bulk-export');
-    Route::get('/risk-assessments/{riskAssessment}/copy', [RiskAssessmentController::class, 'copy'])->name('risk-assessments.copy');
+    Route::post('/risk-assessments/bulk-delete', [RiskAssessmentController::class, 'bulkDelete'])->middleware('permission:risk_assessments.delete')->name('risk-assessments.bulk-delete');
+    Route::post('/risk-assessments/bulk-update', [RiskAssessmentController::class, 'bulkUpdate'])->middleware('permission:risk_assessments.edit')->name('risk-assessments.bulk-update');
+    Route::post('/risk-assessments/bulk-export', [RiskAssessmentController::class, 'bulkExport'])->middleware('permission:risk_assessments.export')->name('risk-assessments.bulk-export');
+    Route::get('/risk-assessments/{riskAssessment}/copy', [RiskAssessmentController::class, 'copy'])->middleware('permission:risk_assessments.create')->name('risk-assessments.copy');
     
     // Job Safety Analysis (JSA/JHA)
     Route::resource('jsas', JSAController::class);
-    Route::post('/jsas/{jsa}/approve', [JSAController::class, 'approve'])->name('jsas.approve');
+    Route::post('/jsas/{jsa}/approve', [JSAController::class, 'approve'])->middleware('permission:risk_assessments.approve')->name('jsas.approve');
     
     // Control Measures
     Route::resource('control-measures', ControlMeasureController::class);
-    Route::post('/control-measures/{controlMeasure}/verify', [ControlMeasureController::class, 'verify'])->name('control-measures.verify');
+    Route::post('/control-measures/{controlMeasure}/verify', [ControlMeasureController::class, 'verify'])->middleware('permission:risk_assessments.write')->name('control-measures.verify');
     
     // Risk Reviews
     Route::resource('risk-reviews', RiskReviewController::class);
-    Route::post('/risk-reviews/{riskReview}/complete', [RiskReviewController::class, 'complete'])->name('risk-reviews.complete');
+    Route::post('/risk-reviews/{riskReview}/complete', [RiskReviewController::class, 'complete'])->middleware('permission:risk_assessments.write')->name('risk-reviews.complete');
 });
 
 // Training & Competency Module Routes
@@ -475,6 +486,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/{user}/activate', [UserController::class, 'activate'])->name('activate');
         Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->name('deactivate');
         Route::post('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+        Route::get('/{user}/permissions', [UserController::class, 'permissions'])->name('permissions');
+        Route::put('/{user}/permissions', [UserController::class, 'updatePermissions'])->name('update-permissions');
         Route::post('/bulk-import', [UserController::class, 'bulkImport'])->name('bulk-import');
         Route::get('/export', [UserController::class, 'export'])->name('export');
     });
@@ -1027,4 +1040,63 @@ Route::middleware('auth')->prefix('waste-sustainability')->name('waste-sustainab
 Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function () {
     Route::resource('rules', NotificationRuleController::class);
     Route::resource('escalation-matrices', EscalationMatrixController::class);
+});
+
+// Biometric Devices & Daily Attendance Routes
+Route::middleware('auth')->prefix('biometric-devices')->name('biometric-devices.')->group(function () {
+    Route::get('/', [BiometricDeviceController::class, 'index'])->name('index');
+    Route::get('/create', [BiometricDeviceController::class, 'create'])->name('create');
+    Route::post('/', [BiometricDeviceController::class, 'store'])->name('store');
+    Route::get('/{biometricDevice}', [BiometricDeviceController::class, 'show'])->name('show');
+    Route::get('/{biometricDevice}/edit', [BiometricDeviceController::class, 'edit'])->name('edit');
+    Route::put('/{biometricDevice}', [BiometricDeviceController::class, 'update'])->name('update');
+    Route::delete('/{biometricDevice}', [BiometricDeviceController::class, 'destroy'])->name('destroy');
+    Route::post('/{biometricDevice}/test-connection', [BiometricDeviceController::class, 'testConnection'])->name('test-connection');
+    Route::post('/{biometricDevice}/sync-users', [BiometricDeviceController::class, 'syncUsers'])->name('sync-users');
+    Route::post('/{biometricDevice}/sync-attendance', [BiometricDeviceController::class, 'syncAttendance'])->name('sync-attendance');
+    Route::get('/{biometricDevice}/enrollment', [BiometricDeviceController::class, 'enrollment'])->name('enrollment');
+    Route::post('/{biometricDevice}/enroll-employee', [BiometricDeviceController::class, 'enrollEmployee'])->name('enroll-employee');
+    Route::post('/{biometricDevice}/bulk-enroll', [BiometricDeviceController::class, 'bulkEnroll'])->name('bulk-enroll');
+    Route::post('/{biometricDevice}/remove-employee', [BiometricDeviceController::class, 'removeEmployee'])->name('remove-employee');
+});
+
+Route::middleware('auth')->prefix('daily-attendance')->name('daily-attendance.')->group(function () {
+    Route::get('/', [DailyAttendanceController::class, 'index'])->name('index');
+    Route::get('/dashboard', [DailyAttendanceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/export/excel', [DailyAttendanceController::class, 'exportExcel'])->name('export-excel');
+    Route::get('/export/pdf', [DailyAttendanceController::class, 'exportPdf'])->name('export-pdf');
+    Route::post('/manual-check-in', [DailyAttendanceController::class, 'manualCheckIn'])->name('manual-check-in');
+    Route::post('/manual-check-out', [DailyAttendanceController::class, 'manualCheckOut'])->name('manual-check-out');
+    Route::post('/{dailyAttendance}/approve', [DailyAttendanceController::class, 'approve'])->name('approve');
+    Route::post('/{dailyAttendance}/reject', [DailyAttendanceController::class, 'reject'])->name('reject');
+    Route::get('/{dailyAttendance}', [DailyAttendanceController::class, 'show'])->name('show');
+});
+
+Route::middleware('auth')->prefix('manpower-reports')->name('manpower-reports.')->group(function () {
+    Route::get('/', [ManpowerReportController::class, 'index'])->name('index');
+    Route::get('/daily', [ManpowerReportController::class, 'dailyReport'])->name('daily');
+    Route::get('/weekly', [ManpowerReportController::class, 'weeklyReport'])->name('weekly');
+    Route::get('/monthly', [ManpowerReportController::class, 'monthlyReport'])->name('monthly');
+    Route::get('/location', [ManpowerReportController::class, 'locationReport'])->name('location');
+});
+
+// Settings Routes
+Route::middleware('auth')->prefix('settings')->name('settings.')->group(function () {
+    Route::get('/', [SettingsController::class, 'index'])->name('index');
+});
+
+// Profile Routes
+Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ProfileController::class, 'show'])->name('show');
+    Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+    Route::put('/', [ProfileController::class, 'update'])->name('update');
+    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('update-password');
+    Route::delete('/photo', [ProfileController::class, 'deletePhoto'])->name('delete-photo');
+});
+
+// API Routes for ZKTeco Bridge (for local bridge service communication)
+Route::prefix('api/zkteco')->middleware('auth:sanctum')->group(function () {
+    Route::post('/sync', [\App\Http\Controllers\API\ZKTecoBridgeController::class, 'receiveSyncData']);
+    Route::post('/heartbeat', [\App\Http\Controllers\API\ZKTecoBridgeController::class, 'heartbeat']);
+    Route::get('/bridge-status', [\App\Http\Controllers\API\ZKTecoBridgeController::class, 'getBridgeStatus']);
 });

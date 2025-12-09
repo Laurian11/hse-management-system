@@ -132,6 +132,7 @@ class RiskAssessmentController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('risk_assessments.create');
         $companyId = Auth::user()->company_id;
         
         $validated = $request->validate([
@@ -248,6 +249,7 @@ class RiskAssessmentController extends Controller
 
     public function edit(RiskAssessment $riskAssessment)
     {
+        $this->authorize('risk_assessments.edit');
         if ($riskAssessment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
         }
@@ -262,6 +264,7 @@ class RiskAssessmentController extends Controller
 
     public function update(Request $request, RiskAssessment $riskAssessment)
     {
+        $this->authorize('risk_assessments.edit');
         if ($riskAssessment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
         }
@@ -327,6 +330,7 @@ class RiskAssessmentController extends Controller
 
     public function destroy(RiskAssessment $riskAssessment)
     {
+        $this->authorize('risk_assessments.delete');
         if ($riskAssessment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
         }
@@ -448,6 +452,7 @@ class RiskAssessmentController extends Controller
      */
     public function exportAll(Request $request)
     {
+        $this->authorize('risk_assessments.export');
         $companyId = $this->getCompanyId();
         $companyGroupIds = $this->getCompanyGroupIds();
         
@@ -582,6 +587,7 @@ class RiskAssessmentController extends Controller
      */
     public function exportPDF(RiskAssessment $riskAssessment)
     {
+        $this->authorize('risk_assessments.print');
         if ($riskAssessment->company_id !== Auth::user()->company_id && 
             !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
             abort(403, 'Unauthorized');

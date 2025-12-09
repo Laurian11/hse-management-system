@@ -158,6 +158,9 @@ class IncidentController extends Controller
 
     public function create(Request $request)
     {
+        if (!auth()->user()->hasPermission('incidents.create')) {
+            abort(403, 'You do not have permission to create incidents.');
+        }
         $companyId = Auth::user()->company_id;
         $companyGroupIds = \App\Services\CompanyGroupService::getCompanyGroupIds($companyId);
         
@@ -254,6 +257,9 @@ class IncidentController extends Controller
 
     public function edit(Incident $incident)
     {
+        if (!auth()->user()->hasPermission('incidents.edit')) {
+            abort(403, 'You do not have permission to edit incidents.');
+        }
         // Check if user can edit this incident (same company)
         if ($incident->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
@@ -308,6 +314,9 @@ class IncidentController extends Controller
 
     public function destroy(Incident $incident)
     {
+        if (!auth()->user()->hasPermission('incidents.delete')) {
+            abort(403, 'You do not have permission to delete incidents.');
+        }
         // Check if user can delete this incident (same company)
         if ($incident->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized');
@@ -814,6 +823,9 @@ class IncidentController extends Controller
      */
     public function exportPDF(Incident $incident)
     {
+        if (!auth()->user()->hasPermission('incidents.print')) {
+            abort(403, 'You do not have permission to print incidents.');
+        }
         if ($incident->company_id !== Auth::user()->company_id && 
             !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
             abort(403, 'Unauthorized');

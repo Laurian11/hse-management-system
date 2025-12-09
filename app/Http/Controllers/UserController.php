@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Company;
 use App\Models\Department;
+use App\Models\Permission;
 use App\Models\ActivityLog;
 use App\Models\UserSession;
 use Illuminate\Http\Request;
@@ -366,5 +367,62 @@ class UserController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Show user permissions management page
+     */
+    public function permissions(User $user)
+    {
+        $user->load(['role', 'company', 'department']);
+        $permissions = Permission::active()->get()->groupBy('module');
+        $userPermissions = $user->permissions ?? [];
+        
+        // Get all modules
+        $modules = Permission::getModules();
+        
+        return view('admin.users.permissions', compact('user', 'permissions', 'userPermissions', 'modules'));
+    }
+
+    /**
+     * Update user permissions
+     */
+    public function updatePermissions(Request $request, User $user)
+    {
+        $validator = Validator::make($request->all(), [
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $oldPermissions = $user->permissions ?? [];
+        $newPermissions = $request->permissions ?? [];
+
+        // Validate that all permission names exist
+        $validPermissions = Permission::whereIn('name', $newPermissions)
+            ->pluck('name')
+            ->toArray();
+        
+        $invalidPermissions = array_diff($newPermissions, $validPermissions);
+        if (count($invalidPermissions) > 0) {
+            return redirect()->back()
+                ->withErrors(['permissions' => 'Invalid permissions: ' . implode(', ', $invalidPermissions)])
+                ->withInput();
+        }
+
+        $user->syncPermissions($validPermissions);
+
+        ActivityLog::log('permission_change', 'admin', 'User', $user->id, 
+            "Updated permissions for {$user->name}", 
+            ['permissions' => $oldPermissions], 
+            ['permissions' => $validPermissions]);
+
+        return redirect()->route('admin.users.permissions', $user)
+            ->with('success', 'User permissions updated successfully.');
     }
 }
