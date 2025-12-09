@@ -378,10 +378,16 @@ class UserController extends Controller
         $permissions = Permission::active()->get()->groupBy('module');
         $userPermissions = $user->permissions ?? [];
         
+        // Get role permissions for display
+        $rolePermissions = [];
+        if ($user->role) {
+            $rolePermissions = $user->role->getPermissionNames();
+        }
+        
         // Get all modules
         $modules = Permission::getModules();
         
-        return view('admin.users.permissions', compact('user', 'permissions', 'userPermissions', 'modules'));
+        return view('admin.users.permissions', compact('user', 'permissions', 'userPermissions', 'rolePermissions', 'modules'));
     }
 
     /**

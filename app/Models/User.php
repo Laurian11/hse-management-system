@@ -295,6 +295,11 @@ class User extends Authenticatable
     {
         static::created(function ($user) {
             ActivityLog::log('create', 'users', 'User', $user->id, 'User created: ' . $user->name);
+            
+            // Sync department from employee if available
+            if ($user->employee && $user->employee->department_id && !$user->department_id) {
+                $user->update(['department_id' => $user->employee->department_id]);
+            }
         });
 
         static::updated(function ($user) {
@@ -304,5 +309,19 @@ class User extends Authenticatable
         static::deleted(function ($user) {
             ActivityLog::log('delete', 'users', 'User', $user->id, 'User deleted: ' . $user->name);
         });
+    }
+    
+    /**
+     * Sync department from employee record
+     */
+    public function syncDepartmentFromEmployee()
+    {
+        if ($this->employee && $this->employee->department_id) {
+            if ($this->department_id !== $this->employee->department_id) {
+                $this->update(['department_id' => $this->employee->department_id]);
+                return true;
+            }
+        }
+        return false;
     }
 }

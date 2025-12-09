@@ -45,6 +45,22 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Update user login tracking
+        $user = Auth::user();
+        $user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+            'failed_login_attempts' => 0, // Reset failed attempts on successful login
+        ]);
+
+        // Create user session record
+        \App\Models\UserSession::startSession(
+            $user,
+            $request->session()->getId(),
+            $request->ip(),
+            $request->userAgent()
+        );
+
         // Log the login activity
         \App\Models\ActivityLog::log('login', 'auth', 'User', Auth::id(), 'User logged in');
 
