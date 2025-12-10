@@ -39,8 +39,10 @@ return [
         'device_ip' => env('ZKTECO_DEVICE_IP', '192.168.1.201'),
         'port' => env('ZKTECO_PORT', 4370),
         'api_key' => env('ZKTECO_API_KEY'),
-        'timeout' => env('ZKTECO_TIMEOUT', 10),
+        'timeout' => env('ZKTECO_TIMEOUT', 15), // Increased default timeout
+        'connect_timeout' => env('ZKTECO_CONNECT_TIMEOUT', 15), // Connection timeout
         'retry_attempts' => env('ZKTECO_RETRY_ATTEMPTS', 3),
+        'non_standard_port_timeout' => env('ZKTECO_NON_STANDARD_TIMEOUT', 30), // For ports like 8081
     ],
 
 ];

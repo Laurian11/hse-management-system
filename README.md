@@ -158,21 +158,18 @@ config/
 - Acknowledgment tracking
 - Priority-based messaging
 
-## API Documentation
+## Complete Documentation
 
-See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed API endpoint documentation.
+All system documentation has been consolidated into a single comprehensive file:
 
-## Design System
-
-The application uses a centralized design system. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for details on:
-- Color schemes
-- Typography
-- Components
-- Custom Blade directives
-
-## Toolbox Talk Module
-
-Comprehensive documentation available in [TOOLBOX_TALK_MODULE.md](TOOLBOX_TALK_MODULE.md)
+**[COMPLETE_DOCUMENTATION.md](./COMPLETE_DOCUMENTATION.md)** - Complete system documentation including:
+- System overview and architecture
+- Module documentation (Incidents, Toolbox Talks, Biometric, etc.)
+- Deployment guides
+- Configuration guides
+- Testing documentation
+- API documentation
+- And much more
 
 ## Configuration
 
@@ -229,6 +226,53 @@ php artisan test --filter IncidentTest
 4. Ensure all tests pass
 5. Submit a pull request
 
+## Deployment
+
+For production deployment, see the comprehensive [DEPLOYMENT.md](./DEPLOYMENT.md) guide.
+
+### Quick Deployment Steps
+
+1. **Prepare server** with PHP 8.2+, MySQL/PostgreSQL, Nginx/Apache
+2. **Clone repository** to production server
+3. **Install dependencies:**
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm install && npm run build
+   ```
+4. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   # Edit .env with production values
+   ```
+5. **Setup database:**
+   ```bash
+   php artisan migrate --force
+   php artisan users:setup-superuser --email=admin@your-domain.com
+   ```
+6. **Optimize application:**
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+7. **Configure scheduled tasks** (cron) and **queue workers** (Supervisor)
+
+### Deployment Scripts
+
+- **Linux/Mac:** `./deploy.sh production`
+- **Windows:** `deploy.bat production`
+
+### Documentation
+
+All documentation is available in [COMPLETE_DOCUMENTATION.md](./COMPLETE_DOCUMENTATION.md), including:
+- Complete deployment guide
+- Pre-deployment checklist
+- Performance optimization guide
+- Module-specific documentation
+- Configuration guides
+- Testing documentation
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
@@ -250,6 +294,8 @@ For issues and questions:
 - User management with RBAC
 - ZKTeco K40 integration
 - Design system implementation
+- Comprehensive KPI tracking system
+- Production deployment ready
 
 ---
 

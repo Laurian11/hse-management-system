@@ -9,6 +9,20 @@ use App\Models\PPEIssuance;
 use App\Models\EquipmentCertification;
 use App\Models\StockConsumptionReport;
 use App\Models\ProcurementRequest;
+use App\Models\InspectionSchedule;
+use App\Models\InspectionChecklist;
+use App\Models\Inspection;
+use App\Models\Audit;
+use App\Models\AuditFinding;
+use App\Models\Incident;
+use App\Models\RiskAssessment;
+use App\Models\JSA;
+use App\Models\ToolboxTalk;
+use App\Models\TrainingCertificate;
+use App\Models\TrainingSession;
+use App\Models\WorkPermit;
+use App\Models\NonConformanceReport;
+use App\Models\PermitLicense;
 
 class QRCodeController extends Controller
 {
@@ -35,19 +49,67 @@ class QRCodeController extends Controller
                 return view('qr.stock', compact('item'));
                 
             case 'audit':
-                $item = EquipmentCertification::forCompany($companyId)->findOrFail($id);
-                if ($action === 'audit') {
-                    // Log audit scan
-                    \App\Models\ActivityLog::log('scan', 'equipment', 'EquipmentCertification', $item->id, "QR code scanned for audit: {$item->reference_number}");
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Audit scan recorded',
-                        'item' => $item
-                    ]);
+                // Check if it's an audit record or equipment certification
+                if (is_numeric($id) && Audit::where('id', $id)->exists()) {
+                    $item = Audit::forCompany($companyId)->findOrFail($id);
+                    $item->load(['leadAuditor', 'department', 'findings']);
+                    if ($action === 'view') {
+                        return redirect()->route('inspections.audits.show', $item)
+                            ->with('info', 'QR code scanned - Viewing audit');
+                    }
+                    return view('qr.audit-record', compact('item'));
+                } else {
+                    // Legacy equipment certification
+                    $item = EquipmentCertification::forCompany($companyId)->findOrFail($id);
+                    if ($action === 'audit') {
+                        // Log audit scan
+                        \App\Models\ActivityLog::log('scan', 'equipment', 'EquipmentCertification', $item->id, "QR code scanned for audit: {$item->reference_number}");
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Audit scan recorded',
+                            'item' => $item
+                        ]);
+                    }
+                    return view('qr.audit', compact('item'));
                 }
-                return view('qr.audit', compact('item'));
+                
+            case 'audit-finding':
+                $item = AuditFinding::forCompany($companyId)->findOrFail($id);
+                $item->load(['audit', 'correctiveActionAssignedTo', 'verifiedBy']);
+                if ($action === 'view') {
+                    return redirect()->route('inspections.audits.show', $item->audit)
+                        ->with('info', 'QR code scanned - Viewing audit finding');
+                }
+                return view('qr.audit-finding', compact('item'));
                 
             case 'inspection':
+                $item = Inspection::forCompany($companyId)->findOrFail($id);
+                $item->load(['inspectedBy', 'department', 'checklist', 'schedule']);
+                if ($action === 'view') {
+                    return redirect()->route('inspections.show', $item)
+                        ->with('info', 'QR code scanned - Viewing inspection');
+                }
+                return view('qr.inspection', compact('item'));
+                
+            case 'inspection-schedule':
+                $item = InspectionSchedule::forCompany($companyId)->findOrFail($id);
+                $item->load(['checklist', 'assignedTo', 'department']);
+                if ($action === 'inspect') {
+                    // Redirect to inspection creation with schedule pre-filled
+                    return redirect()->route('inspections.create', ['schedule_id' => $item->id])
+                        ->with('success', 'QR code scanned - Ready to create inspection from schedule');
+                }
+                return view('qr.inspection-schedule', compact('item'));
+                
+            case 'inspection-checklist':
+                $item = InspectionChecklist::forCompany($companyId)->findOrFail($id);
+                if ($action === 'use') {
+                    // Redirect to inspection creation with checklist pre-filled
+                    return redirect()->route('inspections.create', ['checklist_id' => $item->id])
+                        ->with('success', 'QR code scanned - Checklist loaded');
+                }
+                return view('qr.inspection-checklist', compact('item'));
+                
             case 'ppe':
                 $item = PPEItem::forCompany($companyId)->findOrFail($id);
                 if ($action === 'inspect') {
@@ -90,9 +152,135 @@ class QRCodeController extends Controller
                 $item = ProcurementRequest::forCompany($companyId)->findOrFail($id);
                 return view('qr.procurement', compact('item'));
                 
+            case 'incident':
+                $item = Incident::forCompany($companyId)->findOrFail($id);
+                $item->load(['reporter', 'assignedTo', 'department', 'company']);
+                if ($action === 'view') {
+                    return redirect()->route('incidents.show', $item)
+                        ->with('info', 'QR code scanned - Viewing incident');
+                }
+                return view('qr.incident', compact('item'));
+                
+            case 'risk-assessment':
+                $item = RiskAssessment::forCompany($companyId)->findOrFail($id);
+                $item->load(['creator', 'assignedTo', 'department', 'hazard']);
+                if ($action === 'view') {
+                    return redirect()->route('risk-assessment.risk-assessments.show', $item)
+                        ->with('info', 'QR code scanned - Viewing risk assessment');
+                }
+                return view('qr.risk-assessment', compact('item'));
+                
+            case 'jsa':
+                $item = JSA::forCompany($companyId)->findOrFail($id);
+                $item->load(['creator', 'assignedTo', 'department']);
+                if ($action === 'view') {
+                    return redirect()->route('risk-assessment.jsas.show', $item)
+                        ->with('info', 'QR code scanned - Viewing JSA');
+                }
+                return view('qr.jsa', compact('item'));
+                
+            case 'toolbox-talk':
+                $item = ToolboxTalk::forCompany($companyId)->findOrFail($id);
+                $item->load(['presenter', 'topic', 'department']);
+                if ($action === 'view') {
+                    return redirect()->route('toolbox-talks.show', $item)
+                        ->with('info', 'QR code scanned - Viewing toolbox talk');
+                }
+                return view('qr.toolbox-talk', compact('item'));
+                
+            case 'training-certificate':
+                $item = TrainingCertificate::forCompany($companyId)->findOrFail($id);
+                $item->load(['user', 'trainingSession', 'issuer', 'company']);
+                if ($action === 'verify') {
+                    return redirect()->route('training.certificates.show', $item)
+                        ->with('info', 'QR code scanned - Verifying certificate');
+                }
+                return view('qr.training-certificate', compact('item'));
+                
+            case 'training-session':
+                $item = TrainingSession::forCompany($companyId)->findOrFail($id);
+                $item->load(['trainingPlan', 'instructor', 'department']);
+                if ($action === 'view') {
+                    return redirect()->route('training.sessions.show', $item)
+                        ->with('info', 'QR code scanned - Viewing training session');
+                }
+                return view('qr.training-session', compact('item'));
+                
+            case 'work-permit':
+                $item = WorkPermit::forCompany($companyId)->findOrFail($id);
+                $item->load(['applicant', 'approvedBy', 'workPermitType']);
+                if ($action === 'view') {
+                    return redirect()->route('work-permits.show', $item)
+                        ->with('info', 'QR code scanned - Viewing work permit');
+                }
+                return view('qr.work-permit', compact('item'));
+                
+            case 'ncr':
+                $item = NonConformanceReport::forCompany($companyId)->findOrFail($id);
+                $item->load(['reportedBy', 'assignedTo', 'department']);
+                if ($action === 'view') {
+                    return redirect()->route('inspections.ncrs.show', $item)
+                        ->with('info', 'QR code scanned - Viewing NCR');
+                }
+                return view('qr.ncr', compact('item'));
+                
+            case 'permit-license':
+                $item = PermitLicense::forCompany($companyId)->findOrFail($id);
+                if ($action === 'verify') {
+                    return redirect()->route('permit-licenses.show', $item)
+                        ->with('info', 'QR code scanned - Verifying permit/license');
+                }
+                return view('qr.permit-license', compact('item'));
+                
             default:
                 abort(404, 'Invalid QR code type');
         }
+    }
+
+    /**
+     * Mobile scanner interface
+     */
+    public function scanner()
+    {
+        return view('qr.scanner');
+    }
+
+    /**
+     * Process scanned QR code (API endpoint for mobile apps)
+     */
+    public function processScan(Request $request)
+    {
+        $request->validate([
+            'qr_data' => 'required|string',
+        ]);
+
+        $qrData = $request->qr_data;
+        $companyId = Auth::user()->company_id;
+
+        // Parse QR code URL
+        $parsed = parse_url($qrData);
+        if (!$parsed || !isset($parsed['path'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid QR code format'
+            ], 400);
+        }
+
+        // Extract type and ID from path: /qr/{type}/{id}
+        $pathParts = explode('/', trim($parsed['path'], '/'));
+        if (count($pathParts) < 3 || $pathParts[0] !== 'qr') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid QR code format'
+            ], 400);
+        }
+
+        $type = $pathParts[1];
+        $id = (int) $pathParts[2];
+        $action = $request->get('action', 'view');
+
+        // Redirect to scan handler
+        return redirect()->route('qr.scan', ['type' => $type, 'id' => $id, 'action' => $action]);
     }
 
     /**
@@ -130,6 +318,38 @@ class QRCodeController extends Controller
             case 'procurement':
                 $item = ProcurementRequest::forCompany($companyId)->findOrFail($id);
                 $qrData = \App\Services\QRCodeService::forProcurement($item->id, $item->reference_number);
+                break;
+                
+            case 'inspection-schedule':
+                $item = InspectionSchedule::forCompany($companyId)->findOrFail($id);
+                $qrData = \App\Services\QRCodeService::forInspectionSchedule($item->id, $item->reference_number);
+                break;
+                
+            case 'inspection-checklist':
+                $item = InspectionChecklist::forCompany($companyId)->findOrFail($id);
+                $qrData = \App\Services\QRCodeService::forInspectionChecklist($item->id, $item->name);
+                break;
+                
+            case 'inspection':
+                $item = Inspection::forCompany($companyId)->findOrFail($id);
+                $qrData = \App\Services\QRCodeService::forInspection($item->id, $item->reference_number);
+                break;
+                
+            case 'audit-record':
+                $item = Audit::forCompany($companyId)->findOrFail($id);
+                $qrData = \App\Services\QRCodeService::forAuditRecord($item->id, $item->reference_number);
+                break;
+                
+            case 'audit':
+                // Check if it's an Audit model or EquipmentCertification
+                try {
+                    $item = Audit::forCompany($companyId)->findOrFail($id);
+                    $qrData = \App\Services\QRCodeService::forAuditRecord($item->id, $item->reference_number);
+                } catch (\Exception $e) {
+                    // Fallback to EquipmentCertification
+                    $item = EquipmentCertification::forCompany($companyId)->findOrFail($id);
+                    $qrData = \App\Services\QRCodeService::forAudit($item->id, $item->reference_number ?? $item->certificate_number);
+                }
                 break;
                 
             default:

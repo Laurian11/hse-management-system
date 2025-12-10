@@ -18,6 +18,13 @@
                     <a href="{{ route('biometric-devices.edit', $biometricDevice) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         <i class="fas fa-edit mr-2"></i>Edit
                     </a>
+                    <form action="{{ route('biometric-devices.destroy', $biometricDevice) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this device? This action cannot be undone.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Delete
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -44,25 +51,61 @@
                             <dd class="mt-1 text-sm text-gray-900">{{ $biometricDevice->device_type }}</dd>
                         </div>
                         <div>
+                            <dt class="text-sm font-medium text-gray-500">Device Category</dt>
+                            <dd class="mt-1">
+                                @php
+                                    $categoryLabels = [
+                                        'attendance' => 'Employee Attendance',
+                                        'toolbox_training' => 'Toolbox Talk & Training',
+                                        'both' => 'Both (Attendance & Training)'
+                                    ];
+                                    $category = $biometricDevice->device_category ?? 'attendance';
+                                    $label = $categoryLabels[$category] ?? 'Unknown';
+                                    
+                                    // Determine badge classes based on category
+                                    $badgeClasses = match($category) {
+                                        'attendance' => 'px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800',
+                                        'toolbox_training' => 'px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800',
+                                        'both' => 'px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800',
+                                        default => 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800'
+                                    };
+                                    
+                                    $icon = match($category) {
+                                        'attendance' => 'clock',
+                                        'toolbox_training' => 'chalkboard-teacher',
+                                        'both' => 'tasks',
+                                        default => 'question-circle'
+                                    };
+                                @endphp
+                                <span class="{{ $badgeClasses }}">
+                                    <i class="fas fa-{{ $icon }} mr-1"></i>
+                                    {{ $label }}
+                                </span>
+                                @if($biometricDevice->device_purpose)
+                                    <p class="mt-1 text-xs text-gray-500">{{ $biometricDevice->device_purpose }}</p>
+                                @endif
+                            </dd>
+                        </div>
+                        <div>
                             <dt class="text-sm font-medium text-gray-500">Status</dt>
                             <dd class="mt-1">
                                 @php
-                                    $statusColors = [
-                                        'active' => 'green',
-                                        'inactive' => 'gray',
-                                        'maintenance' => 'orange',
-                                        'offline' => 'red'
-                                    ];
-                                    $color = $statusColors[$biometricDevice->status] ?? 'gray';
+                                    $badgeClasses = match($biometricDevice->status) {
+                                        'active' => 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
+                                        'inactive' => 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800',
+                                        'maintenance' => 'px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800',
+                                        'offline' => 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800',
+                                        default => 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800'
+                                    };
                                 @endphp
-                                <span class="px-2 py-1 text-xs rounded-full bg-{{ $color }}-100 text-{{ $color }}-800">
+                                <span class="{{ $badgeClasses }}">
                                     {{ ucfirst($biometricDevice->status) }}
                                 </span>
                             </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Company</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $biometricDevice->company->name }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $biometricDevice->company->name ?? 'N/A' }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Location</dt>
@@ -106,11 +149,23 @@
                     <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Start Time</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ \Carbon\Carbon::parse($biometricDevice->work_start_time)->format('H:i') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                @if($biometricDevice->work_start_time)
+                                    {{ \Carbon\Carbon::parse($biometricDevice->work_start_time)->format('H:i') }}
+                                @else
+                                    N/A
+                                @endif
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">End Time</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ \Carbon\Carbon::parse($biometricDevice->work_end_time)->format('H:i') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                @if($biometricDevice->work_end_time)
+                                    {{ \Carbon\Carbon::parse($biometricDevice->work_end_time)->format('H:i') }}
+                                @else
+                                    N/A
+                                @endif
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Grace Period</dt>

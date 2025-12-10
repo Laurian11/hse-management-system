@@ -44,6 +44,10 @@
                     <i class="fas fa-plus text-xs"></i>
                     <span class="sidebar-text">Issue PPE</span>
                 </a>
+                <a href="{{ route('qr.scanner') }}" class="flex items-center justify-center space-x-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white border border-purple-600 text-xs font-medium transition-colors" data-tooltip="Scan QR Code">
+                    <i class="fas fa-qrcode text-xs"></i>
+                    <span class="sidebar-text">Scan QR</span>
+                </a>
             </div>
         </div>
         

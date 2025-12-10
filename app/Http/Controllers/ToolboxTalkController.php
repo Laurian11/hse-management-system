@@ -1548,15 +1548,28 @@ class ToolboxTalkController extends Controller
         }
 
         try {
-            $zktecoService = new \App\Services\ZKTecoService();
+            // Find appropriate toolbox/training device for this company
+            $device = \App\Models\BiometricDevice::where('company_id', $toolboxTalk->company_id)
+                ->where('status', 'active')
+                ->toolboxTrainingDevices()
+                ->where('toolbox_attendance_enabled', true)
+                ->first();
+            
+            if (!$device) {
+                return back()->with('error', 'No active toolbox/training biometric device found for this company. Please configure a device first.');
+            }
+            
+            // Use MultiDeviceZKTecoService for toolbox attendance
+            $zktecoService = new \App\Services\MultiDeviceZKTecoService(
+                new \App\Services\NetworkConnectionService()
+            );
             
             // Test device connection first
-            $connectionTest = $zktecoService->testConnection();
-            if (!$connectionTest['connected']) {
+            if (!$zktecoService->connectToDevice($device)) {
                 return back()->with('error', 'Cannot connect to biometric device. Please check device connection.');
             }
 
-            $results = $zktecoService->processToolboxTalkAttendance($toolboxTalk);
+            $results = $zktecoService->processToolboxTalkAttendance($device, $toolboxTalk);
 
             $message = "Biometric sync completed successfully! ";
             $message .= "Processed: {$results['processed']} log(s), ";

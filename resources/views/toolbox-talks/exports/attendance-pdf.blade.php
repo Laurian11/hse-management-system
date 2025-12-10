@@ -65,6 +65,12 @@
     <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
         Generated on {{ now()->format('F j, Y g:i A') }}
     </div>
+
+    <!-- QR Code -->
+    @php
+        $qrData = \App\Services\QRCodeService::forToolboxTalk($talk->id, $talk->reference_number);
+    @endphp
+    <x-pdf-qr-code :data="$qrData" :size="100" position="bottom-right" label="Scan to view" />
 </body>
 </html>
 

@@ -29,6 +29,37 @@
         </div>
 
         <div>
+            <label for="device_category" class="block text-sm font-medium text-gray-700 mb-1">Device Category *</label>
+            <select id="device_category" name="device_category" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    onchange="updateCategorySettings()">
+                <option value="attendance" {{ old('device_category', $biometricDevice->device_category ?? 'attendance') == 'attendance' ? 'selected' : '' }}>
+                    Employee Attendance
+                </option>
+                <option value="toolbox_training" {{ old('device_category', $biometricDevice->device_category ?? '') == 'toolbox_training' ? 'selected' : '' }}>
+                    Toolbox Talk & Training
+                </option>
+                <option value="both" {{ old('device_category', $biometricDevice->device_category ?? '') == 'both' ? 'selected' : '' }}>
+                    Both (Attendance & Training)
+                </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+                <span id="category-description">Select the primary purpose of this device</span>
+            </p>
+            @error('device_category')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="device_purpose" class="block text-sm font-medium text-gray-700 mb-1">Device Purpose (Optional)</label>
+            <textarea id="device_purpose" name="device_purpose" rows="2"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Main entrance attendance device for Site A">{{ old('device_purpose', $biometricDevice->device_purpose ?? '') }}</textarea>
+            <p class="mt-1 text-xs text-gray-500">Optional description of the device's specific purpose</p>
+        </div>
+
+        <div>
             <label for="company_id" class="block text-sm font-medium text-gray-700 mb-1">Company *</label>
             <select id="company_id" name="company_id" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -153,14 +184,20 @@
             <input type="checkbox" id="daily_attendance_enabled" name="daily_attendance_enabled" value="1"
                    {{ old('daily_attendance_enabled', $biometricDevice->daily_attendance_enabled ?? true) ? 'checked' : '' }}
                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-            <label for="daily_attendance_enabled" class="ml-2 text-sm text-gray-700">Enable Daily Attendance Tracking</label>
+            <label for="daily_attendance_enabled" class="ml-2 text-sm text-gray-700">
+                Enable Daily Attendance Tracking
+                <span class="text-xs text-gray-500">(for employee check-in/check-out)</span>
+            </label>
         </div>
 
         <div class="flex items-center">
             <input type="checkbox" id="toolbox_attendance_enabled" name="toolbox_attendance_enabled" value="1"
                    {{ old('toolbox_attendance_enabled', $biometricDevice->toolbox_attendance_enabled ?? true) ? 'checked' : '' }}
                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-            <label for="toolbox_attendance_enabled" class="ml-2 text-sm text-gray-700">Enable Toolbox Talk Attendance</label>
+            <label for="toolbox_attendance_enabled" class="ml-2 text-sm text-gray-700">
+                Enable Toolbox Talk & Training Attendance
+                <span class="text-xs text-gray-500">(for toolbox talks and training sessions)</span>
+            </label>
         </div>
 
         <div>
@@ -188,4 +225,44 @@
     <textarea id="notes" name="notes" rows="3"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">{{ old('notes', $biometricDevice->notes ?? '') }}</textarea>
 </div>
+
+<script>
+function updateCategorySettings() {
+    const category = document.getElementById('device_category').value;
+    const dailyAttendance = document.getElementById('daily_attendance_enabled');
+    const toolboxAttendance = document.getElementById('toolbox_attendance_enabled');
+    const description = document.getElementById('category-description');
+    
+    // Update description
+    const descriptions = {
+        'attendance': 'This device will be used for employee daily attendance tracking (check-in/check-out)',
+        'toolbox_training': 'This device will be used for toolbox talks and training session attendance',
+        'both': 'This device can be used for both daily attendance and toolbox/training attendance'
+    };
+    description.textContent = descriptions[category] || 'Select the primary purpose of this device';
+    
+    // Auto-update checkboxes based on category
+    if (category === 'attendance') {
+        dailyAttendance.checked = true;
+        toolboxAttendance.checked = false;
+        dailyAttendance.disabled = false;
+        toolboxAttendance.disabled = false;
+    } else if (category === 'toolbox_training') {
+        dailyAttendance.checked = false;
+        toolboxAttendance.checked = true;
+        dailyAttendance.disabled = false;
+        toolboxAttendance.disabled = false;
+    } else if (category === 'both') {
+        dailyAttendance.checked = true;
+        toolboxAttendance.checked = true;
+        dailyAttendance.disabled = false;
+        toolboxAttendance.disabled = false;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCategorySettings();
+});
+</script>
 

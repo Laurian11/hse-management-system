@@ -77,3 +77,16 @@ Schedule::command('attendance:sync-daily')->everyFiveMinutes()->name('attendance
 
 // Daily Attendance Sync - Full sync at end of day (11:55 PM)
 Schedule::command('attendance:sync-daily')->dailyAt('23:55')->name('attendance.sync-daily-end-of-day');
+
+// Dynamic Biometric Device Management
+// Health check every 10 minutes
+Schedule::command('biometric:manage health')->everyTenMinutes()->name('biometric.health-check');
+
+// Process pending retries every 2 minutes
+Schedule::command('biometric:manage retry')->everyTwoMinutes()->name('biometric.process-retries');
+
+// Batch sync all devices every 5 minutes (with retry logic)
+Schedule::command('biometric:manage batch')->everyFiveMinutes()->name('biometric.batch-sync');
+
+// Auto-discover devices daily at 2 AM
+Schedule::command('biometric:manage discover')->dailyAt('02:00')->name('biometric.auto-discover');

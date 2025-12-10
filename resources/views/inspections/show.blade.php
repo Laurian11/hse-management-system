@@ -176,6 +176,40 @@
             </div>
             @endif
         </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- QR Code -->
+            <div class="bg-white border border-gray-300 p-6">
+                <h2 class="text-lg font-semibold text-black mb-4">
+                    <i class="fas fa-qrcode mr-2"></i>QR Code
+                </h2>
+                @php
+                    $qrData = \App\Services\QRCodeService::forInspection($inspection->id, $inspection->reference_number);
+                    $qrUrl = \App\Services\QRCodeService::generateUrl($qrData, 200);
+                @endphp
+                <div class="text-center">
+                    <img src="{{ $qrUrl }}" alt="QR Code" class="mx-auto mb-4 border-2 border-gray-200 p-2 rounded">
+                    <p class="text-xs text-gray-500 mb-2">Scan to view this inspection</p>
+                    <a href="{{ route('qr.printable', ['type' => 'inspection', 'id' => $inspection->id]) }}" 
+                       target="_blank" 
+                       class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                        <i class="fas fa-print mr-2"></i>Print QR Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white border border-gray-300 p-6">
+                <h2 class="text-lg font-semibold text-black mb-4">Quick Actions</h2>
+                <div class="space-y-2">
+                    <a href="{{ route('qr.scanner') }}" 
+                       class="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-qrcode mr-2"></i>Scan QR Code
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

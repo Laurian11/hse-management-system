@@ -193,6 +193,12 @@
                 Verification Code: {{ $certificate->verification_code }}
             </div>
         @endif
+
+        <!-- QR Code for Verification -->
+        @php
+            $qrData = \App\Services\QRCodeService::forTrainingCertificate($certificate->id, $certificate->certificate_number);
+        @endphp
+        <x-pdf-qr-code :data="$qrData" :size="100" position="bottom-right" label="Scan to verify" />
     </div>
 </body>
 </html>

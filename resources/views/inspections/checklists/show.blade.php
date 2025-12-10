@@ -24,10 +24,13 @@
     </div>
 </div>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white border border-gray-300 p-6">
-        <h2 class="text-lg font-semibold text-black mb-4">Checklist Details</h2>
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <div class="bg-white border border-gray-300 p-6">
+                <h2 class="text-lg font-semibold text-black mb-4">Checklist Details</h2>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
                 <dt class="text-sm font-medium text-gray-500">Name</dt>
                 <dd class="mt-1 text-sm text-black">{{ $checklist->name }}</dd>
@@ -76,6 +79,45 @@
                 @endforelse
             </div>
         </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- QR Code -->
+        <div class="bg-white border border-gray-300 p-6">
+            <h2 class="text-lg font-semibold text-black mb-4">
+                <i class="fas fa-qrcode mr-2"></i>QR Code
+            </h2>
+            @php
+                $qrData = \App\Services\QRCodeService::forInspectionChecklist($checklist->id, $checklist->name);
+                $qrUrl = \App\Services\QRCodeService::generateUrl($qrData, 200);
+            @endphp
+            <div class="text-center">
+                <img src="{{ $qrUrl }}" alt="QR Code" class="mx-auto mb-4 border-2 border-gray-200 p-2 rounded">
+                <p class="text-xs text-gray-500 mb-2">Scan to use this checklist</p>
+                <a href="{{ route('qr.printable', ['type' => 'inspection-checklist', 'id' => $checklist->id]) }}" 
+                   target="_blank" 
+                   class="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                    <i class="fas fa-print mr-2"></i>Print QR Code
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white border border-gray-300 p-6">
+            <h2 class="text-lg font-semibold text-black mb-4">Quick Actions</h2>
+            <div class="space-y-2">
+                <a href="{{ route('inspections.create', ['checklist_id' => $checklist->id]) }}" 
+                   class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-clipboard-check mr-2"></i>Use Checklist
+                </a>
+                <a href="{{ route('qr.scanner') }}" 
+                   class="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-qrcode mr-2"></i>Scan QR Code
+                </a>
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 @endsection

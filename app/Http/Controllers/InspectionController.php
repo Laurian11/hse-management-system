@@ -49,8 +49,37 @@ class InspectionController extends Controller
         $checklists = InspectionChecklist::forCompany($companyId)->active()->get();
         $departments = Department::forCompany($companyId)->active()->get();
         $users = User::forCompany($companyId)->active()->get();
+        
         $selectedScheduleId = $request->get('schedule_id');
-        return view('inspections.create', compact('schedules', 'checklists', 'departments', 'users', 'selectedScheduleId'));
+        $selectedChecklistId = $request->get('checklist_id');
+        $prefilledLocation = $request->get('location');
+        
+        // Auto-load schedule data if provided
+        $selectedSchedule = null;
+        if ($selectedScheduleId) {
+            $selectedSchedule = InspectionSchedule::forCompany($companyId)->with(['checklist', 'department'])->find($selectedScheduleId);
+            if ($selectedSchedule && !$selectedChecklistId && $selectedSchedule->checklist) {
+                $selectedChecklistId = $selectedSchedule->checklist->id;
+            }
+        }
+        
+        // Auto-load checklist data if provided
+        $selectedChecklist = null;
+        if ($selectedChecklistId) {
+            $selectedChecklist = InspectionChecklist::forCompany($companyId)->find($selectedChecklistId);
+        }
+        
+        return view('inspections.create', compact(
+            'schedules', 
+            'checklists', 
+            'departments', 
+            'users', 
+            'selectedScheduleId',
+            'selectedChecklistId',
+            'selectedSchedule',
+            'selectedChecklist',
+            'prefilledLocation'
+        ));
     }
 
     public function store(Request $request)

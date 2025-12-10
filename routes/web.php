@@ -1002,6 +1002,8 @@ Route::middleware('auth')->prefix('procurement')->name('procurement.')->group(fu
 
 // QR Code Routes
 Route::middleware('auth')->prefix('qr')->name('qr.')->group(function () {
+    Route::get('/scanner', [QRCodeController::class, 'scanner'])->name('scanner');
+    Route::post('/process', [QRCodeController::class, 'processScan'])->name('process');
     Route::get('/{type}/{id}', [QRCodeController::class, 'scan'])->name('scan');
     Route::get('/{type}/{id}/printable', [QRCodeController::class, 'printable'])->name('printable');
 });
@@ -1052,6 +1054,10 @@ Route::middleware('auth')->prefix('biometric-devices')->name('biometric-devices.
     Route::put('/{biometricDevice}', [BiometricDeviceController::class, 'update'])->name('update');
     Route::delete('/{biometricDevice}', [BiometricDeviceController::class, 'destroy'])->name('destroy');
     Route::post('/{biometricDevice}/test-connection', [BiometricDeviceController::class, 'testConnection'])->name('test-connection');
+    Route::get('/{biometricDevice}/info', [BiometricDeviceController::class, 'getDeviceInfo'])->name('info');
+    Route::get('/{biometricDevice}/test-network', [BiometricDeviceController::class, 'testNetwork'])->name('test-network');
+    Route::post('/{biometricDevice}/auto-detect-network', [BiometricDeviceController::class, 'autoDetectNetwork'])->name('auto-detect-network');
+    Route::post('/{biometricDevice}/sync-time', [BiometricDeviceController::class, 'syncDeviceTime'])->name('sync-time');
     Route::post('/{biometricDevice}/sync-users', [BiometricDeviceController::class, 'syncUsers'])->name('sync-users');
     Route::post('/{biometricDevice}/sync-attendance', [BiometricDeviceController::class, 'syncAttendance'])->name('sync-attendance');
     Route::get('/{biometricDevice}/enrollment', [BiometricDeviceController::class, 'enrollment'])->name('enrollment');
