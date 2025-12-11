@@ -194,3 +194,5 @@ All QR code generation methods are in `app/Services/QRCodeService.php`:
 4. Update documentation with usage examples
 
 
+
+

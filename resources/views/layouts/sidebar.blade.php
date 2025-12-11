@@ -682,32 +682,32 @@
                         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-1 mb-1 sidebar-text">Administration</div>
                         <a href="{{ route('admin.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin') && !request()->is('admin/*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Admin Dashboard">
                             <i class="fas fa-tachometer-alt w-5 text-center"></i>
-                            <span class="sidebar-text">Dashboard</span>
-                        </a>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
                         <a href="{{ route('admin.employees.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/employees*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Employees">
                             <i class="fas fa-user-tie w-5 text-center"></i>
-                            <span class="sidebar-text">Employees</span>
-                        </a>
+                        <span class="sidebar-text">Employees</span>
+                    </a>
                         <a href="{{ route('admin.users.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/users*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Users">
                             <i class="fas fa-users w-5 text-center"></i>
-                            <span class="sidebar-text">Users</span>
-                        </a>
+                        <span class="sidebar-text">Users</span>
+                    </a>
                         <a href="{{ route('admin.companies.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/companies*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Companies">
                             <i class="fas fa-building w-5 text-center"></i>
-                            <span class="sidebar-text">Companies</span>
-                        </a>
+                        <span class="sidebar-text">Companies</span>
+                    </a>
                         <a href="{{ route('admin.departments.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/departments*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Departments">
                             <i class="fas fa-sitemap w-5 text-center"></i>
-                            <span class="sidebar-text">Departments</span>
-                        </a>
+                        <span class="sidebar-text">Departments</span>
+                    </a>
                         <a href="{{ route('admin.roles.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/roles*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Roles">
                             <i class="fas fa-user-shield w-5 text-center"></i>
-                            <span class="sidebar-text">Roles & Permissions</span>
-                        </a>
+                        <span class="sidebar-text">Roles & Permissions</span>
+                    </a>
                         <a href="{{ route('admin.activity-logs.index') }}" class="sidebar-nav-item flex items-center space-x-3 px-3 py-2 transition-all {{ request()->is('admin/activity-logs*') ? 'bg-[#0066CC] text-white' : 'hover:bg-[#F5F5F5] text-black' }}" data-tooltip="Activity Logs">
                             <i class="fas fa-history w-5 text-center"></i>
-                            <span class="sidebar-text">Activity Logs</span>
-                        </a>
+                        <span class="sidebar-text">Activity Logs</span>
+                    </a>
                     </div>
                     @endif
                 </div>
