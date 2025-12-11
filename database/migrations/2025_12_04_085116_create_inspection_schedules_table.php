@@ -25,7 +25,8 @@ return new class extends Migration
             $table->date('next_inspection_date');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('inspection_checklist_id')->nullable()->constrained()->onDelete('set null');
+            // Note: Foreign key will be added after inspection_checklists table is created
+            $table->unsignedBigInteger('inspection_checklist_id')->nullable();
             $table->boolean('is_active')->default(true);
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -35,7 +35,8 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->date('approval_date')->nullable();
             $table->text('approval_notes')->nullable();
-            $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->onDelete('set null');
+            // Note: Foreign key will be added after suppliers table is created
+            $table->unsignedBigInteger('supplier_id')->nullable();
             $table->decimal('purchase_cost', 10, 2)->nullable();
             $table->date('purchase_date')->nullable();
             $table->date('received_date')->nullable();

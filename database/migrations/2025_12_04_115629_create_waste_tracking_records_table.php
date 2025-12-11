@@ -24,7 +24,8 @@ return new class extends Migration
             $table->date('tracking_date');
             $table->string('source_location')->nullable();
             $table->string('destination_location')->nullable();
-            $table->foreignId('contractor_id')->nullable()->constrained('suppliers')->onDelete('set null');
+            // Note: Foreign key will be added after suppliers table is created
+            $table->unsignedBigInteger('contractor_id')->nullable();
             $table->string('transport_method')->nullable();
             $table->string('vehicle_registration')->nullable();
             $table->string('manifest_number')->nullable();

@@ -16,7 +16,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('reference_number')->unique();
-            $table->foreignId('work_permit_type_id')->constrained()->onDelete('restrict');
+            // Note: Foreign key will be added after work_permit_types table is created
+            $table->unsignedBigInteger('work_permit_type_id')->nullable();
             $table->foreignId('requested_by')->constrained('users')->onDelete('cascade');
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
             

@@ -22,7 +22,8 @@ return new class extends Migration
             $table->date('certification_date');
             $table->date('expiry_date')->nullable();
             $table->date('next_due_date')->nullable();
-            $table->foreignId('certified_by')->nullable()->constrained('suppliers')->onDelete('set null');
+            // Note: Foreign key will be added after suppliers table is created
+            $table->unsignedBigInteger('certified_by')->nullable();
             $table->string('certifier_name')->nullable();
             $table->text('certification_details')->nullable();
             $table->enum('status', ['valid', 'expired', 'pending', 'rejected'])->default('valid');

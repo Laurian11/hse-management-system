@@ -21,7 +21,8 @@ return new class extends Migration
             $table->string('examination_name')->nullable();
             $table->date('examination_date');
             $table->date('next_due_date')->nullable();
-            $table->foreignId('medical_provider_id')->nullable()->constrained('suppliers')->onDelete('set null');
+            // Note: Foreign key will be added after suppliers table is created
+            $table->unsignedBigInteger('medical_provider_id')->nullable();
             $table->string('provider_name')->nullable();
             $table->text('findings')->nullable();
             $table->enum('result', ['fit', 'unfit', 'fit_with_restrictions', 'requires_follow_up', 'pending'])->default('pending');

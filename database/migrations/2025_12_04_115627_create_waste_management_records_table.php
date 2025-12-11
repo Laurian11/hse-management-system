@@ -27,7 +27,8 @@ return new class extends Migration
             $table->date('collection_date')->nullable();
             $table->date('disposal_date')->nullable();
             $table->enum('disposal_method', ['landfill', 'incineration', 'recycling', 'treatment', 'reuse', 'other'])->nullable();
-            $table->foreignId('disposal_contractor_id')->nullable()->constrained('suppliers')->onDelete('set null');
+            // Note: Foreign key will be added after suppliers table is created
+            $table->unsignedBigInteger('disposal_contractor_id')->nullable();
             $table->string('disposal_certificate_number')->nullable();
             $table->date('disposal_certificate_date')->nullable();
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
