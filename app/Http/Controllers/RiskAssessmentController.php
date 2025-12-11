@@ -11,6 +11,7 @@ use App\Notifications\RiskAssessmentApprovalRequiredNotification;
 use App\Notifications\RiskAssessmentStatusChangedNotification;
 use App\Notifications\RiskAssessmentReviewDueNotification;
 use App\Traits\UsesCompanyGroup;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -18,7 +19,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class RiskAssessmentController extends Controller
 {
-    use UsesCompanyGroup;
+    use UsesCompanyGroup, ChecksPermissions;
 
     public function index(Request $request)
     {
@@ -229,9 +230,7 @@ class RiskAssessmentController extends Controller
 
     public function show(RiskAssessment $riskAssessment)
     {
-        if ($riskAssessment->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
         $riskAssessment->load([
             'hazard',
@@ -250,14 +249,12 @@ class RiskAssessmentController extends Controller
     public function edit(RiskAssessment $riskAssessment)
     {
         $this->authorize('risk_assessments.edit');
-        if ($riskAssessment->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
-        $companyId = Auth::user()->company_id;
-        $hazards = Hazard::forCompany($companyId)->active()->get();
-        $departments = Department::where('company_id', $companyId)->active()->get();
-        $users = User::where('company_id', $companyId)->where('is_active', true)->get();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $hazards = Hazard::whereIn('company_id', $companyGroupIds)->active()->get();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $users = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
         
         return view('risk-assessment.risk-assessments.edit', compact('riskAssessment', 'hazards', 'departments', 'users'));
     }
@@ -265,9 +262,7 @@ class RiskAssessmentController extends Controller
     public function update(Request $request, RiskAssessment $riskAssessment)
     {
         $this->authorize('risk_assessments.edit');
-        if ($riskAssessment->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
         $validated = $request->validate([
             'hazard_id' => 'nullable|exists:hazards,id',
@@ -331,9 +326,7 @@ class RiskAssessmentController extends Controller
     public function destroy(RiskAssessment $riskAssessment)
     {
         $this->authorize('risk_assessments.delete');
-        if ($riskAssessment->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
         // Check if has controls or reviews
         if ($riskAssessment->controlMeasures()->count() > 0 || $riskAssessment->reviews()->count() > 0) {
@@ -588,10 +581,7 @@ class RiskAssessmentController extends Controller
     public function exportPDF(RiskAssessment $riskAssessment)
     {
         $this->authorize('risk_assessments.print');
-        if ($riskAssessment->company_id !== Auth::user()->company_id && 
-            !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
         $riskAssessment->load(['hazard', 'creator', 'assignedTo', 'department', 'company', 'controlMeasures', 'reviews', 'relatedIncident', 'relatedJSA']);
         
@@ -607,9 +597,7 @@ class RiskAssessmentController extends Controller
      */
     public function copy(RiskAssessment $riskAssessment)
     {
-        if ($riskAssessment->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($riskAssessment->company_id);
         
         return redirect()->route('risk-assessment.risk-assessments.create', ['copy_from' => $riskAssessment->id]);
     }

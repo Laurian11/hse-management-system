@@ -7,6 +7,7 @@ use App\Http\Requests\StoreIncidentRequest;
 use App\Http\Requests\UpdateIncidentRequest;
 use App\Notifications\IncidentReportedNotification;
 use App\Notifications\IncidentStatusChangedNotification;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 
 class IncidentController extends Controller
 {
+    use ChecksPermissions;
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -229,10 +231,8 @@ class IncidentController extends Controller
 
     public function show(Incident $incident)
     {
-        // Check if user can view this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can view this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
         
         $incident->load([
             'reporter', 
@@ -260,25 +260,28 @@ class IncidentController extends Controller
         if (!auth()->user()->hasPermission('incidents.edit')) {
             abort(403, 'You do not have permission to edit incidents.');
         }
-        // Check if user can edit this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
+        // Check if user can edit this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
+        
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        
+        // For super admin, get all departments and users
+        if (!$companyId) {
+            $departments = \App\Models\Department::all();
+            $users = \App\Models\User::all();
+        } else {
+            $departments = \App\Models\Department::where('company_id', $companyId)->get();
+            $users = \App\Models\User::where('company_id', $companyId)->get();
         }
-        
-        $companyId = Auth::user()->company_id;
-        
-        $departments = \App\Models\Department::where('company_id', $companyId)->get();
-        $users = \App\Models\User::where('company_id', $companyId)->get();
         
         return view('incidents.edit', compact('incident', 'departments', 'users'));
     }
 
     public function update(UpdateIncidentRequest $request, Incident $incident)
     {
-        // Check if user can update this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can update this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $data = $request->validated();
         $data['incident_date'] = $data['date_occurred'] ?? $incident->incident_date;
@@ -317,10 +320,8 @@ class IncidentController extends Controller
         if (!auth()->user()->hasPermission('incidents.delete')) {
             abort(403, 'You do not have permission to delete incidents.');
         }
-        // Check if user can delete this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can delete this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $incident->delete();
 
@@ -331,10 +332,8 @@ class IncidentController extends Controller
     // Specialized methods for incident workflow
     public function assign(Request $request, Incident $incident)
     {
-        // Check if user can update this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can update this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $request->validate([
             'assigned_to' => 'required|exists:users,id',
@@ -356,10 +355,8 @@ class IncidentController extends Controller
 
     public function investigate(Incident $incident)
     {
-        // Check if user can update this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can update this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $oldStatus = $incident->status;
         $incident->update(['status' => 'investigating']);
@@ -374,10 +371,8 @@ class IncidentController extends Controller
 
     public function close(Request $request, Incident $incident)
     {
-        // Check if user can update this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can update this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $request->validate([
             'resolution_notes' => 'required|string',
@@ -396,10 +391,8 @@ class IncidentController extends Controller
 
     public function reopen(Incident $incident)
     {
-        // Check if user can update this incident (same company)
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        // Check if user can update this incident (same company or super admin)
+        $this->authorizeCompanyResource($incident->company_id);
 
         $oldStatus = $incident->status;
         $incident->update([
@@ -422,9 +415,7 @@ class IncidentController extends Controller
      */
     public function requestClosure(Request $request, Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         // Validate that incident can be closed
         if (!$incident->canBeClosed()) {
@@ -442,9 +433,7 @@ class IncidentController extends Controller
      */
     public function approveClosure(Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         $incident->approveClosure(Auth::user());
         $incident->close();
@@ -457,9 +446,7 @@ class IncidentController extends Controller
      */
     public function rejectClosure(Request $request, Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         $request->validate([
             'rejection_reason' => 'required|string|min:10',
@@ -826,10 +813,7 @@ class IncidentController extends Controller
         if (!auth()->user()->hasPermission('incidents.print')) {
             abort(403, 'You do not have permission to print incidents.');
         }
-        if ($incident->company_id !== Auth::user()->company_id && 
-            !(Auth::user()->role && Auth::user()->role->name === 'super_admin')) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
         
         $incident->load(['reporter', 'assignedTo', 'department', 'company', 'investigation', 'rootCauseAnalysis', 'capas', 'attachments']);
         

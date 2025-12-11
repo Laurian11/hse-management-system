@@ -10,11 +10,13 @@ use App\Models\Incident;
 use App\Models\CAPA;
 use App\Models\User;
 use App\Notifications\ControlMeasureVerificationRequiredNotification;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ControlMeasureController extends Controller
 {
+    use ChecksPermissions;
     public function index(Request $request)
     {
         $companyId = Auth::user()->company_id;
@@ -151,9 +153,7 @@ class ControlMeasureController extends Controller
 
     public function show(ControlMeasure $controlMeasure)
     {
-        if ($controlMeasure->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($controlMeasure->company_id);
         
         $controlMeasure->load([
             'riskAssessment',
@@ -173,21 +173,24 @@ class ControlMeasureController extends Controller
 
     public function edit(ControlMeasure $controlMeasure)
     {
-        if ($controlMeasure->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($controlMeasure->company_id);
         
-        $companyId = Auth::user()->company_id;
-        $users = User::where('company_id', $companyId)->where('is_active', true)->get();
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        
+        // For super admin, get all users
+        if (!$companyId) {
+            $users = User::where('is_active', true)->get();
+        } else {
+            $users = User::where('company_id', $companyId)->where('is_active', true)->get();
+        }
         
         return view('risk-assessment.control-measures.edit', compact('controlMeasure', 'users'));
     }
 
     public function update(Request $request, ControlMeasure $controlMeasure)
     {
-        if ($controlMeasure->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($controlMeasure->company_id);
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -224,9 +227,7 @@ class ControlMeasureController extends Controller
 
     public function destroy(ControlMeasure $controlMeasure)
     {
-        if ($controlMeasure->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($controlMeasure->company_id);
         
         if (in_array($controlMeasure->status, ['implemented', 'verified'])) {
             return back()->with('error', 'Cannot delete implemented or verified control measures.');
@@ -241,9 +242,7 @@ class ControlMeasureController extends Controller
 
     public function verify(Request $request, ControlMeasure $controlMeasure)
     {
-        if ($controlMeasure->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($controlMeasure->company_id);
         
         $validated = $request->validate([
             'verification_method' => 'required|string',

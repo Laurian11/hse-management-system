@@ -6,12 +6,13 @@ use App\Models\Hazard;
 use App\Models\Incident;
 use App\Models\Department;
 use App\Traits\UsesCompanyGroup;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HazardController extends Controller
 {
-    use UsesCompanyGroup;
+    use UsesCompanyGroup, ChecksPermissions;
 
     public function index(Request $request)
     {
@@ -122,9 +123,7 @@ class HazardController extends Controller
 
     public function show(Hazard $hazard)
     {
-        if ($hazard->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($hazard->company_id);
         
         $hazard->load([
             'creator',
@@ -139,21 +138,17 @@ class HazardController extends Controller
 
     public function edit(Hazard $hazard)
     {
-        if ($hazard->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($hazard->company_id);
         
-        $companyId = Auth::user()->company_id;
-        $departments = Department::where('company_id', $companyId)->active()->get();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
         
         return view('risk-assessment.hazards.edit', compact('hazard', 'departments'));
     }
 
     public function update(Request $request, Hazard $hazard)
     {
-        if ($hazard->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($hazard->company_id);
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -179,9 +174,7 @@ class HazardController extends Controller
 
     public function destroy(Hazard $hazard)
     {
-        if ($hazard->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($hazard->company_id);
         
         // Check if hazard has risk assessments or controls
         if ($hazard->riskAssessments()->count() > 0 || $hazard->controlMeasures()->count() > 0) {

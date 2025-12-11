@@ -28,38 +28,141 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // #region agent log
+        try {
+            $logPath = base_path('.cursor/debug.log');
+            $logDir = dirname($logPath);
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0755, true);
+            }
+            $logData = json_encode(['id'=>'log_'.time().'_dash_entry','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:29','message'=>'Dashboard index called','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND | LOCK_EX);
+        } catch (\Exception $e) {
+            // Silently fail logging
+        }
+        // #endregion
+        
         if (!Auth::check()) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_dash_noauth','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:32','message'=>'User not authenticated','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
             return redirect()->route('login');
         }
 
         $user = Auth::user();
         $companyId = $user->company_id;
+        
+        // #region agent log
+        $logData = json_encode(['id'=>'log_'.time().'_dash_user','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:36','message'=>'User retrieved','data'=>['user_id'=>$user->id,'company_id'=>$companyId],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+        @file_put_contents($logPath, $logData, FILE_APPEND);
+        // #endregion
 
         // Get company group IDs (parent + all sisters) for data aggregation
         // For super admin without company_id, get all companies
         if (!$companyId) {
+            // #region agent log
+            $logPath = base_path('.cursor/debug.log');
+            $logData = json_encode(['id'=>'log_'.time().'_dash_nocomp','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:40','message'=>'No company_id, checking super admin','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
             // Load role relationship
-            $user->load('role');
+            try {
+                $user->load('role');
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_role','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:44','message'=>'Role loaded','data'=>['role_name'=>$user->role->name??null],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+            } catch (\Exception $e) {
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_role_err','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:49','message'=>'Role load failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+            }
             // Check if user is super admin
             $isSuperAdmin = $user->role && $user->role->name === 'super_admin';
             if (!$isSuperAdmin) {
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_notsuper','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:55','message'=>'Not super admin, redirecting','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
                 return redirect()->route('login')->with('error', 'User is not assigned to any company.');
             }
             // Super admin can proceed - will see data from all companies
-            $companyGroupIds = \App\Models\Company::where('is_active', true)->pluck('id')->toArray();
+            try {
+                $companyGroupIds = \App\Models\Company::where('is_active', true)->pluck('id')->toArray();
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_companies','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:61','message'=>'Companies queried','data'=>['count'=>count($companyGroupIds)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+            } catch (\Exception $e) {
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_companies_err','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:66','message'=>'Companies query failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+                throw $e;
+            }
             $isParentCompany = false;
         } else {
-            $companyGroupIds = CompanyGroupService::getCompanyGroupIds($companyId);
-            $isParentCompany = CompanyGroupService::isParentCompany($companyId);
+            try {
+                $companyGroupIds = CompanyGroupService::getCompanyGroupIds($companyId);
+                // #region agent log
+                $logPath = base_path('.cursor/debug.log');
+                $logData = json_encode(['id'=>'log_'.time().'_dash_groupids','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:74','message'=>'Company group IDs retrieved','data'=>['count'=>count($companyGroupIds),'ids'=>$companyGroupIds],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+                $isParentCompany = CompanyGroupService::isParentCompany($companyId);
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_isparent','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:77','message'=>'Is parent company check','data'=>['is_parent'=>$isParentCompany],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+            } catch (\Exception $e) {
+                // #region agent log
+                $logData = json_encode(['id'=>'log_'.time().'_dash_service_err','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:81','message'=>'CompanyGroupService failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+                @file_put_contents($logPath, $logData, FILE_APPEND);
+                // #endregion
+                throw $e;
+            }
+        }
+
+        // Safety check: ensure companyGroupIds is not empty
+        if (empty($companyGroupIds)) {
+            // If somehow empty, return empty dashboard data
+            $companyGroupIds = [-1]; // Use invalid ID to return no results
         }
 
         // Calculate days without incident (across company group if parent)
-        $lastIncident = Incident::whereIn('company_id', $companyGroupIds)
-            ->orderBy('incident_date', 'desc')
-            ->first();
-        $daysWithoutIncident = $lastIncident 
-            ? Carbon::parse($lastIncident->incident_date)->diffInDays(now())
-            : now()->diffInDays(Company::find($companyId)->created_at ?? now());
+        try {
+            $lastIncident = Incident::whereIn('company_id', $companyGroupIds)
+                ->orderBy('incident_date', 'desc')
+                ->first();
+            // #region agent log
+            $logPath = base_path('.cursor/debug.log');
+            $logData = json_encode(['id'=>'log_'.time().'_dash_incident','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:89','message'=>'Last incident queried','data'=>['found'=>$lastIncident?true:false],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+        } catch (\Exception $e) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_dash_incident_err','timestamp'=>time()*1000,'location'=>'app/Http/Controllers/DashboardController.php:95','message'=>'Incident query failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+            throw $e;
+        }
+        if ($lastIncident) {
+            $daysWithoutIncident = Carbon::parse($lastIncident->incident_date)->diffInDays(now());
+        } else {
+            // If no incident, calculate from company creation date or oldest company in group
+            if ($companyId) {
+                $company = Company::find($companyId);
+                $daysWithoutIncident = $company ? now()->diffInDays($company->created_at) : 0;
+            } else {
+                // For super admin, use oldest company's created_at from the group
+                $oldestCompany = Company::whereIn('id', $companyGroupIds)
+                    ->orderBy('created_at', 'asc')
+                    ->first();
+                $daysWithoutIncident = $oldestCompany ? now()->diffInDays($oldestCompany->created_at) : 0;
+            }
+        }
 
         // Calculate safety score (across company group if parent)
         $totalIncidents = Incident::whereIn('company_id', $companyGroupIds)->count();

@@ -4,22 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentInvestigation;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class IncidentInvestigationController extends Controller
 {
+    use ChecksPermissions;
     /**
      * Show the form for creating a new investigation
      */
     public function create(Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
-        $companyId = Auth::user()->company_id;
-        $users = \App\Models\User::where('company_id', $companyId)->get();
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        
+        // For super admin, get all users
+        if (!$companyId) {
+            $users = \App\Models\User::all();
+        } else {
+            $users = \App\Models\User::where('company_id', $companyId)->get();
+        }
 
         return view('incidents.investigations.create', compact('incident', 'users'));
     }
@@ -29,9 +36,7 @@ class IncidentInvestigationController extends Controller
      */
     public function store(Request $request, Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         $validated = $request->validate([
             'investigator_id' => 'required|exists:users,id',
@@ -45,7 +50,7 @@ class IncidentInvestigationController extends Controller
         ]);
 
         $validated['incident_id'] = $incident->id;
-        $validated['company_id'] = Auth::user()->company_id;
+        $validated['company_id'] = $incident->company_id; // Use incident's company_id, not user's (handles super admin)
         $validated['assigned_by'] = Auth::user()->id;
         $validated['status'] = 'pending';
 
@@ -67,9 +72,9 @@ class IncidentInvestigationController extends Controller
      */
     public function show(Incident $incident, IncidentInvestigation $investigation)
     {
-        if ($investigation->company_id !== Auth::user()->company_id || 
-            $investigation->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($investigation->company_id);
+        if ($investigation->incident_id !== $incident->id) {
+            abort(403, 'Investigation does not belong to this incident.');
         }
 
         $investigation->load(['investigator', 'assignedBy', 'incident']);
@@ -82,13 +87,20 @@ class IncidentInvestigationController extends Controller
      */
     public function edit(Incident $incident, IncidentInvestigation $investigation)
     {
-        if ($investigation->company_id !== Auth::user()->company_id || 
-            $investigation->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($investigation->company_id);
+        if ($investigation->incident_id !== $incident->id) {
+            abort(403, 'Investigation does not belong to this incident.');
         }
 
-        $companyId = Auth::user()->company_id;
-        $users = \App\Models\User::where('company_id', $companyId)->get();
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        
+        // For super admin, get all users
+        if (!$companyId) {
+            $users = \App\Models\User::all();
+        } else {
+            $users = \App\Models\User::where('company_id', $companyId)->get();
+        }
 
         return view('incidents.investigations.edit', compact('incident', 'investigation', 'users'));
     }
@@ -98,9 +110,9 @@ class IncidentInvestigationController extends Controller
      */
     public function update(Request $request, Incident $incident, IncidentInvestigation $investigation)
     {
-        if ($investigation->company_id !== Auth::user()->company_id || 
-            $investigation->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($investigation->company_id);
+        if ($investigation->incident_id !== $incident->id) {
+            abort(403, 'Investigation does not belong to this incident.');
         }
 
         $validated = $request->validate([
@@ -137,9 +149,7 @@ class IncidentInvestigationController extends Controller
      */
     public function start(Incident $incident, IncidentInvestigation $investigation)
     {
-        if ($investigation->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($investigation->company_id);
 
         $investigation->start();
 
@@ -151,9 +161,7 @@ class IncidentInvestigationController extends Controller
      */
     public function complete(Incident $incident, IncidentInvestigation $investigation)
     {
-        if ($investigation->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($investigation->company_id);
 
         $investigation->complete();
 

@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\RootCauseAnalysis;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class RootCauseAnalysisController extends Controller
 {
+    use ChecksPermissions;
     /**
      * Show the form for creating a new RCA
      */
     public function create(Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         return view('incidents.rca.create', compact('incident'));
     }
@@ -26,9 +26,7 @@ class RootCauseAnalysisController extends Controller
      */
     public function store(Request $request, Incident $incident)
     {
-        if ($incident->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($incident->company_id);
 
         $validated = $request->validate([
             'analysis_type' => 'required|in:5_whys,fishbone,taproot,fault_tree,custom',
@@ -55,7 +53,7 @@ class RootCauseAnalysisController extends Controller
         ]);
 
         $validated['incident_id'] = $incident->id;
-        $validated['company_id'] = Auth::user()->company_id;
+        $validated['company_id'] = $incident->company_id; // Use incident's company_id, not user's (handles super admin)
         $validated['created_by'] = Auth::user()->id;
         $validated['investigation_id'] = $incident->investigation_id;
         $validated['status'] = 'draft';
@@ -77,9 +75,9 @@ class RootCauseAnalysisController extends Controller
      */
     public function show(Incident $incident, RootCauseAnalysis $rootCauseAnalysis)
     {
-        if ($rootCauseAnalysis->company_id !== Auth::user()->company_id || 
-            $rootCauseAnalysis->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($rootCauseAnalysis->company_id);
+        if ($rootCauseAnalysis->incident_id !== $incident->id) {
+            abort(403, 'Root Cause Analysis does not belong to this incident.');
         }
 
         $rootCauseAnalysis->load(['creator', 'reviewer', 'incident', 'capas']);
@@ -92,9 +90,9 @@ class RootCauseAnalysisController extends Controller
      */
     public function edit(Incident $incident, RootCauseAnalysis $rootCauseAnalysis)
     {
-        if ($rootCauseAnalysis->company_id !== Auth::user()->company_id || 
-            $rootCauseAnalysis->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($rootCauseAnalysis->company_id);
+        if ($rootCauseAnalysis->incident_id !== $incident->id) {
+            abort(403, 'Root Cause Analysis does not belong to this incident.');
         }
 
         return view('incidents.rca.edit', compact('incident', 'rootCauseAnalysis'));
@@ -105,9 +103,9 @@ class RootCauseAnalysisController extends Controller
      */
     public function update(Request $request, Incident $incident, RootCauseAnalysis $rootCauseAnalysis)
     {
-        if ($rootCauseAnalysis->company_id !== Auth::user()->company_id || 
-            $rootCauseAnalysis->incident_id !== $incident->id) {
-            abort(403, 'Unauthorized');
+        $this->authorizeCompanyResource($rootCauseAnalysis->company_id);
+        if ($rootCauseAnalysis->incident_id !== $incident->id) {
+            abort(403, 'Root Cause Analysis does not belong to this incident.');
         }
 
         $validated = $request->validate([
@@ -145,9 +143,7 @@ class RootCauseAnalysisController extends Controller
      */
     public function complete(Incident $incident, RootCauseAnalysis $rootCauseAnalysis)
     {
-        if ($rootCauseAnalysis->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($rootCauseAnalysis->company_id);
 
         $rootCauseAnalysis->complete();
 
@@ -159,9 +155,7 @@ class RootCauseAnalysisController extends Controller
      */
     public function review(Incident $incident, RootCauseAnalysis $rootCauseAnalysis)
     {
-        if ($rootCauseAnalysis->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($rootCauseAnalysis->company_id);
 
         $rootCauseAnalysis->review(Auth::user());
 

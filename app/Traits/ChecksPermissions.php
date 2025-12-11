@@ -45,5 +45,52 @@ trait ChecksPermissions
             abort(403, 'You do not have permission to perform this action.');
         }
     }
+
+    /**
+     * Authorize a permission (alias for checkPermission for Laravel compatibility)
+     */
+    protected function authorize(string $permission): void
+    {
+        $this->checkPermission($permission);
+    }
+
+    /**
+     * Check if user can access a resource based on company_id
+     * Super admins (with null company_id) can access all resources
+     * 
+     * @param int|null $resourceCompanyId The company_id of the resource
+     * @return bool
+     */
+    protected function canAccessCompanyResource(?int $resourceCompanyId): bool
+    {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+
+        // Super admin can access all resources
+        if (!$user->company_id) {
+            $user->load('role');
+            return $user->role && $user->role->name === 'super_admin';
+        }
+
+        // Regular users can only access resources from their company
+        return $resourceCompanyId === $user->company_id;
+    }
+
+    /**
+     * Check if user can access a resource based on company_id, abort if not
+     * 
+     * @param int|null $resourceCompanyId The company_id of the resource
+     * @param string $message Custom error message
+     * @return void
+     */
+    protected function authorizeCompanyResource(?int $resourceCompanyId, string $message = 'Unauthorized'): void
+    {
+        if (!$this->canAccessCompanyResource($resourceCompanyId)) {
+            abort(403, $message);
+        }
+    }
 }
 

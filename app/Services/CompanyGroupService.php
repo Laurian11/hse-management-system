@@ -14,17 +14,56 @@ class CompanyGroupService
      */
     public static function getCompanyGroupIds(?int $companyId): array
     {
+        // #region agent log
+        $logPath = base_path('.cursor/debug.log');
+        $logData = json_encode(['id'=>'log_'.time().'_cgs_entry','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:15','message'=>'getCompanyGroupIds called','data'=>['company_id'=>$companyId],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+        @file_put_contents($logPath, $logData, FILE_APPEND);
+        // #endregion
+        
         if (!$companyId) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_empty','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:18','message'=>'No company_id provided','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
             return [];
         }
 
-        $company = Company::find($companyId);
+        try {
+            $company = Company::find($companyId);
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_find','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:25','message'=>'Company find result','data'=>['found'=>$company?true:false],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+        } catch (\Exception $e) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_find_err','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:30','message'=>'Company find failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'B'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+            throw $e;
+        }
         
         if (!$company) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_notfound','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:36','message'=>'Company not found, returning original ID','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
             return [$companyId]; // Return original ID if company not found
         }
 
-        return $company->getCompanyGroupIds();
+        try {
+            $result = $company->getCompanyGroupIds();
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_result','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:43','message'=>'Company group IDs retrieved','data'=>['count'=>count($result)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+            return $result;
+        } catch (\Exception $e) {
+            // #region agent log
+            $logData = json_encode(['id'=>'log_'.time().'_cgs_result_err','timestamp'=>time()*1000,'location'=>'app/Services/CompanyGroupService.php:50','message'=>'getCompanyGroupIds failed','data'=>['message'=>$e->getMessage()],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'D'])."\n";
+            @file_put_contents($logPath, $logData, FILE_APPEND);
+            // #endregion
+            throw $e;
+        }
     }
 
     /**

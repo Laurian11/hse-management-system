@@ -7,12 +7,13 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\RiskAssessment;
 use App\Traits\UsesCompanyGroup;
+use App\Traits\ChecksPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class JSAController extends Controller
 {
-    use UsesCompanyGroup;
+    use UsesCompanyGroup, ChecksPermissions;
 
     public function index(Request $request)
     {
@@ -135,9 +136,7 @@ class JSAController extends Controller
 
     public function show(JSA $jsa)
     {
-        if ($jsa->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($jsa->company_id);
         
         $jsa->load([
             'creator',
@@ -153,28 +152,24 @@ class JSAController extends Controller
 
     public function edit(JSA $jsa)
     {
-        if ($jsa->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($jsa->company_id);
         
         if ($jsa->status === 'completed') {
             return back()->with('error', 'Cannot edit completed JSAs.');
         }
         
-        $companyId = Auth::user()->company_id;
-        $departments = Department::where('company_id', $companyId)->active()->get();
-        $supervisors = User::where('company_id', $companyId)->where('is_active', true)->get();
-        $users = User::where('company_id', $companyId)->where('is_active', true)->get();
-        $riskAssessments = RiskAssessment::forCompany($companyId)->active()->get();
+        $companyGroupIds = $this->getCompanyGroupIds();
+        $departments = Department::whereIn('company_id', $companyGroupIds)->active()->get();
+        $supervisors = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
+        $users = User::whereIn('company_id', $companyGroupIds)->where('is_active', true)->get();
+        $riskAssessments = RiskAssessment::whereIn('company_id', $companyGroupIds)->active()->get();
         
         return view('risk-assessment.jsas.edit', compact('jsa', 'departments', 'supervisors', 'users', 'riskAssessments'));
     }
 
     public function update(Request $request, JSA $jsa)
     {
-        if ($jsa->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($jsa->company_id);
         
         if ($jsa->status === 'completed') {
             return back()->with('error', 'Cannot edit completed JSAs.');
@@ -203,9 +198,7 @@ class JSAController extends Controller
 
     public function destroy(JSA $jsa)
     {
-        if ($jsa->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($jsa->company_id);
         
         if ($jsa->status === 'completed') {
             return back()->with('error', 'Cannot delete completed JSAs.');
@@ -220,9 +213,7 @@ class JSAController extends Controller
 
     public function approve(Request $request, JSA $jsa)
     {
-        if ($jsa->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorizeCompanyResource($jsa->company_id);
         
         $jsa->update([
             'status' => 'approved',
