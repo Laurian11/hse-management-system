@@ -82,8 +82,8 @@ return new class extends Migration
         // Add indexes to safety_communications table
         $addIndex('safety_communications', 'company_id');
         $addIndex('safety_communications', 'status');
-        $addIndex('safety_communications', 'priority');
-        $addIndex('safety_communications', 'scheduled_send_at');
+        $addIndex('safety_communications', 'priority_level'); // Note: column is named priority_level, not priority
+        $addIndex('safety_communications', 'scheduled_send_time'); // Note: column is named scheduled_send_time, not scheduled_send_at
         $addIndex('safety_communications', ['company_id', 'status'], 'safety_communications_company_id_status_index');
     }
 
@@ -128,8 +128,8 @@ return new class extends Migration
         Schema::table('safety_communications', function (Blueprint $table) {
             $table->dropIndex(['company_id']);
             $table->dropIndex(['status']);
-            $table->dropIndex(['priority']);
-            $table->dropIndex(['scheduled_send_at']);
+            $table->dropIndex(['priority_level']); // Note: column is named priority_level, not priority
+            $table->dropIndex(['scheduled_send_time']); // Note: column is named scheduled_send_time, not scheduled_send_at
             $table->dropIndex(['company_id', 'status']);
         });
     }

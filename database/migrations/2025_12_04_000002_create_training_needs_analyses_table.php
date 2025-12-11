@@ -76,7 +76,7 @@ return new class extends Migration
                 'on_hold'
             ])->default('identified');
             
-            $table->foreignId('created_by')->constrained('users')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('validated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('validated_at')->nullable();
             $table->text('validation_notes')->nullable();

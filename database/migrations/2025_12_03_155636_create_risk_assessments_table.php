@@ -82,7 +82,8 @@ return new class extends Migration
             
             // Links to other modules
             $table->foreignId('related_incident_id')->nullable()->constrained('incidents')->onDelete('set null');
-            $table->foreignId('related_jsa_id')->nullable()->constrained('jsas')->onDelete('set null');
+            // Note: related_jsa_id foreign key will be added in a later migration after jsas table is created
+            $table->unsignedBigInteger('related_jsa_id')->nullable();
             
             // Approval
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('session_id', 255)->unique();
             $table->string('ip_address', 45);
             $table->text('user_agent');
-            $table->timestamp('login_at');
+            $table->timestamp('login_at')->nullable();
             $table->timestamp('logout_at')->nullable();
-            $table->timestamp('last_activity_at');
+            $table->timestamp('last_activity_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             

@@ -6,21 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        if (Schema::hasTable('iso_14001_compliance_records')) {
+        // Check if table already exists (may have been created as iso_14001_compliance_records)
+        if (Schema::hasTable('iso14001_compliance_records') || Schema::hasTable('iso_14001_compliance_records')) {
             return;
         }
         
-        Schema::create('iso_14001_compliance_records', function (Blueprint $table) {
+        Schema::create('iso14001_compliance_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('reference_number')->unique();
-            $table->string('clause_reference')->nullable(); // ISO 14001 clause number
-            $table->string('requirement')->nullable();
+            $table->string('clause_reference'); // e.g., "4.1", "6.1.2", "8.1"
+            $table->string('requirement');
             $table->text('description')->nullable();
-            $table->enum('compliance_status', ['compliant', 'non_compliant', 'partially_compliant', 'not_applicable'])->default('compliant');
-            $table->text('evidence')->nullable();
+            $table->enum('compliance_status', ['compliant', 'non_compliant', 'partially_compliant', 'not_applicable', 'under_review'])->default('under_review');
+            $table->text('evidence')->nullable(); // Evidence of compliance
             $table->date('assessment_date');
             $table->foreignId('assessed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->text('findings')->nullable();
@@ -33,17 +37,24 @@ return new class extends Migration
             $table->date('verification_date')->nullable();
             $table->text('verification_notes')->nullable();
             $table->text('notes')->nullable();
-            $table->json('attachments')->nullable();
+            $table->json('attachments')->nullable(); // Array of file paths
             $table->timestamps();
             $table->softDeletes();
             
-            $table->index(['company_id', 'compliance_status']);
-            $table->index(['company_id', 'assessment_date']);
+            // Indexes
+            $table->index('company_id');
+            $table->index('clause_reference');
+            $table->index('compliance_status');
+            $table->index('assessment_date');
+            $table->index('corrective_action_completed');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('iso_14001_compliance_records');
+        Schema::dropIfExists('iso14001_compliance_records');
     }
 };

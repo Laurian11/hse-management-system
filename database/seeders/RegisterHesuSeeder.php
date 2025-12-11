@@ -94,7 +94,7 @@ class RegisterHesuSeeder extends Seeder
             ['email' => 'laurianlawrence@hesu.co.tz'],
             [
                 'name' => 'Laurian Lawrence',
-                'password' => Hash::make('Password'),
+                'password' => Hash::make('password'),
                 'company_id' => $company->id,
                 'role_id' => $superAdminRole->id,
                 'employee_id_number' => $employee->employee_id_number,
@@ -107,7 +107,7 @@ class RegisterHesuSeeder extends Seeder
         if ($user->wasRecentlyCreated === false) {
             $user->update([
                 'name' => 'Laurian Lawrence',
-                'password' => Hash::make('Password'),
+                'password' => Hash::make('password'),
                 'company_id' => $company->id,
                 'role_id' => $superAdminRole->id,
                 'employee_id_number' => $employee->employee_id_number,
@@ -127,7 +127,7 @@ class RegisterHesuSeeder extends Seeder
         $this->command->info('');
         $this->command->info('Login Credentials:');
         $this->command->info('Email: laurianlawrence@hesu.co.tz');
-        $this->command->info('Password: Password');
+        $this->command->info('Password: password');
         $this->command->info('Role: Super Admin (Full Access)');
         $this->command->info('');
         $this->command->info('Company: Hesu Investment Ltd');

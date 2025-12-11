@@ -25,7 +25,7 @@ return new class extends Migration
             $table->json('certification_requirements')->nullable(); // Array of required certifications
             $table->integer('experience_requirement_months')->nullable();
             $table->enum('status', ['draft', 'active', 'archived'])->default('draft');
-            $table->foreignId('created_by')->constrained('users')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('approved_at')->nullable();
             $table->boolean('is_active')->default(true);

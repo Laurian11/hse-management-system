@@ -41,7 +41,7 @@ return new class extends Migration
             
             // Metadata
             $table->string('version')->default('1.0');
-            $table->foreignId('created_by')->constrained('users')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->json('tags')->nullable(); // For categorization
             $table->json('applicable_training_types')->nullable(); // Which training types can use this

@@ -83,8 +83,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            $table->index(['company_id', 'evaluation_level']);
-            $table->index(['company_id', 'status']);
+            $table->index(['company_id', 'evaluation_level'], 'train_eff_eval_comp_level_idx');
+            $table->index(['company_id', 'status'], 'train_eff_eval_comp_status_idx');
             $table->index('training_plan_id');
             $table->index('training_session_id');
         });
